@@ -1,16 +1,16 @@
 class nodejs {
 	Exec { path => [ "/bin/", "/sbin/" , "/usr/bin/", "/usr/sbin/", "/etc/init/" ] }
 
-	file { '/home/ubuntu/node':
-		ensure => 'directory',
-		notify => File['/home/ubuntu/node/app'],
-	}
+	#file { '/home/ubuntu/node':
+	#	ensure => 'directory',
+	#	notify => File['/home/ubuntu/node/app'],
+	#}
 
 	#Symlink to the app
-	file {  '/home/ubuntu/node/app':
-    	ensure  => 'link',
-    	target  => '/vagrant/app',
-  	}
+	#file {  '/home/ubuntu/node/app':
+    #	ensure  => 'link',
+    #	target  => '/vagrant/app',
+  	#}
 
 	#We need to update apt-get before installing dependencies
 	exec { 'first-apt-update':
