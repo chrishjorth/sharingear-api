@@ -55,7 +55,7 @@ describe('API', function() {
 				throw err;
 			}
 			expect(res.headers['content-type']).to.equal('application/json');
-			expect(res.body).to.be.an('object');
+			expect(res.body).to.be.an('objec');
 			done();
 		});
 	});
