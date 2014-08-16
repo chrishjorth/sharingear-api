@@ -40,6 +40,8 @@ server.post('/bookings', createBooking);
 server.put('/bookings/:id', updateBooking);
 server.del('/bookings/:id', deleteBooking);
 
+//ROUTE HANDLERS
+
 /**
  * @response: JSON description of the Sharingear gear classification
  */
