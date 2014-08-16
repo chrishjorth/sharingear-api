@@ -1,0 +1,19 @@
+#!/bin/sh
+
+#Add node modules to PATH
+PATH=$PATH:/usr/local/bin:/usr/local/sbin
+
+git stash -q --keep-index
+
+#Run test
+cd app
+mocha
+RETVAL=$?
+cd ../
+
+git stash pop -q
+
+if [ $RETVAL -ne 0 ]
+then
+  exit 1
+fi
