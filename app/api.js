@@ -20,45 +20,46 @@ server.listen(1339, function() {
 });
 
 //ROUTES
-server.get('/gearclassification', readGearClassification);
+//server.get('/gearclassification', readGearClassification);
 
-server.post('/gear', createGear);
-server.get('/gear/:id', readGearWithID);
-server.put('/gear/:id', updateGearWithID);
-server.del('/gear/:id', deleteGearWithID);
+//server.post('/gear', createGear);
+//server.get('/gear/:id', readGearWithID);
+//server.put('/gear/:id', updateGearWithID);
+//server.del('/gear/:id', deleteGearWithID);
 
-server.get('/gear/search/:string', readGearSearchResults);
+server.get('/gear/search/:location/:gear/:daterange', readGearSearchResults);
 
-server.get('/gear/:id/bookings', readGearWithIDBookings);
+//server.get('/gear/:id/bookings', readGearWithIDBookings);
 
-server.get('/users/:id', readUserWithID);
-server.put('/users/:id', updateUserWithID);
+//server.get('/users/:id', readUserWithID);
+//server.put('/users/:id', updateUserWithID);
 server.get('/users/:id/gear', readGearFromUserWithID);
-server.get('/users/search/:string', readUserSearchResults);
+server.get('/users/:id/reservations', readReservationsFromUserWithID);
+//server.get('/users/search/:string', readUserSearchResults);
 
-server.post('/bookings', createBooking);
-server.put('/bookings/:id', updateBooking);
-server.del('/bookings/:id', deleteBooking);
+//server.post('/bookings', createBooking);
+//server.put('/bookings/:id', updateBooking);
+//server.del('/bookings/:id', deleteBooking);
 
 //ROUTE HANDLERS
 
 /**
  * @response: JSON description of the Sharingear gear classification
  */
-function readGearClassification(req, res, next) {
+/*function readGearClassification(req, res, next) {
 	res.send({
 		guitars: ['Electric Guitar', 'Acoustic Guitar', 'Ukulele'],
 		basses: ['Electric Bass', 'Left-handed bass'],
 		cabinet: []
 	});
 	next();
-}
+}*/
 
 /**
  * @params: User ID, token and gear data
  * @return: new gear id or error.
  */
-function createGear(req, res, next) {
+/*function createGear(req, res, next) {
 	res.send({
 		id: 0,
 		type: 0,
@@ -71,13 +72,13 @@ function createGear(req, res, next) {
 		seller_user_id: 0
 	});
 	next();
-}
+}*/
 
 /**
  * @params: ID of the gear
  * @return: JSON description of the gear
  */
-function readGearWithID(req, res, next) {
+/*function readGearWithID(req, res, next) {
 	res.send({
 		id: 0,
 		type: 0,
@@ -90,13 +91,13 @@ function readGearWithID(req, res, next) {
 		seller_user_id: 0
 	});
 	next();
-}
+}*/
 
 /**
  * @params: User ID, token and gear data to be updated
  * @return: JSON description of the updated gear or error.
  */
-function updateGearWithID(req, res, next) {
+/*function updateGearWithID(req, res, next) {
 	res.send({
 		id: 0,
 		type: 0,
@@ -109,16 +110,16 @@ function updateGearWithID(req, res, next) {
 		seller_user_id: 0
 	});
 	next();
-}
+}*/
 
 /**
  * @params: User ID, token and gear id.
  * @return: {} or error.
  */
-function deleteGearWithID(req, res, next) {
+/*function deleteGearWithID(req, res, next) {
 	res.send({});
 	next();
-}
+}*/
 
 /**
  * @param: A search string
@@ -130,12 +131,45 @@ function readGearSearchResults(req, res, next) {
 		type: 0,
 		subtype: 0,
 		brand: 0,
-		model: 'Flying V Goth found in search',
+		model: 'Flying V Goth',
 		description: 'blah blah',
 		photos: 'url,url,url',
-		price: 100.5,
+		price1: 4,
+		price2: 15,
+		price3: 75,
+		city: 'Copenhagen',
+		address: '',
+		seller_user_id: 0
+	}, {
+		id: 0,
+		type: 0,
+		subtype: 0,
+		brand: 0,
+		model: 'Flying V Goth',
+		description: 'blah blah',
+		photos: 'url,url,url',
+		price1: 4,
+		price2: 15,
+		price3: 75,
+		city: 'Copenhagen',
+		address: '',
+		seller_user_id: 0
+	}, {
+		id: 0,
+		type: 0,
+		subtype: 0,
+		brand: 0,
+		model: 'Flying V Goth',
+		description: 'blah blah',
+		photos: 'url,url,url',
+		price1: 4,
+		price2: 15,
+		price3: 75,
+		city: 'Copenhagen',
+		address: '',
 		seller_user_id: 0
 	}]);
+
 	next();
 }
 
@@ -143,7 +177,7 @@ function readGearSearchResults(req, res, next) {
  * @param: gear id
  * @return: a set of bookings
  */
-function readGearWithIDBookings(req, res, next) {
+/*function readGearWithIDBookings(req, res, next) {
 	res.send([{
 		id: 0,
 		start_time: '2014-08-15 14:31:00',
@@ -153,13 +187,13 @@ function readGearWithIDBookings(req, res, next) {
 		buyer_user_id: null
 	}]);
 	next();
-}
+}*/
 
 /**
  * @param: user id
  * @return: A JSON description of a user
  */
-function readUserWithID(req, res, next) {
+/*function readUserWithID(req, res, next) {
 	res.send({
 		id: 0,
 		type: 0,
@@ -172,13 +206,13 @@ function readUserWithID(req, res, next) {
 		country: 'DNK'
 	});
 	next();
-}
+}*/
 
 /**
  * @param: A search string
  * @return: {} or an array of search results
  */
-function readUserSearchResults(req, res, next) {
+/*function readUserSearchResults(req, res, next) {
 	res.send([{
 		id: 0,
 		type: 0,
@@ -191,13 +225,13 @@ function readUserSearchResults(req, res, next) {
 		country: 'DNK'
 	}]);
 	next();
-}
+}*/
 
 /**
  * @param: A user id and token
  * @return: The updated user description
  */
-function updateUserWithID(req, res, next) {
+/*function updateUserWithID(req, res, next) {
 	res.send({
 		id: 0,
 		type: 0,
@@ -210,7 +244,7 @@ function updateUserWithID(req, res, next) {
 		country: 'DNK'
 	});
 	next();
-}
+}*/
 
 /**
  * @param: A user id.
@@ -231,11 +265,61 @@ function readGearFromUserWithID(req, res, next) {
 	next();
 }
 
+function readReservationsFromUserWithID(req, res, next) {
+	res.send([{
+		id: 0,
+		type: 0,
+		subtype: 0,
+		brand: 0,
+		model: 'Gibson Guitar',
+		description: 'blah blah',
+		photos: 'url,url,url',
+		price: 100.5,
+		seller_user_id: 0,
+		city: 'Copenhagen',
+		address: '',
+		price1: 4,
+		price2: 15,
+		price3: 75
+	}, {
+		id: 0,
+		type: 0,
+		subtype: 0,
+		brand: 0,
+		model: 'Gibson Guitar',
+		description: 'blah blah',
+		photos: 'url,url,url',
+		price: 100.5,
+		seller_user_id: 0,
+		city: 'Copenhagen',
+		address: '',
+		price1: 4,
+		price2: 15,
+		price3: 75
+	}, {
+		id: 0,
+		type: 0,
+		subtype: 0,
+		brand: 0,
+		model: 'Gibson Guitar',
+		description: 'blah blah',
+		photos: 'url,url,url',
+		price: 100.5,
+		seller_user_id: 0,
+		city: 'Copenhagen',
+		address: '',
+		price1: 4,
+		price2: 15,
+		price3: 75
+	}]);
+	next();
+}
+
 /**
  * @param: a user id, token and booking parameters
  * @return: The booking with id.
  */
-function createBooking(req, res, next) {
+/*function createBooking(req, res, next) {
 	res.send({
 		id: 0,
 		start_time: '2014-08-15 14:31:00',
@@ -245,13 +329,13 @@ function createBooking(req, res, next) {
 		buyer_user_id: null
 	});
 	next();
-}
+}*/
 
 /**
  * @param: a booking id, user id and token
  * @return: the new booking data
  */
-function updateBooking(req, res, next) {
+/*function updateBooking(req, res, next) {
 	res.send({
 		id: 0,
 		start_time: '2014-08-15 14:31:00',
@@ -261,16 +345,16 @@ function updateBooking(req, res, next) {
 		buyer_user_id: null
 	});
 	next();
-}
+}*/
 
 /**
  * @param: a booking id, user id and token
  * @return: {} or error 
  */
-function deleteBooking(req, res, next) {
+/*function deleteBooking(req, res, next) {
 	res.send({});
 	next();
-}
+}*/
 
 module.exports = {
 	server: server
