@@ -5,6 +5,7 @@
 
 var restify = require('restify'),
 	config = require('./config'),
+	fb = require('./facebook'),
 	server;
 
 server = restify.createServer({
@@ -15,7 +16,7 @@ server.use(restify.CORS());
 server.use(restify.fullResponse());
 server.use(restify.bodyParser());
 
-server.listen(1339, function() {
+server.listen(1337, function() {
 	console.log('%s listening at %s', server.name, server.url);
 });
 
@@ -31,6 +32,7 @@ server.get('/gear/search/:location/:gear/:daterange', readGearSearchResults);
 
 //server.get('/gear/:id/bookings', readGearWithIDBookings);
 
+server.post('/users/login', createUserSession);
 //server.get('/users/:id', readUserWithID);
 //server.put('/users/:id', updateUserWithID);
 server.get('/users/:id/gear', readGearFromUserWithID);
@@ -188,6 +190,24 @@ function readGearSearchResults(req, res, next) {
 	}]);
 	next();
 }*/
+
+/**
+ * @param accesstoken: FB access token
+ */
+function createUserSession(req, res, next) {
+	fb.authenticate(req.params.accesstoken, function(error, newAccessToken) {
+		if(error) {
+			console.log('Error authenticating with facebook: ' + JSON.stringify(error));
+			res.send({error: error});
+			next();
+			return;
+		}
+
+		console.log('Got new access token: ' + newAccessToken);
+		res.send({});
+		next();
+	});
+}
 
 /**
  * @param: user id

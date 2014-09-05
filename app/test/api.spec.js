@@ -2,7 +2,7 @@ var mocha = require('mocha'),
 	chai = require('chai'),
 	supertest = require('supertest'),
 	expect = chai.expect,
-	url = 'http://localhost:1339';
+	url = 'http://localhost:1337';
 
 describe('API', function() {
 	it.skip('Supports GET /gearclassification', function(done) {
