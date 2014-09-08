@@ -9,16 +9,16 @@ var restify = require('restify'),
 	server;
 
 server = restify.createServer({
-	name: 'Sharingear REST API'
+	name: 'Sharingear API'
+});
+
+server.listen(1337, function() {
+	console.log('%s listening at %s', server.name, server.url);
 });
 
 server.use(restify.CORS());
 server.use(restify.fullResponse());
 server.use(restify.bodyParser());
-
-server.listen(1337, function() {
-	console.log('%s listening at %s', server.name, server.url);
-});
 
 //ROUTES
 //server.get('/gearclassification', readGearClassification);
