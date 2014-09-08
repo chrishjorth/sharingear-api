@@ -2,7 +2,7 @@ var mocha = require('mocha'),
 	chai = require('chai'),
 	supertest = require('supertest'),
 	expect = chai.expect,
-	url = 'http://localhost:1337';
+	url = 'http://api.sharingear.com';
 
 describe('API', function() {
 	it.skip('Supports GET /gearclassification', function(done) {
@@ -50,7 +50,7 @@ describe('API', function() {
 	});
 
 	it('Supports GET /gear/search/:location/:gear/:daterange', function(done) {
-		supertest(url).get('/gear/search/copenhagen/marshall/20140830-20140902').end(function(err, res) {
+		supertest(url).get('/gear/search/copenhagen/marshall/20140830-20140902').set('Content-Type',  'application/json').end(function(err, res) {
 			if(err) {
 				throw err;
 			}
