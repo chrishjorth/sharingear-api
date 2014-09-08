@@ -43,6 +43,8 @@ function graphCall(apiPath, callback) {
 			buffer += chunk;
 		});
 		result.on('end', function() {
+			console.log('FB graph call ended. Buffer:');
+			console.log(buffer);
 			var data = JSON.parse(buffer);
 			if(data.error) {
 				callback(data.error);
