@@ -5,25 +5,54 @@
 
 var https = require('https'),
 	appID = '522375581240221',
-	appSecret = '95b95a4a2e59ddc98136ce54b8a0f8d2';
+	appSecret = '95b95a4a2e59ddc98136ce54b8a0f8d2',
+	app_token = null;
 
 module.exports = {
-	authenticate: authenticate,
-	graphCall: graphCall
+	authenticate: authenticate
 };
 
-function authenticate(accessToken, callback) {
-	var apiPath = '/oauth/access_token?grant_type=fb_exchange_token&client_id=' + appID + '&client_secret=' + appSecret + '&fb_exchange_token=' + accessToken;
-	console.log('Short lived token: ' + accessToken);
-	console.log('API PATH: ' + apiPath);
-	this.graphCall(apiPath, function(error, data) {
+function getAppToken(callback) {
+	var apiPath = '/oauth/access_token?client_id=' + appID + '&client_secret=' + appSecret + '&grant_type=client_credentials';
+	graphCall(apiPath, function(error, data) {
 		if(error) {
 			callback(error);
 		}
 		else {
+			console.log('getAppToken success');
 			callback(null, data);
 		}
 	});
+}
+
+function authenticate(accessToken, callback) {
+	var authHandler;
+
+	authHandler = function() {
+		var apiPath = '/oauth/access_token?grant_type=fb_exchange_token&client_id=' + appID + '&client_secret=' + appSecret + '&fb_exchange_token=' + accessToken;
+		
+		graphCall(apiPath, function(error, data) {
+			if(error) {
+				callback(error);
+			}
+			else {
+				callback(null, data);
+			}
+		});
+	};
+
+	if(app_token === null) {
+		getAppToken(function(error, data) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			authHandler();
+		});
+	}
+	else {
+		authHandler();
+	}
 }
 
 function graphCall(apiPath, callback) {
