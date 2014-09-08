@@ -14,6 +14,7 @@ module.exports = {
 
 function authenticate(accessToken, callback) {
 	var apiPath = '/oauth/access_token?grant_type=fb_exchange_token&client_id=' + appID + '&client_secret=' + appSecret + '&fb_exchange_token=' + accessToken;
+	console.log('Short lived token: ' + accessToken);
 	console.log('API PATH: ' + apiPath);
 	this.graphCall(apiPath, function(error, data) {
 		if(error) {
