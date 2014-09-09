@@ -6,6 +6,7 @@
 var restify = require('restify'),
 	config = require('./config'),
 	fb = require('./facebook'),
+	User = require('./user'),
 	server;
 
 server = restify.createServer({
@@ -192,20 +193,57 @@ function readGearSearchResults(req, res, next) {
 }*/
 
 /**
+ * Switches the FB short token for a long token, if the user does not exist information is retrieved from Facebook and the user is created.
  * @param accesstoken: FB access token
+ * @return The user object
  */
 function createUserSession(req, res, next) {
-	fb.authenticate(req.params.id, req.params.accesstoken, function(error, newAccessToken) {
-		if(error) {
-			console.log('Error authenticating with facebook: ' + JSON.stringify(error));
-			res.send({error: error});
+	var createSession;
+
+	createSession = function(user, longToken) {
+		User.setServerAccessToken(user.id, longToken, function(error) {
+			if(error) {
+				handleError(res, next, 'Error retrieving user by Facebook id: ', error);
+				return;
+			}
+
+			res.send(user);
 			next();
+		});
+	};
+
+	fb.getServerSideToken(req.params.accesstoken, function(error, longToken) {
+		if(error) {
+			handleError(res, next, 'Error authenticating with facebook: ', error);
 			return;
 		}
 
-		console.log('Got new access token: ' + newAccessToken);
-		res.send({});
-		next();
+		//Get user for facebook id, if not exists create user
+		User.getUserFromFacebookID(req.params.fbid, function(error, user) {
+			if(error) {
+				handleError(res, next, 'Error retrieving user by Facebook ID: ', error);
+				return;
+			}
+			if(user === null) {
+				//Create user
+				fb.getUserInfo(longToken, function(error, fbUserInfo) {
+					if(error) {
+						handleError(res, next, 'Error retrieving user from Facebook: ', error);
+						return;
+					}
+					User.createUserFromFacebookInfo(fbUserInfo, function(error, user) {
+						if(error) {
+							handleError(res, next, 'Error creating user: ', error);
+							return;
+						}
+						createSession(user, longToken);
+					});
+				});
+			}
+			else {
+				createSession(user, longToken);
+			}
+		});
 	});
 }
 
@@ -375,6 +413,13 @@ function readReservationsFromUserWithID(req, res, next) {
 	res.send({});
 	next();
 }*/
+
+/* UTILITIES */
+function handleError(res, next, message, error) {
+	console.log(message + JSON.stringify(error));
+	res.send({error: error});
+	next();
+}
 
 module.exports = {
 	server: server
