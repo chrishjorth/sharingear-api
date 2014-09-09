@@ -39,21 +39,21 @@ function authenticate(id, accessToken, callback) {
 	//var apiPath = 'oauth/access_token?client_id=' + appID + '&client_secret=' + appSecret + '&grant_type=client_credentials';
 	//var apiPath = '/me' + '?access_token=' + accessToken;
 
-	graphCall(apiPath, function(error, data) {
-		if(error) {
-			callback(error);
-		}
-		else {
-			callback(null, data);
-		}
+	graphCall(apiPath, function(data) {
+		var longToken;
+		
+		//Store access token for user in db
+		//Retrieve user info from fb and store in db
+		longToken = data.substring(data.indexOf('='));
+		console.log(longToken);
+
+		callback(null, longToken);
 	});
 }
 
 function graphCall(apiPath, callback) {
 	var buffer = '',
 	options, request;
-
-	console.log('graphCall apiPath: ' + apiPath);
 
 	options = {
 		host: 'graph.facebook.com',
@@ -70,13 +70,7 @@ function graphCall(apiPath, callback) {
 		result.on('end', function() {
 			console.log('FB graph call ended. Buffer:');
 			console.log(buffer);
-			var data = JSON.parse(buffer);
-			if(data.error) {
-				callback(data.error);
-			}
-			else {
-				callback(null, buffer);
-			}
+			callback(buffer);
 		});
 		result.on('error', function(e) {
 			callback(e.message);
