@@ -35,9 +35,9 @@ function getSecretProof(accessToken) {
 
 function authenticate(id, accessToken, callback) {
 	//var apiPath = '/oauth/access_token?grant_type=fb_exchange_token&appsecret_proof=' + getSecretProof(accessToken) + '&client_id=' + appID + '&client_secret=' + appSecret + '&fb_exchange_token=' + accessToken;
-	//var apiPath = '/oauth/access_token?client_id=' + appID + '&client_secret=' + appSecret + '&grant_type=fb_exchange_token&fb_exchange_token=' + accessToken;
+	var apiPath = '/oauth/access_token?client_id=' + appID + '&client_secret=' + appSecret + '&grant_type=fb_exchange_token&fb_exchange_token=' + accessToken;
 	//var apiPath = 'oauth/access_token?client_id=' + appID + '&client_secret=' + appSecret + '&grant_type=client_credentials';
-	var apiPath = '/me' + '?access_token=' + accessToken;
+	//var apiPath = '/me' + '?access_token=' + accessToken;
 
 	graphCall(apiPath, function(error, data) {
 		if(error) {
@@ -57,8 +57,7 @@ function graphCall(apiPath, callback) {
 
 	options = {
 		host: 'graph.facebook.com',
-		port: 443, //https
-		//port: 80,
+		port: 443,
 		path: apiPath,
 		method: 'GET'
 	};
