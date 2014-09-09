@@ -59,7 +59,7 @@ function graphCall(apiPath, callback) {
 		host: 'graph.facebook.com',
 		port: 443, //https
 		//port: 80,
-		apiPath: apiPath,
+		path: apiPath,
 		method: 'GET'
 	};
 
