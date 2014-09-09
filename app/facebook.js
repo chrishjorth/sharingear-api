@@ -4,6 +4,7 @@
  */
 
 var https = require('https'),
+	crypto = require('crypto'),
 	appID = '522375581240221',
 	appSecret = '95b95a4a2e59ddc98136ce54b8a0f8d2',
 	app_token = null;
@@ -12,8 +13,9 @@ module.exports = {
 	authenticate: authenticate
 };
 
-function getAppToken(callback) {
+/*function getAppToken(callback) {
 	var apiPath = '/oauth/access_token?client_id=' + appID + '&client_secret=' + appSecret + '&grant_type=client_credentials';
+	console.log('Try to get app token!');
 	graphCall(apiPath, function(error, data) {
 		if(error) {
 			callback(error);
@@ -23,41 +25,35 @@ function getAppToken(callback) {
 			callback(null, data);
 		}
 	});
+}*/
+
+function getSecretProof(accessToken) {
+	var hmac = crypto.createHmac('sha256', appSecret);
+	hmac.update(accessToken);
+	return hmac.digest('hex');
 }
 
-function authenticate(accessToken, callback) {
-	var authHandler;
+function authenticate(id, accessToken, callback) {
+	//var apiPath = '/oauth/access_token?grant_type=fb_exchange_token&appsecret_proof=' + getSecretProof(accessToken) + '&client_id=' + appID + '&client_secret=' + appSecret + '&fb_exchange_token=' + accessToken;
+	//var apiPath = '/oauth/access_token?client_id=' + appID + '&client_secret=' + appSecret + '&grant_type=fb_exchange_token&fb_exchange_token=' + accessToken;
+	//var apiPath = 'oauth/access_token?client_id=' + appID + '&client_secret=' + appSecret + '&grant_type=client_credentials';
+	var apiPath = '/me' + '?access_token=' + accessToken;
 
-	authHandler = function() {
-		var apiPath = '/oauth/access_token?grant_type=fb_exchange_token&client_id=' + appID + '&client_secret=' + appSecret + '&fb_exchange_token=' + accessToken;
-		
-		graphCall(apiPath, function(error, data) {
-			if(error) {
-				callback(error);
-			}
-			else {
-				callback(null, data);
-			}
-		});
-	};
-
-	if(app_token === null) {
-		getAppToken(function(error, data) {
-			if(error) {
-				callback(error);
-				return;
-			}
-			authHandler();
-		});
-	}
-	else {
-		authHandler();
-	}
+	graphCall(apiPath, function(error, data) {
+		if(error) {
+			callback(error);
+		}
+		else {
+			callback(null, data);
+		}
+	});
 }
 
 function graphCall(apiPath, callback) {
 	var buffer = '',
 	options, request;
+
+	console.log('graphCall apiPath: ' + apiPath);
 
 	options = {
 		host: 'graph.facebook.com',

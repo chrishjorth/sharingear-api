@@ -195,7 +195,7 @@ function readGearSearchResults(req, res, next) {
  * @param accesstoken: FB access token
  */
 function createUserSession(req, res, next) {
-	fb.authenticate(req.params.accesstoken, function(error, newAccessToken) {
+	fb.authenticate(req.params.id, req.params.accesstoken, function(error, newAccessToken) {
 		if(error) {
 			console.log('Error authenticating with facebook: ' + JSON.stringify(error));
 			res.send({error: error});
