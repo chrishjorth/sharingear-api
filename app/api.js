@@ -7,6 +7,7 @@ var restify = require('restify'),
 	config = require('./config'),
 	fb = require('./facebook'),
 	User = require('./user'),
+	Gear = require('./gear'),
 	server;
 
 server = restify.createServer({
@@ -22,9 +23,9 @@ server.use(restify.fullResponse());
 server.use(restify.bodyParser());
 
 //ROUTES
-//server.get('/gearclassification', readGearClassification);
+server.get('/gearclassification', readGearClassification);
 
-//server.post('/gear', createGear);
+server.post('/gear', createGear);
 //server.get('/gear/:id', readGearWithID);
 //server.put('/gear/:id', updateGearWithID);
 //server.del('/gear/:id', deleteGearWithID);
@@ -49,20 +50,22 @@ server.get('/users/:id/reservations', readReservationsFromUserWithID);
 /**
  * @response: JSON description of the Sharingear gear classification
  */
-/*function readGearClassification(req, res, next) {
-	res.send({
-		guitars: ['Electric Guitar', 'Acoustic Guitar', 'Ukulele'],
-		basses: ['Electric Bass', 'Left-handed bass'],
-		cabinet: []
+function readGearClassification(req, res, next) {
+	Gear.getClassification(function(error, gearClassification) {
+		if(error) {
+			handleError(res, next, 'Error retrieving gear classification: ', error);
+			return;
+		}
+		res.send(gearClassification);
+		next();
 	});
-	next();
-}*/
+}
 
 /**
  * @params: User ID, token and gear data
  * @return: new gear id or error.
  */
-/*function createGear(req, res, next) {
+function createGear(req, res, next) {
 	res.send({
 		id: 0,
 		type: 0,
@@ -75,7 +78,7 @@ server.get('/users/:id/reservations', readReservationsFromUserWithID);
 		seller_user_id: 0
 	});
 	next();
-}*/
+}
 
 /**
  * @params: ID of the gear
