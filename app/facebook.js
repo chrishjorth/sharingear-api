@@ -11,7 +11,8 @@ var https = require('https'),
 
 module.exports = {
 	getServerSideToken: getServerSideToken,
-	getUserInfo: getUserInfo
+	getUserInfo: getUserInfo,
+	checkToken: checkToken
 };
 
 function getSecretProof(accessToken) {
@@ -31,6 +32,19 @@ function getUserInfo(longToken, callback) {
 	var apiPath = '/me?scope=email&access_token=' + longToken;
 	graphCall(apiPath, function(data) {
 		callback(null, JSON.parse(data));
+	});
+}
+
+function checkToken(longToken, callback) {
+	var apiPath = '/debug_token?input_token=' + longToken + '&access_token=' + getAppToken();
+	graphCall(apiPath, function(data) {
+		data = JSON.parse(data);
+		if(data.error) {
+			callback(data.error.message);
+		}
+		else {
+			callback(null, 'valid');
+		}
 	});
 }
 
@@ -62,3 +76,8 @@ function graphCall(apiPath, callback) {
 
 	request.end();
 }
+
+function getAppToken() {
+	return appID + '|' + appSecret;
+}
+

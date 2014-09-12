@@ -12,7 +12,8 @@ sharingearPool = mysql.createPool({
         port: 3306,
         user: 'root',
         password: '20mircea14chris',
-        database: 'sharingear'
+        database: 'sharingear',
+        supportBigNumbers: true //Required for working with Facebook IDs stored as bigint.
 });
 
 module.exports = {

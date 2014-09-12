@@ -6,7 +6,8 @@
 var db = require('./database');
 
 module.exports = {
-	getClassification: getClassification
+	getClassification: getClassification,
+	createGear: createGear
 };
 
 /**
@@ -53,5 +54,26 @@ function getClassification(callback) {
 			}
 			callback(null, gearClassification);
 		});
+	});
+}
+
+function createGear(newGear, callback) {
+	var gear = [
+		newGear.type,
+		newGear.subtype,
+		newGear.brand,
+		newGear.model,
+		newGear.description,
+		newGear.price_a,
+		newGear.price_b,
+		newGear.price_c,
+		newGear.owner_id
+	];
+	db.query("INSERT INTO gear(type, subtype, brand, model, description, price_a, price_b, price_c, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", gear, function(error, result) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		callback(null, result.insertId);
 	});
 }

@@ -4,6 +4,7 @@
  */
 
 var restify = require('restify'),
+	_ = require('underscore'),
 	config = require('./config'),
 	fb = require('./facebook'),
 	User = require('./user'),
@@ -66,18 +67,39 @@ function readGearClassification(req, res, next) {
  * @return: new gear id or error.
  */
 function createGear(req, res, next) {
-	res.send({
-		id: 0,
-		type: 0,
-		subtype: 0,
-		brand: 0,
-		model: 'Flying V Goth',
-		description: 'blah blah',
-		photos: 'url,url,url',
-		price: 100.5,
-		seller_user_id: 0
+	var params = req.params,
+		newGear;
+
+	isAuthorized(params.owner_id, params.fb_token, function(error, status) {
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		newGear = {
+			type: params.type,
+			subtype: params.subtype,
+			brand: params.brand,
+			model: params.model,
+			decription: params.description,
+			price_a: params.price_a,
+			price_b: params.price_b,
+			price_c: params.price_c,
+			owner_id: params.owner_id
+		};
+
+		Gear.createGear(newGear, function(error, gearID) {
+			if(error) {
+				handleError(res, next, 'Error creating new gear: ', error);
+				return;
+			}
+			res.send({id: gearID});
+			next();
+		});
 	});
-	next();
 }
 
 /**
@@ -204,11 +226,15 @@ function createUserSession(req, res, next) {
 	var createSession;
 
 	createSession = function(user, longToken) {
-		User.setServerAccessToken(user.id, longToken, function(error) {
+		User.setServerAccessToken(user.fbid, longToken, function(error) {
 			if(error) {
 				handleError(res, next, 'Error retrieving user by Facebook id: ', error);
 				return;
 			}
+
+			_.extend(user, {
+				fb_token: longToken
+			});
 
 			res.send(user);
 			next();
@@ -422,6 +448,26 @@ function handleError(res, next, message, error) {
 	console.log(message + JSON.stringify(error));
 	res.send({error: error});
 	next();
+}
+
+function isAuthorized(userID, fbLongToken, callback) {
+	fb.checkToken(fbLongToken, function(error, tokenStatus) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(tokenStatus !== 'valid') {
+			callback('Error checking token: Token not valid.');
+			return;
+		}
+		User.matchToken(userID, fbLongToken, function(error, didMatch) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			callback(null, didMatch);
+		});
+	});
 }
 
 module.exports = {

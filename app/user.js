@@ -8,7 +8,8 @@ var db = require('./database');
 module.exports = {
 	getUserFromFacebookID: getUserFromFacebookID,
 	createUserFromFacebookInfo: createUserFromFacebookInfo,
-	setServerAccessToken: setServerAccessToken
+	setServerAccessToken: setServerAccessToken,
+	matchToken: matchToken
 };
 
 function getUserFromFacebookID(fbid, callback) {
@@ -76,7 +77,26 @@ function createUserFromFacebookInfo(userInfo, callback) {
  * Stores the long term access token for a user. If the user does not exists the user is created first.
  */
 function setServerAccessToken(fbid, longToken, callback) {
-	db.query("UPDATE users SET fb_token=? WHERE fbid=?", [longToken, fbid], function(error) {
+	db.query("UPDATE users SET fb_token=? WHERE fbid=? LIMIT 1", [longToken, fbid], function(error, result) {
+		if(result.affectedRows <= 0) {
+			callback('No user updated.');
+			return;
+		}
 		callback(error);
+	});
+}
+
+function matchToken(userID, fbLongToken, callback) {
+	db.query("SELECT id FROM users WHERE id=? AND fb_token=? LIMIT 1", [userID, fbLongToken], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, false);
+		}
+		else {
+			callback(null, true);
+		}
 	});
 }
