@@ -137,5 +137,11 @@ function createGear(newGear, callback) {
 }
 
 function readGearFromUser(userID, callback) {
-	//db.query("SELECT id, type, ");
+	db.query("SELECT id, type, subtype, brand, model, description, price_a, price_b, price_c FROM gear WHERE owner_id=?", [userID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		callback(null, rows);
+	});
 }
