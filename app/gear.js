@@ -7,7 +7,9 @@ var db = require('./database');
 
 module.exports = {
 	getClassification: getClassification,
-	createGear: createGear
+	checkTypes: checkTypes,
+	createGear: createGear,
+	readGearFromUser: readGearFromUser
 };
 
 /**
@@ -57,23 +59,54 @@ function getClassification(callback) {
 	});
 }
 
-function createGear(newGear, callback) {
-	var gear = [
-		newGear.type,
-		newGear.subtype,
-		newGear.brand,
-		newGear.model,
-		newGear.description,
-		newGear.price_a,
-		newGear.price_b,
-		newGear.price_c,
-		newGear.owner_id
-	];
-	db.query("INSERT INTO gear(type, subtype, brand, model, description, price_a, price_b, price_c, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", gear, function(error, result) {
+function checkTypes(gearType, subtype, callback) {
+	db.query("SELECT gear_types.id, gear_subtypes.id FROM gear_types, gear_subtypes WHERE gear_types.gear_type=? AND gear_subtypes.subtype=? AND gear_subtypes.type_id=gear_types.id LIMIT 1;", [gearType, subtype], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
 		}
-		callback(null, result.insertId);
+		if(rows.length <= 0) {
+			callback(null, false);
+		}
+		else {
+			callback(null, true);
+		}
 	});
+}
+
+function createGear(newGear, callback) {
+	this.checkTypes(newGear.type, newGear.subtype, function(error, correct) {
+		var gear;
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(correct === false) {
+			callback('Wrong type or subtype.');
+			return;
+		}
+		gear = gear = [
+			newGear.type,
+			newGear.subtype,
+			newGear.brand,
+			newGear.model,
+			newGear.description,
+			newGear.price_a,
+			newGear.price_b,
+			newGear.price_c,
+			newGear.owner_id
+		];
+
+		db.query("INSERT INTO gear(type, subtype, brand, model, description, price_a, price_b, price_c, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", gear, function(error, result) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			callback(null, result.insertId);
+		});
+	});
+}
+
+function readGearFromUser(userID, callback) {
+	//db.query("SELECT id, type, ");
 }

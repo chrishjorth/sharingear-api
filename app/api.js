@@ -338,18 +338,14 @@ function createUserSession(req, res, next) {
  * @return: A list of gear
  */
 function readGearFromUserWithID(req, res, next) {
-	res.send([{
-		id: 0,
-		type: 0,
-		subtype: 0,
-		brand: 0,
-		model: 'Flying V Goth found in search',
-		description: 'blah blah',
-		photos: 'url,url,url',
-		price: 100.5,
-		seller_user_id: 0
-	}]);
-	next();
+	Gear.readGearFromUser(req.params.id, function(error, gearList) {
+		if(error) {
+			handleError(res, next, 'Error retrieving gear classification: ', error);
+			return;
+		}
+		res.send(gearList);
+		next();
+	});
 }
 
 function readReservationsFromUserWithID(req, res, next) {
