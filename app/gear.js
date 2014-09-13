@@ -119,13 +119,14 @@ function createGear(newGear, callback) {
 				newGear.brand,
 				newGear.model,
 				newGear.description,
+				newGear.images,
 				newGear.price_a,
 				newGear.price_b,
 				newGear.price_c,
 				newGear.owner_id
 			];
 
-			db.query("INSERT INTO gear(type, subtype, brand, model, description, price_a, price_b, price_c, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", gear, function(error, result) {
+			db.query("INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", gear, function(error, result) {
 				if(error) {
 					callback(error);
 					return;

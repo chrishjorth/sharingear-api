@@ -7,6 +7,7 @@ var restify = require('restify'),
 	_ = require('underscore'),
 	config = require('./config'),
 	fb = require('./facebook'),
+	Sec = require('./sec'),
 	User = require('./user'),
 	Gear = require('./gear'),
 	server;
@@ -42,6 +43,8 @@ server.get('/users/:id/gear', readGearFromUserWithID);
 server.get('/users/:id/reservations', readReservationsFromUserWithID);
 //server.get('/users/search/:string', readUserSearchResults);
 
+server.get('/users/:id/newfilename/:filename', generateFileName);
+
 //server.post('/bookings', createBooking);
 //server.put('/bookings/:id', updateBooking);
 //server.del('/bookings/:id', deleteBooking);
@@ -70,7 +73,7 @@ function createGear(req, res, next) {
 	var params = req.params,
 		newGear;
 
-	isAuthorized(params.owner_id, params.fb_token, function(error, status) {
+	isAuthorized(params.owner_id, function(error, status) {
 		if(error) {
 			handleError(res, next, 'Error authorizing user: ', error);
 			return;
@@ -85,6 +88,7 @@ function createGear(req, res, next) {
 			brand: params.brand,
 			model: params.model,
 			decription: params.description,
+			images: params.images,
 			price_a: params.price_a,
 			price_b: params.price_b,
 			price_c: params.price_c,
@@ -148,6 +152,29 @@ function createGear(req, res, next) {
 	res.send({});
 	next();
 }*/
+
+function generateFileName(req, res, next) {
+	var params = req.params;
+
+	isAuthorized(params.id, function(error, status) {
+		var newFileName, dot, extension, secret;
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		dot = params.filename.indexOf('.');
+		extension = params.filename.substring(dot + 1);
+		newFileName = params.filename.substring(0, dot);
+		newFileName = Sec.generateFileName(newFileName) + '.' + extension;
+		secret = Sec.getFileSecretProof(newFileName);
+		res.send({fileName: newFileName, secretProof: secret});
+		next();
+	});
+}
 
 /**
  * @param: A search string
@@ -232,9 +259,9 @@ function createUserSession(req, res, next) {
 				return;
 			}
 
-			_.extend(user, {
+			/*_.extend(user, {
 				fb_token: longToken
-			});
+			});*/
 
 			res.send(user);
 			next();
@@ -446,8 +473,26 @@ function handleError(res, next, message, error) {
 	next();
 }
 
-function isAuthorized(userID, fbLongToken, callback) {
-	fb.checkToken(fbLongToken, function(error, tokenStatus) {
+function isAuthorized(userID, callback) {
+	User.getToken(userID, function(error, token) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		fb.checkToken(token, function(error, tokenStatus) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			if(tokenStatus !== 'valid') {
+				callback(null, false);
+			}
+			else {
+				callback(null, true);
+			}
+		});
+	});
+	/*fb.checkToken(fbLongToken, function(error, tokenStatus) {
 		if(error) {
 			callback(error);
 			return;
@@ -463,7 +508,7 @@ function isAuthorized(userID, fbLongToken, callback) {
 			}
 			callback(null, didMatch);
 		});
-	});
+	});*/
 }
 
 module.exports = {

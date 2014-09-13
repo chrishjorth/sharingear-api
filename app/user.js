@@ -9,7 +9,8 @@ module.exports = {
 	getUserFromFacebookID: getUserFromFacebookID,
 	createUserFromFacebookInfo: createUserFromFacebookInfo,
 	setServerAccessToken: setServerAccessToken,
-	matchToken: matchToken
+	matchToken: matchToken,
+	getToken: getToken
 };
 
 function getUserFromFacebookID(fbid, callback) {
@@ -98,5 +99,23 @@ function matchToken(userID, fbLongToken, callback) {
 		else {
 			callback(null, true);
 		}
+	});
+}
+
+function getToken(userID, callback) {
+	db.query("SELECT fb_token FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback('No user with id ' + userID + '.');
+			return;
+		}
+		if(rows[0].fb_token === null) {
+			callback('User has no token.');
+			return;
+		}
+		callback(null, rows[0].fb_token);
 	});
 }
