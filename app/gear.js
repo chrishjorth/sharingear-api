@@ -148,7 +148,7 @@ function readGearFromUser(userID, callback) {
 	});
 }
 
-function addImage(userID, gearID, imageURL) {
+function addImage(userID, gearID, imageURL, callback) {
 	db.query("SELECT images FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
 		var images = '';
 		if(error) {
