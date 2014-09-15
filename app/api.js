@@ -40,7 +40,8 @@ server.get('/gear/search/:location/:gear/:daterange', readGearSearchResults);
 server.post('/users/login', createUserSession);
 //server.get('/users/:id', readUserWithID);
 //server.put('/users/:id', updateUserWithID);
-server.get('/users/:id/gear', readGearFromUserWithID);
+server.get('/users/:user_id/gear', readGearFromUserWithID);
+server.put('/users/:user_id/gear/:gear_id', updateGearFromUserWithID);
 server.get('/users/:id/reservations', readReservationsFromUserWithID);
 //server.get('/users/search/:string', readUserSearchResults);
 
@@ -401,13 +402,48 @@ function createUserSession(req, res, next) {
  * @return: A list of gear
  */
 function readGearFromUserWithID(req, res, next) {
-	Gear.readGearFromUser(req.params.id, function(error, gearList) {
+	Gear.readGearFromUser(req.params.user_id, function(error, gearList) {
 		if(error) {
 			handleError(res, next, 'Error retrieving gear classification: ', error);
 			return;
 		}
 		res.send(gearList);
 		next();
+	});
+}
+
+/**
+ * It is not possible to update type and subtype for existing gear.
+ * @return the updated gear
+ */
+function updateGearFromUserWithID(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		var updatedGearData;
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		updatedGearData = {
+			brand: req.params.brand,
+			model: req.params.model,
+			description: req.params.description,
+			images: req.params.images,
+			price_a: req.params.price_a,
+			price_b: req.params.price_b,
+			price_c: req.params.price_c
+		};
+		Gear.updateGearWithID(req.params.gear_id, updatedGearData, function(error) {
+			if(error) {
+				handleError(res, next, 'Error updating gear: ', error);
+				return;
+			}
+			res.send(updatedGearData);
+			next();
+		});
 	});
 }
 

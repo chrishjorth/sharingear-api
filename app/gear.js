@@ -11,7 +11,8 @@ module.exports = {
 	checkBrand: checkBrand,
 	createGear: createGear,
 	readGearFromUser: readGearFromUser,
-	addImage: addImage
+	addImage: addImage,
+	updateGearWithID: updateGearWithID
 };
 
 /**
@@ -166,8 +167,36 @@ function addImage(userID, gearID, imageURL, callback) {
 				callback(error);
 				return;
 			}
+			if(result.affectedRows <= 0) {
+				callback('No gear found to update.');
+				return;
+			}
 			console.log('images updated');
 			callback(null, images);
 		});
+	});
+}
+
+function updateGearWithID(gearID, updatedGearData, callback) {
+	var inputs = [
+		updatedGearData.brand,
+		updatedGearData.model,
+		updatedGearData.description,
+		updatedGearData.images,
+		updatedGearData.price_a,
+		updatedGearData.price_b,
+		updatedGearData.price_c,
+		gearID
+	];
+	db.query("UPDATE gear SET brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=? WHERE id=? LIMIT 1", inputs, function(error, result) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(result.affectedRows <= 0) {
+			callback('No gear found to update.');
+			return;
+		}
+		callback(null);
 	});
 }
