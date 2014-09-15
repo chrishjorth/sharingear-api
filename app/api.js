@@ -156,7 +156,7 @@ function createGear(req, res, next) {
 
 function addImageToGear(req, res, next) {
 	//Validate the image url
-	var imageURL = req.params.image_url
+	var imageURL = req.params.image_url,
 		validation;
 
 	imageURL = imageURL.split('?')[0]; //Remove eventual query string parameters inserted by meddlers
