@@ -31,6 +31,7 @@ server.post('/gear', createGear);
 //server.get('/gear/:id', readGearWithID);
 //server.put('/gear/:id', updateGearWithID);
 //server.del('/gear/:id', deleteGearWithID);
+server.post('/gear/image', addImageToGear);
 
 server.get('/gear/search/:location/:gear/:daterange', readGearSearchResults);
 
@@ -152,6 +153,38 @@ function createGear(req, res, next) {
 	res.send({});
 	next();
 }*/
+
+function addImageToGear(req, res, next) {
+	//Validate the image url
+	var imageURL = req.params.image_url
+		validation;
+
+	imageURL = imageURL.split('?')[0]; //Remove eventual query string parameters inserted by meddlers
+	validation = imageURL.split('/');
+	if(validation[2] !== 'dev.sharingear.com') {
+		handleError(res, next, 'Error adding image to gear: ', 'image url is from an invalid domain.');
+		return;
+	}
+	
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		Gear.addImage(req.params.user_id, req.params.gear_id, imageURL, function(error, images) {
+			if(error) {
+				handleError(res, next, 'Error authorizing user: ', error);
+				return;
+			}
+			res.send({images: images});
+			next();
+		});
+	});
+}
 
 function generateFileName(req, res, next) {
 	var params = req.params;

@@ -10,7 +10,8 @@ module.exports = {
 	checkTypes: checkTypes,
 	checkBrand: checkBrand,
 	createGear: createGear,
-	readGearFromUser: readGearFromUser
+	readGearFromUser: readGearFromUser,
+	addImage: addImage
 };
 
 /**
@@ -144,5 +145,27 @@ function readGearFromUser(userID, callback) {
 			return;
 		}
 		callback(null, rows);
+	});
+}
+
+function addImage(userID, gearID, imageURL) {
+	db.query("SELECT images FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
+		var images = '';
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback('No gear found.');
+			return;
+		}
+		images = rows[0].images + imageURL + ',';
+		db.query("UPDATE gear SET images=? WHERE id=? AND owner_id=?", [images, gearID, userID], function(error, result) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			callback(null, images);
+		});
 	});
 }
