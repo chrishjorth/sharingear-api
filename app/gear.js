@@ -159,12 +159,14 @@ function addImage(userID, gearID, imageURL) {
 			callback('No gear found.');
 			return;
 		}
+		console.log('images selected');
 		images = rows[0].images + imageURL + ',';
 		db.query("UPDATE gear SET images=? WHERE id=? AND owner_id=?", [images, gearID, userID], function(error, result) {
 			if(error) {
 				callback(error);
 				return;
 			}
+			console.log('images updated');
 			callback(null, images);
 		});
 	});
