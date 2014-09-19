@@ -28,7 +28,7 @@ server.use(restify.bodyParser());
 server.get('/gearclassification', readGearClassification);
 
 server.post('/gear', createGear);
-//server.get('/gear/:id', readGearWithID);
+server.get('/gear/:id', readGearWithID);
 //server.put('/gear/:id', updateGearWithID);
 //server.del('/gear/:id', deleteGearWithID);
 server.post('/gear/image', addImageToGear);
@@ -112,6 +112,17 @@ function createGear(req, res, next) {
 			res.send({id: gearID});
 			next();
 		});
+	});
+}
+
+function readGearWithID(req, res, next) {
+	Gear.readGearWithID(req.params.id, function(error, gear) {
+		if(error) {
+			handleError(res, next, 'Error retrieving gear: ', error);
+			return;
+		}
+		res.send(gear);
+		next();
 	});
 }
 
@@ -411,7 +422,7 @@ function createUserSession(req, res, next) {
 function readGearFromUserWithID(req, res, next) {
 	Gear.readGearFromUser(req.params.user_id, function(error, gearList) {
 		if(error) {
-			handleError(res, next, 'Error retrieving gear classification: ', error);
+			handleError(res, next, 'Error retrieving gear list: ', error);
 			return;
 		}
 		res.send(gearList);

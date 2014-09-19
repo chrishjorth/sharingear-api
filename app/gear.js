@@ -12,7 +12,8 @@ module.exports = {
 	createGear: createGear,
 	readGearFromUser: readGearFromUser,
 	addImage: addImage,
-	updateGearWithID: updateGearWithID
+	updateGearWithID: updateGearWithID,
+	readGearWithID: readGearWithID
 };
 
 /**
@@ -212,5 +213,45 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 			return;
 		}
 		callback(null);
+	});
+}
+
+function readGearWithID(gearID, callback) {
+	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, owner_id FROM gear WHERE id=? LIMIT 1", gearID, function(error, rows) {
+		var gear;
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback('No gear found for the id.');
+			return;
+		}
+		gear = rows[0];
+		if(gear.model === null) {
+			gear.model = '';
+		}
+		if(gear.description === null) {
+			gear.description = '';
+		}
+		if(gear.images === null) {
+			gear.images = '';
+		}
+		if(gear.address === null) {
+			gear.address = '';
+		}
+		if(gear.postal_code === null) {
+			gear.postal_code = '';
+		}
+		if(gear.city === null) {
+			gear.city = '';
+		}
+		if(gear.region === null) {
+			gear.region = '';
+		}
+		if(gear.country === null) {
+			gear.country = '';
+		}
+		callback(null, rows[0]);
 	});
 }
