@@ -94,6 +94,13 @@ function createGear(req, res, next) {
 			price_a: params.price_a,
 			price_b: params.price_b,
 			price_c: params.price_c,
+			address: params.address,
+			postal_code: params.postalcode,
+			city: params.city,
+			region: params.region,
+			country: params.country,
+			latitude: params.latitude,
+			longitude: params.longitude,
 			owner_id: params.owner_id
 		};
 
@@ -434,7 +441,14 @@ function updateGearFromUserWithID(req, res, next) {
 			images: req.params.images,
 			price_a: req.params.price_a,
 			price_b: req.params.price_b,
-			price_c: req.params.price_c
+			price_c: req.params.price_c,
+			address: req.params.address,
+			postal_code: req.params.postalcode,
+			city: req.params.city,
+			region: req.params.region,
+			country: req.params.country,
+			latitude: req.params.latitude,
+			longitude: req.params.longitude
 		};
 		Gear.updateGearWithID(req.params.gear_id, updatedGearData, function(error) {
 			if(error) {

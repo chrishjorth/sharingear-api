@@ -125,10 +125,17 @@ function createGear(newGear, callback) {
 				newGear.price_a,
 				newGear.price_b,
 				newGear.price_c,
+				newGear.address,
+				newGear.postal_code,
+				newGear.city,
+				newGear.region,
+				newGear.country,
+				newGear.latitude,
+				newGear.longitude,
 				newGear.owner_id
 			];
 
-			db.query("INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", gear, function(error, result) {
+			db.query("INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", gear, function(error, result) {
 				if(error) {
 					callback(error);
 					return;
@@ -186,9 +193,16 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 		updatedGearData.price_a,
 		updatedGearData.price_b,
 		updatedGearData.price_c,
+		updatedGearData.address,
+		updatedGearData.postal_code,
+		updatedGearData.city,
+		updatedGearData.region,
+		updatedGearData.country,
+		updatedGearData.latitude,
+		updatedGearData.longitude,
 		gearID
 	];
-	db.query("UPDATE gear SET brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=? WHERE id=? LIMIT 1", inputs, function(error, result) {
+	db.query("UPDATE gear SET brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=? WHERE id=? LIMIT 1", inputs, function(error, result) {
 		if(error) {
 			callback(error);
 			return;
