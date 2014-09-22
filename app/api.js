@@ -240,9 +240,9 @@ function readGearSearchResults(req, res, next) {
 	latLngArray = req.params.location.split(',');
 	lat = latLngArray[0];
 	lng = latLngArray[1];
-	Gear.search(lat, lng, gear, function(error, results) {
+	Gear.search(lat, lng, req.params.gear, function(error, results) {
 		if(error) {
-			handleError(res, next, 'Error searching for gear: ', error);
+			res.send([]);
 			return;
 		}
 		res.send(results);
