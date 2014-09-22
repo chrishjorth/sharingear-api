@@ -64,6 +64,7 @@ function search(searchString, paramArray, callback) {
 	});*/
 	console.log('Query the connection');
 	sphinxConnection.query(searchString, paramArray, function(error, rows) {
+		console.log('returned from driver');
 		if(error) {
 			console.log('Error running query: ' + queryString + '. ' + error.code);
 		}
