@@ -13,7 +13,8 @@ module.exports = {
 	readGearFromUser: readGearFromUser,
 	addImage: addImage,
 	updateGearWithID: updateGearWithID,
-	readGearWithID: readGearWithID
+	readGearWithID: readGearWithID,
+	search: search
 };
 
 /**
@@ -253,5 +254,17 @@ function readGearWithID(gearID, callback) {
 			gear.country = '';
 		}
 		callback(null, rows[0]);
+	});
+}
+
+function search(lat, lng, gear, callback) {
+	//Get all gear at location, then narrow down based on gear description, then filter by date range
+	db.search("SELECT id, type, subtype, brand, model FROM gear WHERE ('?') LIMIT 100", [gear], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		console.log(JSON.stringify(rows));
+		callback(null);
 	});
 }

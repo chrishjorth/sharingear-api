@@ -5,19 +5,25 @@
 /* !TODO: Handle server disconnects */
 
 var mysql = require('mysql'),
-	sharingearPool;
+	sharingearPool,
+	sphinxPool;
 
 sharingearPool = mysql.createPool({
-        host: '173.194.247.144',
-        port: 3306,
-        user: 'root',
-        password: '20mircea14chris',
-        database: 'sharingear',
-        supportBigNumbers: true //Required for working with Facebook IDs stored as bigint.
+	host: '173.194.247.144',
+	port: 3306,
+	user: 'root',
+	password: '20mircea14chris',database: 'sharingear',
+	supportBigNumbers: true //Required for working with Facebook IDs stored as bigint.
+});
+
+sphinxPool = mysql.createPool({
+	host: '127.0.0.1',
+	port: 9306,
 });
 
 module.exports = {
-	query: query
+	query: query,
+	search: search
 };
 
 function query(queryString, paramArray, callback) {
@@ -36,3 +42,19 @@ function query(queryString, paramArray, callback) {
 		});
 	});
 };
+
+function search(searchString, paramArray, callback) {
+	sphinxPool.getConnection(function(error, connection) {
+		if(error) {
+			callback('Error opening sphinx connection: ' + error);
+			return;
+		}
+		connection.query(searchString, paramArray, function(error, rows) {
+			if(error) {
+				console.log('Error running search: ' + searchString + '. ' + error.code);
+			}
+			callback(error, rows);
+			connection.destroy();
+		});
+	});
+}

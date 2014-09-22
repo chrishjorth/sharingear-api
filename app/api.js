@@ -236,51 +236,18 @@ function generateFileName(req, res, next) {
  * @return: {} or an array of search results
  */
 function readGearSearchResults(req, res, next) {
-	res.send([{
-		id: 0,
-		type: 0,
-		subtype: 0,
-		brand: 0,
-		model: 'Flying V Goth',
-		description: 'blah blah',
-		photos: 'url,url,url',
-		price1: 4,
-		price2: 15,
-		price3: 75,
-		city: 'Copenhagen',
-		address: '',
-		seller_user_id: 0
-	}, {
-		id: 0,
-		type: 0,
-		subtype: 0,
-		brand: 0,
-		model: 'Flying V Goth',
-		description: 'blah blah',
-		photos: 'url,url,url',
-		price1: 4,
-		price2: 15,
-		price3: 75,
-		city: 'Copenhagen',
-		address: '',
-		seller_user_id: 0
-	}, {
-		id: 0,
-		type: 0,
-		subtype: 0,
-		brand: 0,
-		model: 'Flying V Goth',
-		description: 'blah blah',
-		photos: 'url,url,url',
-		price1: 4,
-		price2: 15,
-		price3: 75,
-		city: 'Copenhagen',
-		address: '',
-		seller_user_id: 0
-	}]);
-
-	next();
+	var latLngArray, lat, lng;
+	latLngArray = req.params.location.split(',');
+	lat = latLngArray[0];
+	lng = latLngArray[1];
+	Gear.search(lat, lng, gear, function(error, results) {
+		if(error) {
+			handleError(res, next, 'Error searching for gear: ', error);
+			return;
+		}
+		res.send(results);
+		next();
+	});
 }
 
 /**
