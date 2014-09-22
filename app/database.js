@@ -62,7 +62,8 @@ function search(searchString, paramArray, callback) {
 			connection.destroy();
 		});
 	});*/
-	sphinxConnection.query(queryString, paramArray, function(error, rows) {
+	console.log('Query the connection');
+	sphinxConnection.query(searchString, paramArray, function(error, rows) {
 		if(error) {
 			console.log('Error running query: ' + queryString + '. ' + error.code);
 		}
