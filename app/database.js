@@ -23,7 +23,8 @@ sharingearPool = mysql.createPool({
 });*/
 sphinxConnection = mysql.createConnection({
 	host: '127.0.0.1',
-	port: 9306
+	//port: 9306
+	port: 9312
 });
 
 module.exports = {
