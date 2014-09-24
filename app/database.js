@@ -62,14 +62,8 @@ function search(searchString, paramArray, callback) {
 			connection.destroy();
 		});
 	});*/
-	console.log('Query the connection');
-	//sphinxConnection.query(searchString, paramArray, function(error, rows) {
-	sphinxConnection.query("SELECT id FROM gear WHERE MATCH('ampeg') LIMIT 100", function(error, rows) {
-		console.log('returned from driver');
-		if(error) {
-			console.log(JSON.stringify(error));
-			console.log('Error running query: ' + searchString + '.');
-		}
+	sphinxConnection.query(searchString, paramArray, function(error, rows) {
+	//sphinxConnection.query("SELECT id FROM gear WHERE MATCH('ampeg') LIMIT 100", function(error, rows) {
 		callback(error, rows);
 	});
 }
