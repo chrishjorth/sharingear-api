@@ -259,14 +259,14 @@ function readGearWithID(gearID, callback) {
 
 function search(lat, lng, gear, callback) {
 	//Get all gear at location, then narrow down based on gear description, then filter by date range
-	console.log('Call search with: ' + gear);
-	db.search("SELECT id FROM gear WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
+	db.search("SELECT id, type, subtype, brand, model FROM gear WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
 		if(error) {
 			console.log('search error: ' + JSON.stringify(error));
 			callback(error);
 			return;
 		}
 		console.log(JSON.stringify(rows));
+
 		callback(null);
 	});
 }
