@@ -63,7 +63,8 @@ function search(searchString, paramArray, callback) {
 		});
 	});*/
 	console.log('Query the connection');
-	sphinxConnection.query(searchString, paramArray, function(error, rows) {
+	//sphinxConnection.query(searchString, paramArray, function(error, rows) {
+	sphinxConnection.query("SELECT id FROM gear WHERE MATCH('gear') LIMIT 100", function(error, rows) {
 		console.log('returned from driver');
 		if(error) {
 			console.log(JSON.stringify(error));
