@@ -282,6 +282,9 @@ function search(lat, lng, gear, callback) {
 		sql += rows[rows.length - 1].id; //rows has at least one item
 		sql += ") AND distance <= 10000.0 ORDER BY distance ASC LIMIT 100";
 
+		console.log('SQL:');
+		console.log(sql);
+
 		db.search(sql, [lat, lng], function(error, rows) {
 			if(error) {
 				console.log('search error: ' + JSON.stringify(error));
