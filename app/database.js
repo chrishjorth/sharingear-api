@@ -17,14 +17,14 @@ sharingearPool = mysql.createPool({
 	supportBigNumbers: true //Required for working with Facebook IDs stored as bigint.
 });
 
-sphinxPool = mysql.createPool({
-	host: '127.0.0.1',
-	port: 9306
-});
-/*sphinxConnection = mysql.createConnection({
+/*sphinxPool = mysql.createPool({
 	host: '127.0.0.1',
 	port: 9306
 });*/
+sphinxConnection = mysql.createConnection({
+	host: '127.0.0.1',
+	port: 9306
+});
 
 module.exports = {
 	query: query,
@@ -49,7 +49,7 @@ function query(queryString, paramArray, callback) {
 };
 
 function search(searchString, paramArray, callback) {
-	sphinxPool.getConnection(function(error, connection) {
+	/*sphinxPool.getConnection(function(error, connection) {
 		if(error) {
 			callback('Error opening sphinx connection: ' + error);
 			return;
@@ -58,8 +58,8 @@ function search(searchString, paramArray, callback) {
 			callback(error, rows);
 			connection.destroy();
 		});
-	});
-	/*sphinxConnection.query(searchString, paramArray, function(error, rows) {
-		callback(error, rows);
 	});*/
+	sphinxConnection.query(searchString, paramArray, function(error, rows) {
+		callback(error, rows);
+	});
 }

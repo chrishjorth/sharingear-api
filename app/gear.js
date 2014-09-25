@@ -288,6 +288,7 @@ function search(lat, lng, gear, callback) {
 				callback(error);
 				return;
 			}
+			console.log(JSON.stringify(rows));
 			callback(null, rows);
 		});
 	});
