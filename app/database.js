@@ -17,14 +17,14 @@ sharingearPool = mysql.createPool({
 	supportBigNumbers: true //Required for working with Facebook IDs stored as bigint.
 });
 
-/*sphinxPool = mysql.createPool({
-	host: '127.0.0.1',
-	port: 9306
-});*/
-sphinxConnection = mysql.createConnection({
+sphinxPool = mysql.createPool({
 	host: '127.0.0.1',
 	port: 9306
 });
+/*sphinxConnection = mysql.createConnection({
+	host: '127.0.0.1',
+	port: 9306
+});*/
 
 module.exports = {
 	query: query,
