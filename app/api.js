@@ -237,6 +237,7 @@ function generateFileName(req, res, next) {
  */
 function readGearSearchResults(req, res, next) {
 	var latLngArray, lat, lng;
+	console.log(req.params.location);
 	latLngArray = req.params.location.split(',');
 	lat = latLngArray[0];
 	lng = latLngArray[1];
