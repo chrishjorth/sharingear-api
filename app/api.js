@@ -237,11 +237,9 @@ function generateFileName(req, res, next) {
  */
 function readGearSearchResults(req, res, next) {
 	var latLngArray, lat, lng;
-	console.log(req.params.location);
 	latLngArray = req.params.location.split(',');
 	lat = latLngArray[0];
 	lng = latLngArray[1];
-	console.log('So far so good. gear: ' + req.params.gear);
 	Gear.search(lat, lng, req.params.gear, function(error, results) {
 		if(error) {
 			res.send([]);

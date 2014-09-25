@@ -274,32 +274,21 @@ function search(lat, lng, gear, callback) {
 			callback(null, []);
 			return;
 		}
-		console.log(JSON.stringify(rows));
-		console.log('lat: ' + lat);
-		console.log('lng: ' + lng);
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
-		console.log('lat: ' + lat);
-		console.log('lng: ' + lng);
 		sql = "SELECT id, type, subtype, brand, model, latitude, longitude, GEODIST(?, ?, latitude, longitude) AS distance FROM gear WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ',';
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
 		sql += ") AND distance <= 10000.0 ORDER BY distance ASC LIMIT 100";
-
-		console.log('SQL:');
-		console.log(sql);
-
 		db.search(sql, [lat, lng], function(error, rows) {
 			if(error) {
 				console.log('search error: ' + JSON.stringify(error));
 				callback(error);
 				return;
 			}
-			console.log('Final search results');
-			console.log(JSON.stringify(rows));
-			callback(null);
+			callback(null, rows);
 		});
 	});
 }
