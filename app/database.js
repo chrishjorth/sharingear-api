@@ -49,21 +49,17 @@ function query(queryString, paramArray, callback) {
 };
 
 function search(searchString, paramArray, callback) {
-	/*sphinxPool.getConnection(function(error, connection) {
+	sphinxPool.getConnection(function(error, connection) {
 		if(error) {
 			callback('Error opening sphinx connection: ' + error);
 			return;
 		}
 		connection.query(searchString, paramArray, function(error, rows) {
-			if(error) {
-				console.log('Error running search: ' + searchString + '. ' + error.code);
-			}
 			callback(error, rows);
 			connection.destroy();
 		});
-	});*/
-	sphinxConnection.query(searchString, paramArray, function(error, rows) {
-	//sphinxConnection.query("SELECT id FROM gear WHERE MATCH('ampeg') LIMIT 100", function(error, rows) {
-		callback(error, rows);
 	});
+	/*sphinxConnection.query(searchString, paramArray, function(error, rows) {
+		callback(error, rows);
+	});*/
 }
