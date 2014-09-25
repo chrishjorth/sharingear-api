@@ -263,6 +263,7 @@ function readGearWithID(gearID, callback) {
  */
 function search(lat, lng, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
+	console.log('Search gear');
 	db.search("SELECT id, type, subtype, brand, model FROM gear WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
 		var sql, i;
 		if(error) {
@@ -282,6 +283,7 @@ function search(lat, lng, gear, callback) {
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
 		sql += ") AND distance <= 10000.0 ORDER BY distance ASC LIMIT 100";
+		console.log('Search location');
 		db.search(sql, [lat, lng], function(error, rows) {
 			if(error) {
 				console.log('search error: ' + JSON.stringify(error));
