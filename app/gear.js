@@ -275,6 +275,8 @@ function search(lat, lng, gear, callback) {
 			return;
 		}
 		console.log(JSON.stringify(rows));
+		console.log('lat: ' + lat);
+		console.log('lng: ' + lng);
 		sql = "SELECT id, type, subtype, brand, model, latitude, longitude, GEODIST(?, ?, latitude, longitude) as distance FROM gear WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ',';
