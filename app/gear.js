@@ -14,7 +14,8 @@ module.exports = {
 	addImage: addImage,
 	updateGearWithID: updateGearWithID,
 	readGearWithID: readGearWithID,
-	search: search
+	search: search,
+	createGearBulk: createGearBulk
 };
 
 /**
@@ -263,7 +264,7 @@ function readGearWithID(gearID, callback) {
  */
 function search(lat, lng, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
-	console.log('Search gear');
+	//console.log('Search gear');
 	db.search("SELECT id, type, subtype, brand, model FROM gear WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
 		var sql, i;
 		if(error) {
@@ -283,11 +284,11 @@ function search(lat, lng, gear, callback) {
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
 		sql += ") AND distance <= 10000.0 ORDER BY distance ASC LIMIT 100";
-		console.log('Search location');
+		/*console.log('Search location');
 		console.log('SQL:');
 		console.log(sql);
 		console.log('lat: ' + lat);
-		console.log('lng: ' + lng);
+		console.log('lng: ' + lng);*/
 		db.search(sql, [lat, lng], function(error, rows) {
 			if(error) {
 				console.log('search error: ' + JSON.stringify(error));
@@ -297,5 +298,77 @@ function search(lat, lng, gear, callback) {
 			console.log(JSON.stringify(rows));
 			callback(null, rows);
 		});
+	});
+}
+
+function createGearBulk(ownerID, gearList, callback) {
+	var gearArray = [],
+		sql, i, gear;
+	sql = "INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, owner_id) VALUES ";
+	for(i = 0; i < gearList.length; i++) {
+		gear = gearList[i];
+		if(!gear.type) {
+			callback('Type is missing for gear.');
+			return;
+		}
+		if(!gear.subtype) {
+			gear.subtype = '';
+		}
+		if(!gear.brand) {
+			gear.brand = '';
+		}
+		if(!gear.model) {
+			gear.model = '';
+		}
+		if(!gear.description) {
+			gear.description = '';
+		}
+		if(!gear.images) {
+			gear.images = '';
+		}
+		if(!gear.price_a) {
+			gear.price_a = '';
+		}
+		if(!gear.price_b) {
+			gear.price_b = '';
+		}
+		if(!gear.price_c) {
+			gear.price_c = '';
+		}
+		if(!gear.address) {
+			gear.address = '';
+		}
+		if(!gear.postal_code) {
+			gear.postal_code = '';
+		}
+		if(!gear.city) {
+			gear.city = '';
+		}
+		if(!gear.region) {
+			gear.region = '';
+		}
+		if(!gear.country) {
+			gear.country = '';
+		}
+		if(!gear.latitude) {
+			gear.latitude = '';
+		}
+		if(!gear.longitude) {
+			gear.longitude = '';
+		}
+		gear.owner_id = ownerID;
+
+		sql += "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		gearArray.push(gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id);
+		if(i < gearList.length - 1) {
+			sql += ',';
+		}
+	}
+	db.query(sql, gearArray, function(error, result) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		callback(null);
 	});
 }

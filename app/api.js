@@ -28,6 +28,7 @@ server.use(restify.bodyParser());
 server.get('/gearclassification', readGearClassification);
 
 server.post('/gear', createGear);
+server.post('/gearlist', createGearFromList);
 server.get('/gear/:id', readGearWithID);
 //server.put('/gear/:id', updateGearWithID);
 //server.del('/gear/:id', deleteGearWithID);
@@ -110,6 +111,33 @@ function createGear(req, res, next) {
 				return;
 			}
 			res.send({id: gearID});
+			next();
+		});
+	});
+}
+
+/**
+ * @params: User ID, token and gear list as JSON string
+ * @return: new gear id or error.
+ */
+function createGearFromList(req, res, next) {
+	isAuthorized(req.params.owner_id, function(error, status) {
+		var gearList;
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		gearList = JSON.parse(req.params.gear_list);
+		Gear.createGearBulk(req.params.owner_id, gearList, function(error, gearIDList) {
+			if(error) {
+				handleError(res, next, 'Error creating new gear from list: ', error);
+				return;
+			}
+			res.send(gearIDList);
 			next();
 		});
 	});
