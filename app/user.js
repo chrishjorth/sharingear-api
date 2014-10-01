@@ -52,7 +52,7 @@ function createUserFromFacebookInfo(userInfo, callback) {
 			callback(null, retrievedUser);
 			return;
 		}
-		db.query("INSERT INTO users(fbid, email, name, surname, birthdate, city) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", user, function(error, rows) {
+		db.query("INSERT INTO users(fbid, email, name, surname, birthdate, city) VALUES(?, ?, ?, ?, ?, ?)", user, function(error, rows) {
 			if(error) {
 				callback(error);
 				return;
