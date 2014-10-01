@@ -39,7 +39,7 @@ server.get('/gear/search/:location/:gear/:daterange', readGearSearchResults);
 
 server.post('/users/login', createUserSession);
 //server.get('/users/:id', readUserWithID);
-//server.put('/users/:id', updateUserWithID);
+server.put('/users/:id', updateUserWithID);
 server.get('/users/:user_id/gear', readGearFromUserWithID);
 server.put('/users/:user_id/gear/:gear_id', updateGearFromUserWithID);
 server.get('/users/:id/reservations', readReservationsFromUserWithID);
@@ -367,20 +367,28 @@ function createUserSession(req, res, next) {
  * @param: A user id and token
  * @return: The updated user description
  */
-/*function updateUserWithID(req, res, next) {
-	res.send({
-		id: 0,
-		type: 0,
-		name: 'Chris',
-		surname: 'Hjorth',
-		birthdate: '1984-09-17',
-		address: 'somewhere',
-		postcode: 1000,
-		state: 'Hovedstaden',
-		country: 'DNK'
+function updateUserWithID(req, res, next) {
+	isAuthorized(req.params.id, function(error, status) {
+		var updatedGearData;
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+
+		User.update(req.params.id, req.params, function(error, updatedUser) {
+			if(error) {
+				handleError(res, next, 'Error authorizing user: ', error);
+				return;
+			}
+			res.send(updatedUser);
+			next();
+		});
 	});
-	next();
-}*/
+}
 
 /**
  * @param: A user id.

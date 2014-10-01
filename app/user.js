@@ -10,11 +10,12 @@ module.exports = {
 	createUserFromFacebookInfo: createUserFromFacebookInfo,
 	setServerAccessToken: setServerAccessToken,
 	matchToken: matchToken,
-	getToken: getToken
+	getToken: getToken,
+	update: update
 };
 
 function getUserFromFacebookID(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, city FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, city, image_url FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -37,10 +38,8 @@ function createUserFromFacebookInfo(userInfo, callback) {
 		userInfo.first_name + ' ' + userInfo.middle_name, //name
 		userInfo.last_name, //surname
 		'', //birthdate
-		'Landemærket 8', //address
-		'1100', //postcode
-		'', //state
-		'DKK' //country
+		'', //city
+		'' //image_url
 	];
 	//Make sure user does not exist
 	this.getUserFromFacebookID(user[0], function(error, retrievedUser) {
@@ -52,7 +51,7 @@ function createUserFromFacebookInfo(userInfo, callback) {
 			callback(null, retrievedUser);
 			return;
 		}
-		db.query("INSERT INTO users(fbid, email, name, surname, birthdate, city) VALUES(?, ?, ?, ?, ?, ?)", user, function(error, rows) {
+		db.query("INSERT INTO users(fbid, email, name, surname, birthdate, city, image_url) VALUES(?, ?, ?, ?, ?, ?, ?)", user, function(error, rows) {
 			if(error) {
 				callback(error);
 				return;
@@ -117,5 +116,48 @@ function getToken(userID, callback) {
 			return;
 		}
 		callback(null, rows[0].fb_token);
+	});
+}
+
+function update(userID, updatedInfo, callback) {
+	var userInfo;
+
+	db.query("SELECT id, fbid, email, name, surname, birthdate, city, image_url FROM users WHERE fbid=? LIMIT 1", [userID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback('No user with id ' + userID + '.');
+			return;
+		}
+		userInfo = [
+			(updatedInfo.email ? updatedInfo.email : rows[0].email),
+			(updatedInfo.name ? updatedInfo.name : rows[0].name),
+			(updatedInfo.surname ? updatedInfo.surname : rows[0].surname),
+			(updatedInfo.birthdate ? updatedInfo.birthdate : rows[0].birthdate),
+			(updatedInfo.city ? updatedInfo.city : rows[0].city),
+			(updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
+			userID
+		];
+		db.query("UPDATE users SET email=?, name=?, surname=?, birthdate=?, city=?, image_url=? WHERE id=? LIMIT 1", userInfo, function(error, result) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			if(rows.length <= 0) {
+				callback('No user with id ' + userID + ' after successful select!');
+				return;
+			}
+			callback({
+				id: userID,
+				email: userInfo[0],
+				name: userInfo[1],
+				surname: userInfo[2],
+				birthdate: userInfo[3],
+				city: userInfo[4],
+				image_url: userInfo[5]
+			});
+		});
 	});
 }
