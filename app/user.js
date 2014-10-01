@@ -14,7 +14,7 @@ module.exports = {
 };
 
 function getUserFromFacebookID(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postcode, state, country FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, city FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -52,7 +52,7 @@ function createUserFromFacebookInfo(userInfo, callback) {
 			callback(null, retrievedUser);
 			return;
 		}
-		db.query("INSERT INTO users(fbid, email, name, surname, birthdate, address, postcode, state, country) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", user, function(error, rows) {
+		db.query("INSERT INTO users(fbid, email, name, surname, birthdate, city) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", user, function(error, rows) {
 			if(error) {
 				callback(error);
 				return;

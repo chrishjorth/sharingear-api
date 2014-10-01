@@ -277,7 +277,7 @@ function createUserSession(req, res, next) {
 	createSession = function(user, longToken) {
 		User.setServerAccessToken(user.fbid, longToken, function(error) {
 			if(error) {
-				handleError(res, next, 'Error retrieving user by Facebook id: ', error);
+				handleError(res, next, 'Error setting Access Token: ', error);
 				return;
 			}
 
