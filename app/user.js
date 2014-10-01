@@ -39,7 +39,7 @@ function createUserFromFacebookInfo(userInfo, callback) {
 		userInfo.last_name, //surname
 		'', //birthdate
 		'', //city
-		'' //image_url
+		'http://graph.facebook.com/' + userInfo.id + '/picture?type=large' //image_url
 	];
 	//Make sure user does not exist
 	this.getUserFromFacebookID(user[0], function(error, retrievedUser) {
