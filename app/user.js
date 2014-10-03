@@ -35,12 +35,15 @@ function createUserFromFacebookInfo(userInfo, callback) {
 	user = [
 		userInfo.id, //fbid
 		userInfo.email, //email
-		userInfo.first_name + ' ' + userInfo.middle_name, //name
+		userInfo.first_name, //name
 		userInfo.last_name, //surname
 		'', //birthdate
 		'', //city
 		'http://graph.facebook.com/' + userInfo.id + '/picture?type=large' //image_url
 	];
+	if(userInfo.middle_name && userInfo.middle_name.length > 0) {
+		user[2] += ' ' + userInfo.middle_name;
+	}
 	//Make sure user does not exist
 	this.getUserFromFacebookID(user[0], function(error, retrievedUser) {
 		if(error) {
