@@ -132,12 +132,12 @@ function createGearFromList(req, res, next) {
 			return;
 		}
 		gearList = JSON.parse(req.params.gear_list);
-		Gear.createGearBulk(req.params.owner_id, gearList, function(error, gearIDList) {
+		Gear.createGearBulk(req.params.owner_id, gearList, function(error) {
 			if(error) {
 				handleError(res, next, 'Error creating new gear from list: ', error);
 				return;
 			}
-			res.send(gearIDList);
+			res.send({});
 			next();
 		});
 	});
