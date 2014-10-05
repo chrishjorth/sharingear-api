@@ -138,7 +138,7 @@ function createGear(newGear, callback) {
 				newGear.owner_id
 			];
 
-			db.query("INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", gear, function(error, result) {
+			db.query("INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), ?)", gear, function(error, result) {
 				if(error) {
 					callback(error);
 					return;
@@ -205,7 +205,7 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 		updatedGearData.longitude,
 		gearID
 	];
-	db.query("UPDATE gear SET brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=? WHERE id=? LIMIT 1", inputs, function(error, result) {
+	db.query("UPDATE gear SET brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=?, updated=UNIX_TIMESTAMP() WHERE id=? LIMIT 1", inputs, function(error, result) {
 		if(error) {
 			callback(error);
 			return;
@@ -304,7 +304,7 @@ function search(lat, lng, gear, callback) {
 function createGearBulk(ownerID, gearList, callback) {
 	var gearArray = [],
 		sql, i, gear;
-	sql = "INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, owner_id) VALUES ";
+	sql = "INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES ";
 	for(i = 0; i < gearList.length; i++) {
 		gear = gearList[i];
 		if(!gear.type) {
@@ -358,7 +358,7 @@ function createGearBulk(ownerID, gearList, callback) {
 		}
 		gear.owner_id = ownerID;
 
-		sql += "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		sql += "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), ?)";
 		gearArray.push(gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id);
 		if(i < gearList.length - 1) {
 			sql += ',';
