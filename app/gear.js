@@ -276,6 +276,7 @@ function search(lat, lng, gear, callback) {
 			callback(null, []);
 			return;
 		}
+		console.log('Found gear by full text search');
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
 		sql = "SELECT id, type, subtype, brand, model, latitude, longitude, GEODIST(?, ?, latitude, longitude) AS distance FROM gear WHERE id IN (";
@@ -295,6 +296,7 @@ function search(lat, lng, gear, callback) {
 				callback(error);
 				return;
 			}
+			console.log('Found gear by location filter');
 			console.log(JSON.stringify(rows));
 			callback(null, rows);
 		});
