@@ -292,12 +292,12 @@ function search(lat, lng, gear, callback) {
 			callback(null, []);
 			return;
 		}
-		console.log('Found gear by full text search');
+		//console.log('Found gear by full text search');
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
-		console.log('lat: ' + lat);
-		console.log('lng: ' + lng);
-		sql = "SELECT id, type, subtype, brand, model, images, latitude, longitude, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
+		//console.log('lat: ' + lat);
+		//console.log('lng: ' + lng);
+		sql = "SELECT id, type, subtype, brand, model, images, latitude, longitude, owner_id GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ',';
 		}
@@ -314,8 +314,8 @@ function search(lat, lng, gear, callback) {
 				callback(error);
 				return;
 			}
-			console.log('Found gear by location filter');
-			console.log(JSON.stringify(rows));
+			//console.log('Found gear by location filter');
+			//console.log(JSON.stringify(rows));
 			callback(null, rows);
 		});
 	});
