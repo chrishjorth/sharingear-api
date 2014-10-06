@@ -5,7 +5,6 @@
 /* !TODO: Handle server disconnects */
 
 var mysql = require('mysql'),
-	child_process = require('child_process'),
 	isIndexing = false,
 	needToReindex = false,
 	sharingearPool,
@@ -63,7 +62,7 @@ function search(searchString, paramArray, callback) {
 
 function index(callback) {
 	var spawn, indexer, response;
-	spawn = child_process.spawn;
+	spawn = require('child_process').spawn;
 
 	console.log('spawning indexer');
 	//indexer = spawn('sudo indexer', ['gear_delta', '--rotate']);
