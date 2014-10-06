@@ -297,7 +297,7 @@ function search(lat, lng, gear, callback) {
 		lng = parseFloat(lng) * Math.PI / 180;
 		//console.log('lat: ' + lat);
 		//console.log('lng: ' + lng);
-		sql = "SELECT id, type, subtype, brand, model, images, latitude, longitude, owner_id GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
+		sql = "SELECT id, type, subtype, brand, model, images, latitude, longitude, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ',';
 		}
