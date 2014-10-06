@@ -66,10 +66,12 @@ function index(callback) {
 	console.log('require spawn');
 	spawn = child_process.spawn;
 	console.log('spawning indexer');
-	childProcess = spawn('sudo indexer', 'gear_delta --rotate');
+	childProcess = spawn('sudo indexer gear_delta --rotate', '');
+	console.log('process spawned');
 
 	response = '';
 	childProcess.on('data', function(buffer) {
+		console.log('process data');
 		response += buffer.toString();
 	});
 	childProcess.on('end', function() {
