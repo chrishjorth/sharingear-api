@@ -66,7 +66,7 @@ function index(callback) {
 
 	console.log('spawning indexer');
 	try {
-		indexer = spawn('/usr/bin/indexer', ['gear_delta', '--rotate']);
+		indexer = child_process.spawn('/usr/bin/indexer', ['gear_delta', '--rotate']);
 	}
 	catch(e) {
 		console.log(e.toString());
