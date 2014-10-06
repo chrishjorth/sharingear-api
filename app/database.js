@@ -62,6 +62,7 @@ function search(searchString, paramArray, callback) {
 
 function index(callback) {
 	var childProcess, response;
+	console.log('spawning indexer');
 	childProcess = require('child_process').spawn('sudo indexer', 'gear_delta --rotate');
 
 	response = '';
