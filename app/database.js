@@ -66,15 +66,15 @@ function index(callback) {
 
 	console.log('spawning indexer');
 	//indexer = spawn('sudo indexer', ['gear_delta', '--rotate']);
-	indexer = child_process.spawn('ls', ['-la', '/usr']);
+	indexer = child_process.spawn('ls', ['-la']);
 	//ls -la /usr
 	console.log('process spawned');
 
 	//response = '';
-	indexer.stderr.on('data', function(data) {
+	/*indexer.stderr.on('data', function(data) {
 		console.log('Error indexing: ');
 		console.log(data);
-	});
+	});*/
 	indexer.stdout.on('data', function(data) {
 		console.log('process data');
 		console.log(data);
