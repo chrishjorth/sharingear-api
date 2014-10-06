@@ -63,11 +63,11 @@ function search(searchString, paramArray, callback) {
 
 function index(callback) {
 	var spawn, indexer, response;
-	//spawn = require('child_process').spawn;
 
 	console.log('spawning indexer');
 	//indexer = spawn('sudo indexer', ['gear_delta', '--rotate']);
 	indexer = child_process.spawn('ls', ['-la', '/usr']);
+	//ls -la /usr
 	console.log('process spawned');
 
 	//response = '';
@@ -80,10 +80,11 @@ function index(callback) {
 		console.log(data);
 		//response += data;
 	});
-	childProcess.on('close', function(code) {
+	indexer.on('close', function(code) {
 		console.log('Done indexing with code: ');
 		console.log(code);
 	});
 
+	console.log('wtf');
 	
 }
