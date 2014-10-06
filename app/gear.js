@@ -120,7 +120,13 @@ function createGear(newGear, callback) {
 			}
 
 			lat = parseFloat(newGear.latitude) * Math.PI / 180;
+			if(isNaN(lat)) {
+				lat = null;
+			}
 			lng = parseFloat(newGear.longitude) * Math.PI / 180;
+			if(isNaN(lng)) {
+				lng = null;
+			}
 
 			console.log('BEFORE INSERT');
 			console.log('lat: ' + lat);
