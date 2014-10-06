@@ -62,23 +62,24 @@ function search(searchString, paramArray, callback) {
 }
 
 function index(callback) {
-	var spawn, childProcess, response;
-	console.log('require spawn');
+	var spawn, indexer, response;
 	spawn = child_process.spawn;
 
+	console.log('spawning indexer');
+	indexer = spawn('sudo indexer gear_delta --rotate', '');
+	console.log('process spawned');
+
 	response = '';
-	childProcess.on('data', function(buffer) {
+	indexer.stdout.on('data', function(data) {
 		console.log('process data');
-		response += buffer.toString();
+		response += data;
 	});
-	childProcess.on('end', function() {
-		console.log('Done indexing: ' + response);
+	indexer.stderr.on('data', function(data) {
+		console.log('Error indexing: ' + data);
 	});
-	childProcess.on('error', function(error) {
-		console.log(JSON.stringify(error));
+	childProcess.on('close', function(code) {
+		console.log('Done indexing with code: ' + code);
 	});
 
-	console.log('spawning indexer');
-	childProcess = spawn('sudo indexer gear_delta --rotate', '');
-	console.log('process spawned');
+	
 }
