@@ -66,7 +66,7 @@ function index(callback) {
 
 	console.log('spawning indexer');
 	//indexer = spawn('sudo indexer', ['gear_delta', '--rotate']);
-	indexer = child_process.spawn('pwd', []);
+	indexer = child_process.spawn('whoami', []);
 	//ls -la /usr
 	console.log('process spawned');
 
@@ -77,7 +77,7 @@ function index(callback) {
 	});*/
 	indexer.stdout.on('data', function(data) {
 		console.log('process data');
-		console.log(data);
+		console.log(data.toString());
 		//response += data;
 	});
 	indexer.on('close', function(code) {
