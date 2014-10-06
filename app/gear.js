@@ -231,6 +231,7 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 			return;
 		}
 		callback(null);
+		db.index();
 	});
 }
 
@@ -396,5 +397,6 @@ function createGearBulk(ownerID, gearList, callback) {
 			return;
 		}
 		callback(null);
+		db.index();
 	});
 }
