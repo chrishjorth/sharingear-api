@@ -109,6 +109,7 @@ function createGear(newGear, callback) {
 		}
 
 		Gear.checkBrand(newGear.brand, function(error, correct) {
+			var lat, lng;
 			if(error) {
 				callback(error);
 				return;
@@ -117,6 +118,13 @@ function createGear(newGear, callback) {
 				callback('Wrong brand.');
 				return;
 			}
+
+			lat = parseFloat(newGear.latitude) * Math.PI / 180;
+			lng = parseFloat(newGear.longitude) * Math.PI / 180;
+
+			console.log('BEFORE INSERT');
+			console.log('lat: ' + lat);
+			console.log('lng: ' + lng);
 
 			gear = [
 				newGear.type,
@@ -133,8 +141,8 @@ function createGear(newGear, callback) {
 				newGear.city,
 				newGear.region,
 				newGear.country,
-				parseFloat(newGear.latitude) * Math.PI / 180,
-				parseFloat(newGear.longitude) * Math.PI / 180,
+				lat,
+				lng,
 				newGear.owner_id
 			];
 
