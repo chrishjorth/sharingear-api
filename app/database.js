@@ -61,36 +61,12 @@ function search(searchString, paramArray, callback) {
 	});
 }
 
-function index(callback) {
-	var spawn, indexer, response;
-
-	console.log('spawning indexer');
-	try {
-		indexer = child_process.spawn('/usr/bin/indexer', ['gear_delta', '--rotate']);
-	}
-	catch(e) {
-		console.log(e.toString());
-	}
-	
-	//indexer = child_process.spawn('whoami', []);
-	//ls -la /usr
-	console.log('process spawned');
-
-	//response = '';
-	/*indexer.stderr.on('data', function(data) {
-		console.log('Error indexing: ');
-		console.log(data);
-	});*/
-	indexer.stdout.on('data', function(data) {
-		console.log('process data');
-		console.log(data.toString());
-		//response += data;
-	});
+function index() {
+	var indexer, response;	
+	indexer = child_process.spawn('/usr/bin/indexer', ['gear_delta', '--rotate']);
 	indexer.on('close', function(code) {
-		console.log('Done indexing with code: ');
-		console.log(code);
+		if(code !== 0) {
+			console.log('Error indexing. Indexer terminated with code: ' + code);
+		}
 	});
-
-	console.log('wtf');
-	
 }
