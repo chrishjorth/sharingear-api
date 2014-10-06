@@ -158,6 +158,7 @@ function createGear(newGear, callback) {
 					return;
 				}
 				callback(null, result.insertId);
+				db.index();
 			});
 		});
 	});

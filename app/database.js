@@ -5,6 +5,8 @@
 /* !TODO: Handle server disconnects */
 
 var mysql = require('mysql'),
+	isIndexing = false,
+	needToReindex = false,
 	sharingearPool,
 	sphinxPool;
 
@@ -21,14 +23,11 @@ sphinxPool = mysql.createPool({
 	host: '127.0.0.1',
 	port: 9306
 });
-/*sphinxConnection = mysql.createConnection({
-	host: '127.0.0.1',
-	port: 9306
-});*/
 
 module.exports = {
 	query: query,
-	search: search
+	search: search,
+	index: index
 };
 
 function query(queryString, paramArray, callback) {
@@ -59,7 +58,17 @@ function search(searchString, paramArray, callback) {
 			connection.destroy();
 		});
 	});
-	/*sphinxConnection.query(searchString, paramArray, function(error, rows) {
-		callback(error, rows);
-	});*/
+}
+
+function index(callback) {
+	var childProcess, response;
+	childProcess = require('child_process').spawn('sudo indexer', 'gear_delta --rotate');
+
+	response = '';
+	childProcess.on('data', function(buffer) {
+		response += buffer.toString();
+	});
+	childProcess.on('end', function() {
+		console.log('Done indexing: ' + response);
+	});
 }
