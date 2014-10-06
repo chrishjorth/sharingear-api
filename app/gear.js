@@ -281,7 +281,7 @@ function readGearWithID(gearID, callback) {
 function search(lat, lng, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
 	//console.log('Search gear');
-	db.search("SELECT id, type, subtype, brand, model FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
+	db.search("SELECT id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
 		var sql, i;
 		if(error) {
 			console.log('search error: ' + JSON.stringify(error));
@@ -297,7 +297,7 @@ function search(lat, lng, gear, callback) {
 		lng = parseFloat(lng) * Math.PI / 180;
 		console.log('lat: ' + lat);
 		console.log('lng: ' + lng);
-		sql = "SELECT id, type, subtype, brand, model, latitude, longitude, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
+		sql = "SELECT id, type, subtype, brand, model, images, latitude, longitude, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ',';
 		}
