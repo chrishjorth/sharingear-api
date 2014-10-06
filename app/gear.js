@@ -133,8 +133,8 @@ function createGear(newGear, callback) {
 				newGear.city,
 				newGear.region,
 				newGear.country,
-				newGear.latitude,
-				newGear.longitude,
+				parseFloat(newGear.latitude) * Math.PI / 180,
+				parseFloat(newGear.longitude) * Math.PI / 180,
 				newGear.owner_id
 			];
 
@@ -201,8 +201,8 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 		updatedGearData.city,
 		updatedGearData.region,
 		updatedGearData.country,
-		updatedGearData.latitude,
-		updatedGearData.longitude,
+		parseFloat(updatedGearData.latitude) * Math.PI / 180,
+		parseFloat(updatedGearData.longitude) * Math.PI / 180,
 		gearID
 	];
 	db.query("UPDATE gear SET brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=?, updated=NULL WHERE id=? LIMIT 1", inputs, function(error, result) {
@@ -357,8 +357,14 @@ function createGearBulk(ownerID, gearList, callback) {
 		if(!gear.latitude) {
 			gear.latitude = '';
 		}
+		else {
+			gear.latitude = parseFloat(gear.latitude) * Math.PI / 180
+		}
 		if(!gear.longitude) {
 			gear.longitude = '';
+		}
+		else {
+			gear.longitude = parseFloat(gear.longitude) * Math.PI / 180
 		}
 		gear.owner_id = ownerID;
 
