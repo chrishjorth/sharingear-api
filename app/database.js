@@ -5,6 +5,7 @@
 /* !TODO: Handle server disconnects */
 
 var mysql = require('mysql'),
+	child_process = require('child_process'),
 	isIndexing = false,
 	needToReindex = false,
 	sharingearPool,
@@ -62,21 +63,22 @@ function search(searchString, paramArray, callback) {
 
 function index(callback) {
 	var spawn, indexer, response;
-	spawn = require('child_process').spawn;
+	//spawn = require('child_process').spawn;
 
 	console.log('spawning indexer');
 	//indexer = spawn('sudo indexer', ['gear_delta', '--rotate']);
-	indexer = spawn('ls', ['-la', '/usr']);
+	indexer = child_process.spawn('ls', ['-la', '/usr']);
 	console.log('process spawned');
 
-	response = '';
+	//response = '';
 	indexer.stderr.on('data', function(data) {
 		console.log('Error indexing: ');
 		console.log(data);
 	});
 	indexer.stdout.on('data', function(data) {
 		console.log('process data');
-		response += data;
+		console.log(data);
+		//response += data;
 	});
 	childProcess.on('close', function(code) {
 		console.log('Done indexing with code: ');
