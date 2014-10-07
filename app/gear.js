@@ -310,7 +310,7 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 	};
 
 
-	this.checkSubtype(newGear.subtype, function(error, correct) {
+	this.checkSubtype(updatedGearData.subtype, function(error, correct) {
 		if(error) {
 			callback(error);
 			return;
@@ -320,8 +320,7 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 			return;
 		}
 
-		Gear.checkBrand(newGear.brand, function(error, correct) {
-			var lat, lng, gear;
+		Gear.checkBrand(updatedGearData.brand, function(error, correct) {
 			if(error) {
 				callback(error);
 				return;
