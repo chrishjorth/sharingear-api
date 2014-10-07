@@ -426,7 +426,6 @@ function createGearBulk(ownerID, gearList, callback) {
 	var create, types, typesSQL, subtypes, subtypesSQL, brands, brandsSQL, i, gearItem;
 
 	create = function() {
-		console.log('Add gear in bulk');
 		var gearArray = [],
 			sql, i, gear;
 		sql = "INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES ";
@@ -522,57 +521,71 @@ function createGearBulk(ownerID, gearList, callback) {
 		gearItem = gearList[i];
 		types.push(gearItem.type);
 		typesSQL += "(?),";
-		subtypes.push(gearItem.subtype);
-		subtypesSQL += "(?),";
-		brands.push(gearItem.brand);
-		brandsSQL += "(?),";
+		if(gearItem.subtype && gearItem.subtype !== '' && gearItem.subtype !== null) {
+			subtypes.push(gearItem.subtype);
+			subtypesSQL += "(?),";
+		}
+		if(gearItem.brand && gearItem.brand !== '' && gearItem.brand !== null) {
+			brands.push(gearItem.brand);
+			brandsSQL += "(?),";
+		}
 	}
-	gearItem = gearList[gearList - 1];
+
+	gearItem = gearList[gearList.length - 1];
 	types.push(gearItem.type);
 	typesSQL += "(?);";
 	typesSQL += "SELECT gear_type FROM templist WHERE gear_type NOT IN (SELECT gear_type FROM gear_types);";
 	typesSQL += "DROP TABLE templist;";
-	subtypes.push(gearItem.subtype);
-	subtypesSQL += "(?);";
-	subtypesSQL += "SELECT subtype FROM templist WHERE subtype NOT IN (SELECT subtype FROM gear_subtypes);";
-	subtypesSQL += "DROP TABLE templist;";
-	brands.push(gearItem.brand);
-	brandsSQL += "(?);";
-	brandsSQL += "SELECT brand FROM templist WHERE brand NOT IN (SELECT brand FROM gear_brands);";
-	brandsSQL += "DROP TABLE templist;";
 
-	console.log('Do the query');
+	if(gearItem.subtype && gearItem.subtype !== '' && gearItem.subtype !== null) {
+		subtypes.push(gearItem.subtype);
+		subtypesSQL += "(?)";
+	}
+	subtypesSQL += "; SELECT subtype FROM templist WHERE subtype NOT IN (SELECT subtype FROM gear_subtypes);";
+	subtypesSQL += "DROP TABLE templist;";
+
+	if(gearItem.brand && gearItem.brand !== '' && gearItem.brand !== null) {
+		brands.push(gearItem.brand);
+		brandsSQL += "(?)";
+	}
+	brandsSQL += "; SELECT brand FROM templist WHERE brand NOT IN (SELECT brand FROM gear_brands);";
+	brandsSQL += "DROP TABLE templist;";
 
 	db.query(typesSQL, types, function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
 		}
-		if(rows.length > 0) {
+		if(rows[2].length > 0) { //2 for the third SQL statement
 			callback('Found invalid type in gear list.');
 			return;
 		}
-		console.log('Types pass');
+		if(subtypes.length <= 0) {
+			create();
+			return;
+		}
 		db.query(subtypesSQL, subtypes, function(error, rows) {
 			if(error) {
 				callback(error);
 				return;
 			}
-			if(rows.length > 0) {
+			if(rows[2].length > 0) { //2 for the third SQL statement
 				callback('Found invalid subtype in gear list.');
 				return;
 			}
-			console.log('Subtypes pass');
+			if(brands.length <= 0) {
+				create();
+				return;
+			}
 			db.query(brandsSQL, brands, function(error, rows) {
 				if(error) {
 					callback(error);
 					return;
 				}
-				if(rows.length > 0) {
+				if(rows[2].length > 0) { //2 for the third SQL statement
 					callback('Found invalid brand in gear list.');
 					return;
 				}
-				console.log('Brands pass');
 				create();
 			});
 		});
