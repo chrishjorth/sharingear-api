@@ -8,6 +8,8 @@ var db = require('./database');
 module.exports = {
 	getClassification: getClassification,
 	checkTypes: checkTypes,
+	checkType: checkType,
+	checkSubtype: checkSubtype,
 	checkBrand: checkBrand,
 	createGear: createGear,
 	readGearFromUser: readGearFromUser,
@@ -80,7 +82,51 @@ function checkTypes(gearType, subtype, callback) {
 	});
 }
 
+function checkType(gearType, callback) {
+	db.query("SELECT id FROM gear_types WHERE gear_type=? LIMIT 1", [gearType], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, false);
+		}
+		else {
+			callback(null, true);
+		}
+	});
+}
+
+/**
+ * @return true for valid subtype or empty string. Empty string counts as valid in order to allow undefined subtype.
+ */
+function checkSubtype(subtype, callback) {
+	if(subtype === '') {
+		callback(null, true);
+		return;
+	}
+	db.query("SELECT id FROM gear_subtypes WHERE subtype=? LIMIT 1", [subtype], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, false);
+		}
+		else {
+			callback(null, true);
+		}
+	});
+}
+
+/**
+ * @return true for valid subtype or empty string. Empty string counts as valid in order to allow undefined brand.
+ */
 function checkBrand(brand, callback) {
+	if(brand === '') {
+		callback(null, true);
+		return;
+	}
 	db.query("SELECT id FROM gear_brands WHERE name=? LIMIT 1", [brand], function(error, rows) {
 		if(error) {
 			callback(error);
@@ -96,70 +142,82 @@ function checkBrand(brand, callback) {
 }
 
 function createGear(newGear, callback) {
-	var Gear = this;
-	this.checkTypes(newGear.type, newGear.subtype, function(error, correct) {
+	var Gear = this,
+		create;
+
+	create = function() {
+		var lat, lng, gear;
+		lat = parseFloat(newGear.latitude) * Math.PI / 180;
+		if(isNaN(lat)) {
+			lat = null;
+		}
+		lng = parseFloat(newGear.longitude) * Math.PI / 180;
+		if(isNaN(lng)) {
+			lng = null;
+		}
+		gear = [
+			newGear.type,
+			newGear.subtype,
+			newGear.brand,
+			newGear.model,
+			newGear.description,
+			newGear.images,
+			newGear.price_a,
+			newGear.price_b,
+			newGear.price_c,
+			newGear.address,
+			newGear.postal_code,
+			newGear.city,
+			newGear.region,
+			newGear.country,
+			lat,
+			lng,
+			newGear.owner_id
+		];
+
+		db.query("INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)", gear, function(error, result) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			callback(null, result.insertId);
+			db.index();
+		});
+	};
+
+
+	this.checkType(newGear.type, function(error, correct) {
 		var gear;
 		if(error) {
 			callback(error);
 			return;
 		}
 		if(correct === false) {
-			callback('Wrong type or subtype.');
+			callback('Wrong type.');
 			return;
 		}
 
-		Gear.checkBrand(newGear.brand, function(error, correct) {
-			var lat, lng;
+		Gear.checkSubtype(newGear.subtype, function(error, correct) {
 			if(error) {
 				callback(error);
 				return;
 			}
 			if(correct === false) {
-				callback('Wrong brand.');
+				callback('Wrong subtype.');
 				return;
 			}
 
-			lat = parseFloat(newGear.latitude) * Math.PI / 180;
-			if(isNaN(lat)) {
-				lat = null;
-			}
-			lng = parseFloat(newGear.longitude) * Math.PI / 180;
-			if(isNaN(lng)) {
-				lng = null;
-			}
-
-			console.log('BEFORE INSERT');
-			console.log('lat: ' + lat);
-			console.log('lng: ' + lng);
-
-			gear = [
-				newGear.type,
-				newGear.subtype,
-				newGear.brand,
-				newGear.model,
-				newGear.description,
-				newGear.images,
-				newGear.price_a,
-				newGear.price_b,
-				newGear.price_c,
-				newGear.address,
-				newGear.postal_code,
-				newGear.city,
-				newGear.region,
-				newGear.country,
-				lat,
-				lng,
-				newGear.owner_id
-			];
-
-			db.query("INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)", gear, function(error, result) {
+			Gear.checkBrand(newGear.brand, function(error, correct) {
+				var lat, lng, gear;
 				if(error) {
 					callback(error);
 					return;
 				}
-				callback(null, result.insertId);
-				console.log('Gear inserted');
-				db.index();
+				if(correct === false) {
+					callback('Wrong brand.');
+					return;
+				}
+				create();
 			});
 		});
 	});
@@ -199,40 +257,82 @@ function addImage(userID, gearID, imageURL, callback) {
 			}
 			console.log('images updated');
 			callback(null, images);
+			db.index();
 		});
 	});
 }
 
 function updateGearWithID(gearID, updatedGearData, callback) {
-	var inputs = [
-		updatedGearData.brand,
-		updatedGearData.model,
-		updatedGearData.description,
-		updatedGearData.images,
-		updatedGearData.price_a,
-		updatedGearData.price_b,
-		updatedGearData.price_c,
-		updatedGearData.address,
-		updatedGearData.postal_code,
-		updatedGearData.city,
-		updatedGearData.region,
-		updatedGearData.country,
-		parseFloat(updatedGearData.latitude) * Math.PI / 180,
-		parseFloat(updatedGearData.longitude) * Math.PI / 180,
-		gearID
-	];
-	db.query("UPDATE gear SET brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=?, updated=NULL WHERE id=? LIMIT 1", inputs, function(error, result) {
+	var Gear = this;
+		update;
+
+	update = function() {
+		var lat, lng, inputs;
+		lat = parseFloat(updatedGearData.latitude) * Math.PI / 180;
+		if(isNaN(lat)) {
+			lat = null;
+		}
+		lng = parseFloat(updatedGearData.longitude) * Math.PI / 180;
+		if(isNaN(lng)) {
+			lng = null;
+		}
+		inputs = [
+			updatedGearData.subtype,
+			updatedGearData.brand,
+			updatedGearData.model,
+			updatedGearData.description,
+			updatedGearData.images,
+			updatedGearData.price_a,
+			updatedGearData.price_b,
+			updatedGearData.price_c,
+			updatedGearData.address,
+			updatedGearData.postal_code,
+			updatedGearData.city,
+			updatedGearData.region,
+			updatedGearData.country,
+			lat,
+			lng,
+			gearID
+		];
+
+		db.query("UPDATE gear SET subtype=?, brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=?, updated=NULL WHERE id=? LIMIT 1", inputs, function(error, result) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			if(result.affectedRows <= 0) {
+				callback('No gear found to update.');
+				return;
+			}
+			callback(null);
+			db.index();
+		});
+	};
+
+
+	this.checkSubtype(newGear.subtype, function(error, correct) {
 		if(error) {
 			callback(error);
 			return;
 		}
-		if(result.affectedRows <= 0) {
-			callback('No gear found to update.');
+		if(correct === false) {
+			callback('Wrong subtype.');
 			return;
 		}
-		callback(null);
-		db.index();
-	});
+
+		Gear.checkBrand(newGear.brand, function(error, correct) {
+			var lat, lng, gear;
+			if(error) {
+				callback(error);
+				return;
+			}
+			if(correct === false) {
+				callback('Wrong brand.');
+				return;
+			}
+			update();
+		});
+	});	
 }
 
 function readGearWithID(gearID, callback) {
@@ -323,80 +423,154 @@ function search(lat, lng, gear, callback) {
 }
 
 function createGearBulk(ownerID, gearList, callback) {
-	var gearArray = [],
-		sql, i, gear;
-	sql = "INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES ";
-	for(i = 0; i < gearList.length; i++) {
-		gear = gearList[i];
-		if(!gear.type) {
-			callback('Type is missing for gear.');
-			return;
-		}
-		if(!gear.subtype) {
-			gear.subtype = '';
-		}
-		if(!gear.brand) {
-			gear.brand = '';
-		}
-		if(!gear.model) {
-			gear.model = '';
-		}
-		if(!gear.description) {
-			gear.description = '';
-		}
-		if(!gear.images) {
-			gear.images = '';
-		}
-		if(!gear.price_a) {
-			gear.price_a = '';
-		}
-		if(!gear.price_b) {
-			gear.price_b = '';
-		}
-		if(!gear.price_c) {
-			gear.price_c = '';
-		}
-		if(!gear.address) {
-			gear.address = '';
-		}
-		if(!gear.postal_code) {
-			gear.postal_code = '';
-		}
-		if(!gear.city) {
-			gear.city = '';
-		}
-		if(!gear.region) {
-			gear.region = '';
-		}
-		if(!gear.country) {
-			gear.country = '';
-		}
-		if(!gear.latitude) {
-			gear.latitude = '';
-		}
-		else {
-			gear.latitude = parseFloat(gear.latitude) * Math.PI / 180
-		}
-		if(!gear.longitude) {
-			gear.longitude = '';
-		}
-		else {
-			gear.longitude = parseFloat(gear.longitude) * Math.PI / 180
-		}
-		gear.owner_id = ownerID;
+	var create, types, subtypes, brands, i, gearItem;
 
-		sql += "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)";
-		gearArray.push(gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id);
-		if(i < gearList.length - 1) {
-			sql += ',';
+	create = function() {
+		var gearArray = [],
+			sql, i, gear;
+		sql = "INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES ";
+		for(i = 0; i < gearList.length; i++) {
+			gear = gearList[i];
+			if(!gear.type) {
+				callback('Type is missing for gear.');
+				return;
+			}
+			if(!gear.subtype) {
+				gear.subtype = '';
+			}
+			if(!gear.brand) {
+				gear.brand = '';
+			}
+			if(!gear.model) {
+				gear.model = '';
+			}
+			if(!gear.description) {
+				gear.description = '';
+			}
+			if(!gear.images) {
+				gear.images = '';
+			}
+			if(!gear.price_a) {
+				gear.price_a = '';
+			}
+			if(!gear.price_b) {
+				gear.price_b = '';
+			}
+			if(!gear.price_c) {
+				gear.price_c = '';
+			}
+			if(!gear.address) {
+				gear.address = '';
+			}
+			if(!gear.postal_code) {
+				gear.postal_code = '';
+			}
+			if(!gear.city) {
+				gear.city = '';
+			}
+			if(!gear.region) {
+				gear.region = '';
+			}
+			if(!gear.country) {
+				gear.country = '';
+			}
+			if(!gear.latitude) {
+				gear.latitude = '';
+			}
+			else {
+				gear.latitude = parseFloat(gear.latitude) * Math.PI / 180
+			}
+			if(!gear.longitude) {
+				gear.longitude = '';
+			}
+			else {
+				gear.longitude = parseFloat(gear.longitude) * Math.PI / 180
+			}
+			gear.owner_id = ownerID;
+
+			sql += "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)";
+			gearArray.push(gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id);
+			if(i < gearList.length - 1) {
+				sql += ',';
+			}
 		}
+		db.query(sql, gearArray, function(error, result) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			callback(null);
+			db.index();
+		});
+	};
+
+	//Check that all types are valid, then the subtypes and then the brands
+	types = [];
+	typesSQL = "CREATE TEMPORARY TABLE IF NOT EXISTS templist (gear_type VARCHAR(45) NOT NULL);";
+	typesSQL += "INSERT INTO templist(gear_type) VALUES";
+	
+	subtypes = [];
+	subtypesSQL = "CREATE TEMPORARY TABLE IF NOT EXISTS templist (subtype VARCHAR(45) NOT NULL);";
+	subtypesSQL += "INSERT INTO templist(subtype) VALUES";
+	
+	brands = [];
+	brandsSQL = "CREATE TEMPORARY TABLE IF NOT EXISTS templist (brand VARCHAR(45) NOT NULL);";
+	brandsSQL += "INSERT INTO templist(brand) VALUES";
+
+	for(i = 0; i < gearList.length - 1; i++) {
+		gearItem = gearList[i];
+		types.push(gearItem.type);
+		typesSQL += "(?),";
+		subtypes.push(gearItem.subtype);
+		subtypesSQL += "(?),";
+		brands.push(gearItem.brand);
+		brandsSQL += "(?),";
 	}
-	db.query(sql, gearArray, function(error, result) {
+	gearItem = gearList[gearList - 1];
+	types.push(gearItem.type);
+	typesSQL += "(?);";
+	typesSQL += "SELECT gear_type FROM templist WHERE gear_type NOT IN (SELECT gear_type FROM gear_types);";
+	typesSQL += "DROP TABLE templist;";
+	subtypes.push(gearItem.subtype);
+	subtypesSQL += "(?);";
+	subtypesSQL += "SELECT subtype FROM templist WHERE subtype NOT IN (SELECT subtype FROM gear_subtypes);";
+	subtypesSQL += "DROP TABLE templist;";
+	brands.push(gearItem.brand);
+	brandsSQL += "(?);";
+	brandsSQL += "SELECT brand FROM templist WHERE brand NOT IN (SELECT brand FROM gear_brands);";
+	brandsSQL += "DROP TABLE templist;";
+
+	db.query(typesSQL, types, function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
 		}
-		callback(null);
-		db.index();
+		if(rows.length > 0) {
+			callback('Found invalid type in gear list.');
+			return;
+		}
+		db.query(subtypesSQL, subtypes, function(error, rows) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			if(rows.length > 0) {
+				callback('Found invalid subtype in gear list.');
+				return;
+			}
+			db.query(brandsSQL, brands, function(error, rows) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				if(rows.length > 0) {
+					callback('Found invalid brand in gear list.');
+					return;
+				}
+				create();
+			});
+		});
 	});
 }
+
+
