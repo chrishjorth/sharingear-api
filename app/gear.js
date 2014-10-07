@@ -426,6 +426,7 @@ function createGearBulk(ownerID, gearList, callback) {
 	var create, types, subtypes, brands, i, gearItem;
 
 	create = function() {
+		console.log('Add gear in bulk');
 		var gearArray = [],
 			sql, i, gear;
 		sql = "INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES ";
@@ -540,6 +541,8 @@ function createGearBulk(ownerID, gearList, callback) {
 	brandsSQL += "SELECT brand FROM templist WHERE brand NOT IN (SELECT brand FROM gear_brands);";
 	brandsSQL += "DROP TABLE templist;";
 
+	console.log('Do the query');
+
 	db.query(typesSQL, types, function(error, rows) {
 		if(error) {
 			callback(error);
@@ -549,6 +552,7 @@ function createGearBulk(ownerID, gearList, callback) {
 			callback('Found invalid type in gear list.');
 			return;
 		}
+		console.log('Types pass');
 		db.query(subtypesSQL, subtypes, function(error, rows) {
 			if(error) {
 				callback(error);
@@ -558,6 +562,7 @@ function createGearBulk(ownerID, gearList, callback) {
 				callback('Found invalid subtype in gear list.');
 				return;
 			}
+			console.log('Subtypes pass');
 			db.query(brandsSQL, brands, function(error, rows) {
 				if(error) {
 					callback(error);
@@ -567,6 +572,7 @@ function createGearBulk(ownerID, gearList, callback) {
 					callback('Found invalid brand in gear list.');
 					return;
 				}
+				console.log('Brands pass');
 				create();
 			});
 		});
