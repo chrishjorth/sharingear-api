@@ -125,7 +125,7 @@ function getToken(userID, callback) {
 function update(userID, updatedInfo, callback) {
 	var userInfo;
 
-	db.query("SELECT id, fbid, email, name, surname, birthdate, city, image_url FROM users WHERE fbid=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, email, name, surname, birthdate, city, image_url FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;

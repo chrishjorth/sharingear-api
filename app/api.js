@@ -409,7 +409,7 @@ function updateUserWithID(req, res, next) {
 
 		User.update(req.params.id, req.params, function(error, updatedUser) {
 			if(error) {
-				handleError(res, next, 'Error authorizing user: ', error);
+				handleError(res, next, 'Error updating user: ', error);
 				return;
 			}
 			res.send(updatedUser);
