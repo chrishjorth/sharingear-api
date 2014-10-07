@@ -449,6 +449,7 @@ function updateGearFromUserWithID(req, res, next) {
 			return;
 		}
 		updatedGearData = {
+			subtype: req.params.subtype,
 			brand: req.params.brand,
 			model: req.params.model,
 			description: req.params.description,
@@ -464,6 +465,7 @@ function updateGearFromUserWithID(req, res, next) {
 			latitude: req.params.latitude,
 			longitude: req.params.longitude
 		};
+
 		Gear.updateGearWithID(req.params.gear_id, updatedGearData, function(error) {
 			if(error) {
 				handleError(res, next, 'Error updating gear: ', error);

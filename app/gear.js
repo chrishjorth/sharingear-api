@@ -263,7 +263,7 @@ function addImage(userID, gearID, imageURL, callback) {
 }
 
 function updateGearWithID(gearID, updatedGearData, callback) {
-	var Gear = this;
+	var Gear = this,
 		update;
 
 	update = function() {
@@ -308,7 +308,6 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 			db.index();
 		});
 	};
-
 
 	this.checkSubtype(updatedGearData.subtype, function(error, correct) {
 		if(error) {
