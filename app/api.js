@@ -458,7 +458,7 @@ function updateGearFromUserWithID(req, res, next) {
 			price_b: req.params.price_b,
 			price_c: req.params.price_c,
 			address: req.params.address,
-			postal_code: req.params.postalcode,
+			postal_code: req.params.postal_code,
 			city: req.params.city,
 			region: req.params.region,
 			country: req.params.country,
