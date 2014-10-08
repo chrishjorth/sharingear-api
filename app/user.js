@@ -140,7 +140,7 @@ function readUser(userID, callback) {
 function update(userID, updatedInfo, callback) {
 	var userInfo;
 
-	db.query("SELECT id, email, name, surname, birthdate, city, image_url FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, email, name, surname, birthdate, city, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -156,9 +156,10 @@ function update(userID, updatedInfo, callback) {
 			(updatedInfo.birthdate ? updatedInfo.birthdate : rows[0].birthdate),
 			(updatedInfo.city ? updatedInfo.city : rows[0].city),
 			(updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
+			(updatedInfo.bio ? updatedInfo.bio : rows[0].bio),
 			userID
 		];
-		db.query("UPDATE users SET email=?, name=?, surname=?, birthdate=?, city=?, image_url=? WHERE id=? LIMIT 1", userInfo, function(error, result) {
+		db.query("UPDATE users SET email=?, name=?, surname=?, birthdate=?, city=?, image_url=?, bio=? WHERE id=? LIMIT 1", userInfo, function(error, result) {
 			if(error) {
 				callback(error);
 				return;
@@ -174,7 +175,8 @@ function update(userID, updatedInfo, callback) {
 				surname: userInfo[2],
 				birthdate: userInfo[3],
 				city: userInfo[4],
-				image_url: userInfo[5]
+				image_url: userInfo[5],
+				bio: userInfo[6]
 			});
 		});
 	});
