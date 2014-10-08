@@ -11,6 +11,7 @@ module.exports = {
 	setServerAccessToken: setServerAccessToken,
 	matchToken: matchToken,
 	getToken: getToken,
+	readUser: readUser,
 	update: update
 };
 
@@ -119,6 +120,20 @@ function getToken(userID, callback) {
 			return;
 		}
 		callback(null, rows[0].fb_token);
+	});
+}
+
+function readUser(userID, callback) {
+	db.query("SELECT id, name, surname, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback('No user with id: ' + userID + '.');
+			return;
+		}
+		callback(null, rows[0]);
 	});
 }
 

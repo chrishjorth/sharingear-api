@@ -39,7 +39,7 @@ server.get('/gear/search/:location/:gear/:daterange', readGearSearchResults);
 //server.get('/gear/:id/bookings', readGearWithIDBookings);
 
 server.post('/users/login', createUserSession);
-//server.get('/users/:id', readUserWithID);
+server.get('/users/:id', readUserWithID);
 server.put('/users/:id', updateUserWithID);
 server.get('/users/:user_id/gear', readGearFromUserWithID);
 server.put('/users/:user_id/gear/:gear_id', updateGearFromUserWithID);
@@ -357,20 +357,16 @@ function createUserSession(req, res, next) {
  * @param: user id
  * @return: A JSON description of a user
  */
-/*function readUserWithID(req, res, next) {
-	res.send({
-		id: 0,
-		type: 0,
-		name: 'Chris',
-		surname: 'Hjorth',
-		birthdate: '1984-09-17',
-		address: 'Anders Nielsens Vej 21A, 1. tv',
-		postcode: 9400,
-		state: 'Nordjylland',
-		country: 'DNK'
+function readUserWithID(req, res, next) {
+	User.readUser(req.params.id, function(error, user) {
+		if(error) {
+			handleError(res, next, 'Error reading user: ', error);
+			return;
+		}
+		res.send(user);
+		next();
 	});
-	next();
-}*/
+}
 
 /**
  * @param: A search string
