@@ -224,7 +224,7 @@ function createGear(newGear, callback) {
 }
 
 function readGearFromUser(userID, callback) {
-	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c FROM gear WHERE owner_id=?", [userID], function(error, rows) {
+	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude FROM gear WHERE owner_id=?", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;

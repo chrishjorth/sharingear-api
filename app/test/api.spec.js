@@ -93,7 +93,7 @@ describe('API', function() {
 		});
 	});
 
-	it('Supports GET /users/:id/gear', function(done) {
+	it.skip('Supports GET /users/:id/gear', function(done) {
 		supertest(url).get('/users/0/gear').end(function(err, res) {
 			if(err) {
 				throw err;
