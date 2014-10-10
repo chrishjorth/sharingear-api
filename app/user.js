@@ -16,7 +16,7 @@ module.exports = {
 };
 
 function getUserFromFacebookID(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, city, image_url FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, city, image_url, bio FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
