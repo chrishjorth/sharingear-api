@@ -168,7 +168,7 @@ function update(userID, updatedInfo, callback) {
 				callback('No user with id ' + userID + ' after successful select!');
 				return;
 			}
-			callback({
+			callback(null, {
 				id: userID,
 				email: userInfo[0],
 				name: userInfo[1],
