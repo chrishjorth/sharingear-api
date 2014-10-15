@@ -10,6 +10,7 @@ var restify = require('restify'),
 	Sec = require('./sec'),
 	User = require('./user'),
 	Gear = require('./gear'),
+	Availability = require('./availability'),
 	server;
 
 server = restify.createServer({
@@ -30,10 +31,7 @@ server.get('/gearclassification', readGearClassification);
 server.post('/gear', createGear);
 server.post('/gearlist', createGearFromList);
 server.get('/gear/:id', readGearWithID);
-//server.put('/gear/:id', updateGearWithID);
-//server.del('/gear/:id', deleteGearWithID);
 server.post('/gear/image', addImageToGear);
-
 server.get('/gear/search/:location/:gear/:daterange', readGearSearchResults);
 
 //server.get('/gear/:id/bookings', readGearWithIDBookings);
@@ -43,6 +41,8 @@ server.get('/users/:id', readUserWithID);
 server.put('/users/:id', updateUserWithID);
 server.get('/users/:user_id/gear', readGearFromUserWithID);
 server.put('/users/:user_id/gear/:gear_id', updateGearFromUserWithID);
+server.post('/users/:user_id/gear/:gear_id/availability', createGearAvailability);
+server.get('/users/:user_id/gear/:gear_id/availability', readGearAvailability);
 server.get('/users/:id/reservations', readReservationsFromUserWithID);
 //server.get('/users/search/:string', readUserSearchResults);
 
@@ -469,6 +469,62 @@ function updateGearFromUserWithID(req, res, next) {
 			}
 			res.send(updatedGearData);
 			next();
+		});
+	});
+}
+
+function readGearAvailability(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		Availability.get(req.params.gear_id, function(error, availabilityArray) {
+			if(error) {
+				handleError(res, next, 'Error getting gear availability: ', error);
+				return;
+			}
+			res.send(availabilityArray);
+			next();
+		});
+	});
+}
+
+function createGearAvailability(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		var availability;
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		availability = JSON.parse(req.params.availability)
+		//Check that the user owns the gear
+		Gear.checkOwner(req.params.user_id, req.params.gear_id, function(error, data) {
+			if(error) {
+				handleError(res, next, 'Error checking gear ownership: ', error);
+				return;
+			}
+			console.log('checkOwner data: ' + JSON.stringify(data));
+			if(data === false) {
+				handleError(res, next, 'Error checking gear ownership: ', 'User ' + req.params.user_id + ' does not own gear ' + req.params.gear_id);
+				return;
+			}
+			Availability.set(req.params.gear_id, availability, function(error) {
+				if(error) {
+					handleError(res, next, 'Error setting gear availability: ', error);
+					return;
+				}
+				res.send({});
+				next();
+			});
 		});
 	});
 }

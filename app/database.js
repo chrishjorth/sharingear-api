@@ -18,7 +18,8 @@ sharingearPool = mysql.createPool({
 	password: '20mircea14chris',
 	database: 'sharingear',
 	supportBigNumbers: true, //Required for working with Facebook IDs stored as bigint.
-	multipleStatements: true //Required for Minus operation from dynamic data set, which requires temp table
+	multipleStatements: true, //Required for Minus operation from dynamic data set, which requires temp table
+	dateStrings: true
 });
 
 sphinxPool = mysql.createPool({
