@@ -63,6 +63,7 @@ function getClassification(callback) {
 			for(i = 0; i < rows.length; i++) {
 				gearClassification.brands.push(rows[i].name);
 			}
+			gearClassification.brands.push('Other');
 			callback(null, gearClassification);
 		});
 	});

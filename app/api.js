@@ -17,7 +17,8 @@ server = restify.createServer({
 	name: 'Sharingear API'
 });
 
-server.listen(1337, function() {
+//Tunnelblick uses 1337 apparently
+server.listen(1338, function() {
 	console.log('%s listening at %s', server.name, server.url);
 });
 
