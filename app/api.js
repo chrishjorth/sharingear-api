@@ -50,6 +50,7 @@ server.get('/users/:id/reservations', readReservationsFromUserWithID);
 server.get('/users/:id/newfilename/:filename', generateFileName);
 
 //server.post('/bookings', createBooking);
+server.get('/bookings/:id', readBooking);
 //server.put('/bookings/:id', updateBooking);
 //server.del('/bookings/:id', deleteBooking);
 
@@ -592,6 +593,18 @@ function readReservationsFromUserWithID(req, res, next) {
 	});
 	next();
 }*/
+
+function readBooking(req, res, next) {
+	res.send({
+		id: 1,
+		gear_id: 1,
+		start_time: '2014-11-15 13:37:00',
+		end_time: '2014-11-15 13:37:00',
+		renter_id: 3,
+		price: 66
+	});
+	next();
+}
 
 /**
  * @param: a booking id, user id and token
