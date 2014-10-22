@@ -324,7 +324,7 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 				return;
 			}
 			callback(null);
-			//db.index();
+			db.index();
 		});
 	};
 

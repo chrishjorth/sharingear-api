@@ -209,13 +209,10 @@ function addImageToGear(req, res, next) {
 
 	imageURL = imageURL.split('?')[0]; //Remove eventual query string parameters inserted by meddlers
 	validation = imageURL.split('/');
-	console.log('Validation URL: ' + validation[2]);
 	if(validation[2] !== 'dev.sharingear.com') {
 		handleError(res, next, 'Error adding image to gear: ', 'image url is from an invalid domain.');
 		return;
 	}
-
-	console.log('Valid image url');
 	
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -226,7 +223,6 @@ function addImageToGear(req, res, next) {
 			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
 			return;
 		}
-		console.log('User is authorized');
 		Gear.addImage(req.params.user_id, req.params.gear_id, imageURL, function(error, images) {
 			if(error) {
 				handleError(res, next, 'Error authorizing user: ', error);
