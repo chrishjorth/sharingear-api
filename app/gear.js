@@ -246,7 +246,7 @@ function createGear(newGear, callback) {
 }
 
 function readGearFromUser(userID, callback) {
-	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, status FROM gear WHERE owner_id=?", [userID], function(error, rows) {
+	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, gear_status FROM gear WHERE owner_id=?", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -356,7 +356,7 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 }
 
 function readGearWithID(gearID, callback) {
-	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, status, owner_id FROM gear WHERE id=? LIMIT 1", gearID, function(error, rows) {
+	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, gear_status, owner_id FROM gear WHERE id=? LIMIT 1", gearID, function(error, rows) {
 		var gear;
 		if(error) {
 			callback(error);
@@ -418,7 +418,7 @@ function search(lat, lng, gear, callback) {
 		lng = parseFloat(lng) * Math.PI / 180;
 		//console.log('lat: ' + lat);
 		//console.log('lng: ' + lng);
-		sql = "SELECT id, type, subtype, brand, model, images, price_a, price_b, price_c, latitude, longitude, status, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
+		sql = "SELECT id, type, subtype, brand, model, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ',';
 		}
@@ -649,7 +649,7 @@ function setStatus(gearID, status, callback) {
 		callback('Error: invalid gear status.');
 		return;
 	}
-	db.query("UPDATE gear SET status=? WHERE id=? LIMIT 1", [status, gearID], function(error, result) {
+	db.query("UPDATE gear SET gear_status=? WHERE id=? LIMIT 1", [status, gearID], function(error, result) {
 		if(error) {
 			callback('Error updating gear status: ' + error);
 			return;
