@@ -3,11 +3,14 @@
  * @author: Chris Hjorth
  */
 
-var db = require('./database');
+var db = require('./database'),
+	Moment = require('moment');
 
 module.exports = {
 	set: set,
-	get: get
+	get: get,
+	//isAvailable: isAvailable,
+	setToUnavailableFromStartToEnd: setToUnavailableFromStartToEnd
 };
 
 /**
@@ -56,4 +59,89 @@ function get(gearID, callback) {
 		}
 		callback(null, availabilityArray);
 	});
+}
+
+/*function isAvailable(gearID, startTime, endTime, callback) {
+	db.query('SELECT id FROM availability WHERE start <= ? AND end >= ? AND gear_id = ? LIMIT 1', [startTime, endTime, gearID], function(error, rows) {
+		if(error) {
+			callback('Error checking availability: ' + error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, false);
+		}
+		else {
+			callback(null, true);
+		}
+	});
+}*/
+
+/**
+ * @assertion: Interval is between an availble interval.
+ */
+function setToUnavailableFromStartToEnd(gearID, startTime, endTime, callback) {
+	console.log('Find availability: ');
+	console.log('startTime: ' + startTime);
+	console.log('endTime: ' + endTime);
+	db.query("SELECT id, start, end FROM availability WHERE start <= ? AND end >= ? AND gear_id = ? LIMIT 1", [startTime, endTime, gearID], function(error, rows) {
+		if(error) {
+			callback('Error selecting availability: ' + error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback('No availability found for interval.');
+			return;
+		}
+		availableStart = Moment(rows[0].start, 'YYYY-MM-DD HH:mm:ss');
+		availableEnd = Moment(rows[0].end, 'YYYY-MM-DD HH:mm:ss');
+		startTimeMoment = Moment(startTime, 'YYYY-MM-DD HH:mm:ss');
+		endTimeMoment = Moment(endTime, 'YYYY-MM-DD HH:mm:ss');
+		if(availableStart.isSame(startTimeMoment, 'day') === true && availableEnd.isSame(endTimeMoment, 'day') === true) {
+			db.query("DELETE FROM availability WHERE id=? LIMIT 1", [rows[0].id], function(error, result) {
+				if(error) {
+					callback('Error deleting availability interval: ' + error);
+					return;
+				}
+				callback(null);
+			});
+		}
+		else if(availableStart.isSame(startTimeMoment, 'day') === true) {
+			db.query("UPDATE availability SET end=? WHERE id=? LIMIT 1", [endTime, rows[0].id], function(error, result) {
+				if(error) {
+					callback('Error updating end value for availability interval: ' + error);
+					return;
+				}
+				callback(null);
+			});
+		}
+		else if(availableEnd.isSame(endTimeMoment, 'day') === true) {
+			db.query("UPDATE availability SET start=? WHERE id=? LIMIT 1", [startTime, rows[0].id], function(error, result) {
+				if(error) {
+					callback('Error updating start value for availability interval: ' + error);
+					return;
+				}
+				callback(null);
+			});
+		}
+		else {
+			//In this case the interval is in the middle
+			db.query("UPDATE availability SET end=? WHERE id=? LIMIT 1", [startTime, rows[0].id], function(error, result) {
+				if(error) {
+					callback('Error setting end to start time for availability interval: ' + error);
+					return;
+				}
+				db.query("INSERT INTO availability(start, end, gear_id) VALUES(?, ?, ?)", [endTime, rows[0].end, gearID], function(error, result) {
+					if(error) {
+						callback('Error inserting new availability after split: ' + error);
+						return;
+					}
+					callback(null);
+				});
+			});
+		}
+	});
+	//If same start and same end just delete
+	//If same start move back end
+	//If same end move forward start
+	//If in the middle move back end to startTime and create new availability from endTime to end
 }

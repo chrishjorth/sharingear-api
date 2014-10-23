@@ -11,6 +11,7 @@ var restify = require('restify'),
 	User = require('./user'),
 	Gear = require('./gear'),
 	Availability = require('./availability'),
+	Booking = require('./booking'),
 	server;
 
 server = restify.createServer({
@@ -49,8 +50,8 @@ server.get('/users/:id/reservations', readReservationsFromUserWithID);
 
 server.get('/users/:id/newfilename/:filename', generateFileName);
 
-//server.post('/bookings', createBooking);
-server.get('/bookings/:id', readBooking);
+server.post('/users/:id/bookings', createBooking);
+server.get('/users/:user_id/bookings/:booking_id', readBooking);
 //server.put('/bookings/:id', updateBooking);
 //server.del('/bookings/:id', deleteBooking);
 
@@ -582,17 +583,26 @@ function readReservationsFromUserWithID(req, res, next) {
  * @param: a user id, token and booking parameters
  * @return: The booking with id.
  */
-/*function createBooking(req, res, next) {
-	res.send({
-		id: 0,
-		start_time: '2014-08-15 14:31:00',
-		end_time: '2014-08-20 14:31:00',
-		status: true, //false is available for booking, true is booked
-		gear_id: 0,
-		buyer_user_id: null
+function createBooking(req, res, next) {
+	isAuthorized(req.params.id, function(error, status) {
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		Booking.create(req.params.id, req.params, function(error, booking) {
+			if(error) {
+				handleError(res, next, 'Error creating booking: ', error);
+				return;
+			}
+			res.send(booking);
+			next();
+		});
 	});
-	next();
-}*/
+}
 
 function readBooking(req, res, next) {
 	res.send({

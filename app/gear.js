@@ -3,7 +3,8 @@
  * @author: Chris Hjorth
  */
 
-var db = require('./database');
+var db = require('./database'),
+	Moment = require('moment');
 
 module.exports = {
 	getClassification: getClassification,
@@ -18,7 +19,9 @@ module.exports = {
 	updateGearWithID: updateGearWithID,
 	readGearWithID: readGearWithID,
 	search: search,
-	createGearBulk: createGearBulk
+	createGearBulk: createGearBulk,
+	getPrice: getPrice,
+	setStatus: setStatus
 };
 
 /**
@@ -606,6 +609,52 @@ function createGearBulk(ownerID, gearList, callback) {
 				create();
 			});
 		});
+	});
+}
+
+function getPrice(gearID, startTime, endTime, callback) {
+	db.query("SELECT price_a, price_b, price_c FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
+		var startMoment, endMoment, weeks, days, hours, price;
+		if(error) {
+			callback('Error retrieving prices for gear: ' + error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback('No gear with id ' + gearID + '.');
+			return;
+		}
+		startMoment = Moment(startTime, 'YYYY-MM-DD HH:mm:ss');
+		endMoment = Moment(endTime, 'YYYY-MM-DD HH:mm:ss');
+		weeks = parseInt(endMoment.diff(startMoment, 'weeks'), 10);
+		endMoment.subtract(weeks, 'weeks');
+		days = parseInt(endMoment.diff(startMoment, 'days'), 10);
+		endMoment.subtract(days, 'days');
+		hours = parseInt(endMoment.diff(startMoment, 'hours'), 10);
+		console.log('startTime: ' + startTime);
+		console.log('endTime: ' + endTime);
+		console.log('weeks: ' + weeks);
+		console.log('days: ' + days);
+		console.log('hours: ' + hours);
+		console.log('price_a: ' + rows[0].price_a);
+		console.log('price_b: ' + rows[0].price_b);
+		console.log('price_c: ' + rows[0].price_c);
+		price = rows[0].price_a * hours + rows[0].price_b * days + rows[0].price_c * weeks;
+		console.log('total price: ' + price);
+		callback(null, price);
+	});
+}
+
+function setStatus(gearID, status, callback) {
+	if(status !== 'available' && status !== 'unavailable' && status !== 'pending' && status !== 'rented') {
+		callback('Error: invalid gear status.');
+		return;
+	}
+	db.query("UPDATE gear SET status=? WHERE id=? LIMIT 1", [status, gearID], function(error, result) {
+		if(error) {
+			callback('Error updating gear status: ' + error);
+			return;
+		}
+		callback(null);
 	});
 }
 
