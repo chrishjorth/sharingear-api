@@ -51,7 +51,7 @@ server.get('/users/:id/reservations', readReservationsFromUserWithID);
 server.get('/users/:id/newfilename/:filename', generateFileName);
 
 server.post('/users/:id/bookings', createBooking);
-server.get('/users/:user_id/gear/:gear_id/bookings', readClosestBooking);
+server.get('/gear/:gear_id/bookings/renters/:user_id', readClosestBooking);
 //server.put('/bookings/:id', updateBooking);
 //server.del('/bookings/:id', deleteBooking);
 
