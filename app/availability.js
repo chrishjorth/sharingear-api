@@ -4,11 +4,13 @@
  */
 
 var db = require('./database'),
-	Moment = require('moment');
+	Moment = require('moment'),
+	MomentUtilities = require('./momentutilities');
 
 module.exports = {
 	set: set,
 	get: get,
+	removeInterval: removeInterval,
 	//isAvailable: isAvailable,
 	setToUnavailableFromStartToEnd: setToUnavailableFromStartToEnd
 };
@@ -59,6 +61,45 @@ function get(gearID, callback) {
 		}
 		callback(null, availabilityArray);
 	});
+}
+
+function removeInterval(gearID, startTime, endTime, callback) {
+	//Get availability sorted, add data and then call set
+	db.query("SELECT id, start_time, end_time, gear_id FROM availability WHERE gear_id=? ORDER BY start_time DESC", [gearID], function(error, rows) {
+		var i;
+		if(error) {
+			callback('Error selecting availability: ' + error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null); //This counts as correct since it is like removing something that was already not there.
+			return;
+		}
+		startMoment = Moment(startTime, 'YYYY-MM-DD HH:mm:ss');
+		endMoment = Moment(endMoment, 'YYYY-MM-DD HH:mm:ss');
+		//Check if the interval fits in any of the availability intervals
+		for(i = 0; i < rows.length; i++) {
+			intervalStartMoment = Moment(rows[i].start_time, 'YYYY-MM-DD HH:mm:ss');
+			intervalEndMoment = Moment(rows[i].endTime, 'YYYY-MM-DD HH:mm:ss');
+			//Interval is the same or include -> delete
+
+			//interval is between availability interval -> 
+			/*if(MomentUtilities.isBetweenExclusive(startMoment, intervalStartMoment, intervalEndMoment) === true && MomentUtilities.isBetween(endMoment, intervalStartMoment, intervalEndMoment) === true) {
+				rows.splice(i, 0, {
+					start_time: endMoment.format('YYYY-MM-DD HH:mm:ss'),
+					end_time: rows[i].end_time
+				})
+				rows[i].end_time = startMoment.format('YYYY-MM-DD HH:mm:ss');
+				i++; //Beacuse we inserted an element and we do not need to loop over it
+			}
+			//interval is including availability interval
+			else if(startMoment.isBefore(intervalStartMoment) === true && )
+			//interval includes start of availability interval
+
+			//interval includes end of availability interval*/
+		}
+	});
+
 }
 
 /*function isAvailable(gearID, startTime, endTime, callback) {
@@ -140,8 +181,4 @@ function setToUnavailableFromStartToEnd(gearID, startTime, endTime, callback) {
 			});
 		}
 	});
-	//If same start and same end just delete
-	//If same start move back end
-	//If same end move forward start
-	//If in the middle move back end to startTime and create new availability from endTime to end
 }

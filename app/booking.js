@@ -9,7 +9,8 @@ var db = require('./database'),
 
 module.exports = {
 	create: create,
-	readClosest: readClosest
+	readClosest: readClosest,
+	update: update
 };
 
 function create(renterID, bookingData, callback) {
@@ -67,5 +68,41 @@ function readClosest(gearID, callback) {
 			return;
 		}
 		callback(null, rows[0]);
+	});
+}
+
+function update(gearID, bookingID, status, callback) {
+	if(status !== 'denied' && status !== 'accepted') {
+		callback('Unacceptable booking status.');
+		return;
+	}
+	db.query("UPDATE bookings SET status=? WHERE id=? LIMIT 1", [status, bookingID], function(error, result) {
+		if(error) {
+			callback('Error updating booking status: ' + error);
+			return;
+		}
+		if(status === 'denied') {
+			db.query("SELECT start_time, end_time FROM bookings WHERE id=? LIMIT 1", [bookingID], function(error, rows) {
+				if(error) {
+					callback('Error selecting booking interval: ' + error);
+					return;
+				}
+				if(rows.length <= 0) {
+					callback('No booking found for id ' + bookingID + '.');
+					return;
+				}
+				Availability.removeInterval(gearID, rows[0].start_time, rows[0].end_time, function(error) {
+					if(error) {
+						callback(error);
+					}
+					else {
+						callback(null);
+					}
+				});
+			});
+		}
+		else {
+			callback(null);
+		}
 	});
 }

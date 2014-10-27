@@ -50,9 +50,9 @@ server.get('/users/:id/reservations', readReservationsFromUserWithID);
 
 server.get('/users/:id/newfilename/:filename', generateFileName);
 
-server.post('/users/:id/bookings', createBooking);
-server.get('/gear/:gear_id/bookings/renters/:user_id', readClosestBooking);
-//server.put('/bookings/:id', updateBooking);
+server.post('/users/:user_id/gear/:gear_id/bookings', createBooking);
+server.get('/users/:user_id/gear/:gear_id/bookings/:booking_id', readClosestBooking);
+server.put('/users/:user_id/gear/:gear_id/bookings/:booking_id', updateBooking);
 //server.del('/bookings/:id', deleteBooking);
 
 //ROUTE HANDLERS
@@ -629,17 +629,26 @@ function readClosestBooking(req, res, next) {
  * @param: a booking id, user id and token
  * @return: the new booking data
  */
-/*function updateBooking(req, res, next) {
-	res.send({
-		id: 0,
-		start_time: '2014-08-15 14:31:00',
-		end_time: '2014-08-20 14:31:00',
-		status: true, //false is available for booking, true is booked
-		gear_id: 0,
-		buyer_user_id: null
+function updateBooking(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		Booking.update(req.params.gear_id, req.params.booking_id, req.params.booking_status, function(error) {
+			if(error) {
+				handleError(res, next, 'Error updating booking: ', error);
+				return;
+			}
+			res.send({});
+			next();
+		});
 	});
-	next();
-}*/
+}
 
 /**
  * @param: a booking id, user id and token
