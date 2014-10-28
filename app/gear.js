@@ -147,13 +147,11 @@ function checkBrand(brand, callback) {
 }
 
 function checkOwner(userID, gearID, callback) {
-	console.log('userID: ' + userID + ' gearID: ' + gearID);
 	db.query("SELECT id FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
 		}
-		console.log('rows: ' + JSON.stringify(rows));
 		if(rows.length <= 0) {
 			callback(null, false);
 		}

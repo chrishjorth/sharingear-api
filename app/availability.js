@@ -30,10 +30,10 @@ function set(gearID, availability, callback) {
 		valueArray = [];
 		for(i = 0; i < availability.length - 1; i++) {
 			sql += '(?, ?, ?), ';
-			valueArray.push(availability[i].start, availability[i].end, gearID);
+			valueArray.push(availability[i].start_time, availability[i].end_time, gearID);
 		}
 		sql += '(?, ?, ?)';
-		valueArray.push(availability[i].start, availability[i].end, gearID);
+		valueArray.push(availability[i].start_time, availability[i].end_time, gearID);
 		db.query(sql, valueArray, function(error, result) {
 			if(error) {
 				callback(error);
@@ -53,10 +53,9 @@ function get(gearID, callback) {
 		}
 		availabilityArray = [];
 		for(i = 0; i < rows.length; i++) {
-			console.log('start: ' + rows[i].start);
 			availabilityArray.push({
-				start: rows[i].start,
-				end: rows[i].end
+				start: rows[i].start_time,
+				end: rows[i].end_time
 			});
 		}
 		callback(null, availabilityArray);

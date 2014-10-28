@@ -512,7 +512,6 @@ function createGearAvailability(req, res, next) {
 				handleError(res, next, 'Error checking gear ownership: ', error);
 				return;
 			}
-			console.log('checkOwner data: ' + JSON.stringify(data));
 			if(data === false) {
 				handleError(res, next, 'Error checking gear ownership: ', 'User ' + req.params.user_id + ' does not own gear ' + req.params.gear_id);
 				return;
