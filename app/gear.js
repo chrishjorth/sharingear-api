@@ -405,7 +405,7 @@ function search(lat, lng, gear, callback) {
 	db.search("SELECT id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
 		var sql, i;
 		if(error) {
-			console.log('search error: ' + JSON.stringify(error));
+			console.log('Error searching for match: ' + JSON.stringify(error));
 			callback(error);
 			return;
 		}
@@ -416,22 +416,20 @@ function search(lat, lng, gear, callback) {
 		//console.log('Found gear by full text search');
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
-		//console.log('lat: ' + lat);
-		//console.log('lng: ' + lng);
 		sql = "SELECT id, type, subtype, brand, model, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ',';
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
 		sql += ") AND distance <= 10000.0 ORDER BY distance ASC LIMIT 100";
-		/*console.log('Search location');
-		console.log('SQL:');
-		console.log(sql);
-		console.log('lat: ' + lat);
-		console.log('lng: ' + lng);*/
+		//console.log('Search location');
+		//console.log('SQL:');
+		//console.log(sql);
+		//console.log('lat: ' + lat);
+		//console.log('lng: ' + lng);
 		db.search(sql, [lat, lng], function(error, rows) {
 			if(error) {
-				console.log('search error: ' + JSON.stringify(error));
+				console.log('Error filtering by location: ' + JSON.stringify(error));
 				callback(error);
 				return;
 			}
