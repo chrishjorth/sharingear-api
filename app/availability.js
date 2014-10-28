@@ -26,7 +26,7 @@ function set(gearID, availability, callback) {
 			callback(error);
 			return;
 		}
-		sql = 'INSERT INTO availability(start, end, gear_id) VALUES ';
+		sql = 'INSERT INTO availability(start_time, end_time, gear_id) VALUES ';
 		valueArray = [];
 		for(i = 0; i < availability.length - 1; i++) {
 			sql += '(?, ?, ?), ';
@@ -45,7 +45,7 @@ function set(gearID, availability, callback) {
 }
 
 function get(gearID, callback) {
-	db.query("SELECT start, end FROM availability WHERE gear_id=?", [gearID], function(error, rows) {
+	db.query("SELECT start_time, end_time FROM availability WHERE gear_id=?", [gearID], function(error, rows) {
 		var availabilityArray, i;
 		if(error) {
 			callback(error);
@@ -64,6 +64,7 @@ function get(gearID, callback) {
 }
 
 function removeInterval(gearID, startTime, endTime, callback) {
+	var Availability = this;
 	//Get availability sorted, add data and then call set
 	db.query("SELECT id, start_time, end_time, gear_id FROM availability WHERE gear_id=? ORDER BY start_time DESC", [gearID], function(error, rows) {
 		var i;
@@ -81,10 +82,14 @@ function removeInterval(gearID, startTime, endTime, callback) {
 		for(i = 0; i < rows.length; i++) {
 			intervalStartMoment = Moment(rows[i].start_time, 'YYYY-MM-DD HH:mm:ss');
 			intervalEndMoment = Moment(rows[i].endTime, 'YYYY-MM-DD HH:mm:ss');
-			//Interval is the same or include -> delete
-
+			//Interval is the same or includes availability interval -> delete
+			if(MomentUtilities.isBetween(intervalStartMoment, startMoment, endMoment) === true && MomentUtilities.isBetween(intervalEndMoment, startMoment, endMoment) === true) {
+				//Delete the interval
+				rows.splice(i, 1);
+				i--; //We removed an element and must compensate for the for loop increment
+			}
 			//interval is between availability interval -> 
-			/*if(MomentUtilities.isBetweenExclusive(startMoment, intervalStartMoment, intervalEndMoment) === true && MomentUtilities.isBetween(endMoment, intervalStartMoment, intervalEndMoment) === true) {
+			else if(MomentUtilities.isBetweenExclusive(startMoment, intervalStartMoment, intervalEndMoment) === true && MomentUtilities.isBetween(endMoment, intervalStartMoment, intervalEndMoment) === true) {
 				rows.splice(i, 0, {
 					start_time: endMoment.format('YYYY-MM-DD HH:mm:ss'),
 					end_time: rows[i].end_time
@@ -92,14 +97,20 @@ function removeInterval(gearID, startTime, endTime, callback) {
 				rows[i].end_time = startMoment.format('YYYY-MM-DD HH:mm:ss');
 				i++; //Beacuse we inserted an element and we do not need to loop over it
 			}
-			//interval is including availability interval
-			else if(startMoment.isBefore(intervalStartMoment) === true && )
 			//interval includes start of availability interval
-
-			//interval includes end of availability interval*/
+			else if(MomentUtilities.isBetween(startMoment, intervalStartMoment, intervalEndMoment) === true) {
+				rows[i].start_time = startMoment.format('YYYY-MM-DD HH:mm:ss');
+			}
+			//interval includes end of availability interval
+			else if(MomentUtilities.isBetween(endMoment, intervalStartMoment, intervalEndMoment) === true) {
+				rows[i].end_time = endMoment.format('YYYY-MM-DD HH:mm:ss');
+			}
 		}
+		//At this point rows is the new availability set
+		Availability.set(gearID, rows, function(error) {
+			callback(error);
+		});
 	});
-
 }
 
 /*function isAvailable(gearID, startTime, endTime, callback) {
