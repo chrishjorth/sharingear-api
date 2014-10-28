@@ -28,7 +28,7 @@ function create(renterID, bookingData, callback) {
 			renterID,
 			price
 		];
-		Availability.setToUnavailableFromStartToEnd(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error) {
+		Availability.removeInterval(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error) {
 			if(error) {
 				callback(error);
 				return;

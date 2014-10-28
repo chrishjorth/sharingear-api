@@ -12,7 +12,7 @@ module.exports = {
 	get: get,
 	removeInterval: removeInterval,
 	//isAvailable: isAvailable,
-	setToUnavailableFromStartToEnd: setToUnavailableFromStartToEnd
+	//setToUnavailableFromStartToEnd: setToUnavailableFromStartToEnd
 };
 
 /**
@@ -21,7 +21,7 @@ module.exports = {
 function set(gearID, availability, callback) {
 	//Remove all availability for the gear id
 	db.query("DELETE FROM availability WHERE gear_id=?", [gearID], function(error, result) {
-		var sql, i, valueArray;
+		var sql, i, valueArray, startMoment, endMoment;
 		if(error) {
 			callback(error);
 			return;
@@ -29,6 +29,16 @@ function set(gearID, availability, callback) {
 		sql = 'INSERT INTO availability(start_time, end_time, gear_id) VALUES ';
 		valueArray = [];
 		for(i = 0; i < availability.length - 1; i++) {
+			if(!availability[i].start_time || !availability[i].end_time) {
+				callback('Bad parameters in availability array.');
+				return;
+			}
+			startMoment = Moment(availability[i].start_time);
+			endMoment = Moment(availability[i].end_time);
+			if(startMoment.isValid() === false || endMoment.isValid() === false) {
+				callback('Invalid date in availability array.');
+				return;
+			}
 			sql += '(?, ?, ?), ';
 			valueArray.push(availability[i].start_time, availability[i].end_time, gearID);
 		}
@@ -130,7 +140,7 @@ function removeInterval(gearID, startTime, endTime, callback) {
 /**
  * @assertion: Interval is between an availble interval.
  */
-function setToUnavailableFromStartToEnd(gearID, startTime, endTime, callback) {
+/*function setToUnavailableFromStartToEnd(gearID, startTime, endTime, callback) {
 	console.log('Find availability: ');
 	console.log('startTime: ' + startTime);
 	console.log('endTime: ' + endTime);
@@ -191,4 +201,4 @@ function setToUnavailableFromStartToEnd(gearID, startTime, endTime, callback) {
 			});
 		}
 	});
-}
+}*/
