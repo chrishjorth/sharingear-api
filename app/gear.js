@@ -31,7 +31,7 @@ module.exports = {
  * }
  */
 function getClassification(callback) {
-	db.query("SELECT gear_types.gear_type, gear_subtypes.subtype FROM gear_types, gear_subtypes WHERE gear_subtypes.type_id=gear_types.id ORDER BY gear_types.gear_type", [], function(error, rows) {
+	db.query("SELECT gear_types.gear_type, gear_subtypes.subtype FROM gear_types, gear_subtypes WHERE gear_subtypes.type_id=gear_types.id ORDER BY gear_types.sorting", [], function(error, rows) {
 		var currentGear = '',
 			gearClassification, classification, i;
 
