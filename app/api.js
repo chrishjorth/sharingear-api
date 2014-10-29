@@ -4,6 +4,7 @@
  */
 
 var restify = require('restify'),
+	fs = require('fs'),
 	_ = require('underscore'),
 	config = require('./config'),
 	fb = require('./facebook'),

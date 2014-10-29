@@ -104,7 +104,7 @@ describe('API', function() {
 		});
 	});
 
-	it('Supports GET /users/:id/reservations', function(done) {
+	it.skip('Supports GET /users/:id/reservations', function(done) {
 		supertest(url).get('/users/0/reservations').end(function(err, res) {
 			if(err) {
 				throw err;
