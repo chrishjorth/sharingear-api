@@ -33,19 +33,18 @@ catch(error) {
 
 
 //We only run with https
-try {
-	server = restify.createServer({
-		name: 'Sharingear API',
-		key: key,
-		certificate: certificate
-	});
+server = restify.createServer({
+	name: 'Sharingear API',
+	key: key,
+	certificate: certificate
+});
 
-	//Tunnelblick uses 1337 apparently
-	server.listen(1338, function() {
-		console.log('%s listening at %s', server.name, server.url);
-	});
+//Tunnelblick uses 1337 apparently
+server.listen(1338, function() {
+	console.log('%s listening at %s', server.name, server.url);
+});
 
-	server.use(restify.CORS());
+server.use(restify.CORS());
 server.use(restify.fullResponse());
 server.use(restify.bodyParser());
 
@@ -76,13 +75,6 @@ server.post('/users/:user_id/gear/:gear_id/bookings', createBooking);
 server.get('/users/:user_id/gear/:gear_id/bookings/:booking_id', readClosestBooking);
 server.put('/users/:user_id/gear/:gear_id/bookings/:booking_id', updateBooking);
 //server.del('/bookings/:id', deleteBooking);
-
-
-}
-catch(error) {
-	console.log('Error creating server:');
-	console.log(JSON.stringify(error));
-}
 
 
 
