@@ -76,7 +76,7 @@ function removeInterval(gearID, startTime, endTime, callback) {
 	var Availability = this;
 	//Get availability sorted, add data and then call set
 	db.query("SELECT id, start_time, end_time, gear_id FROM availability WHERE gear_id=? ORDER BY start_time DESC", [gearID], function(error, rows) {
-		var i;
+		var i, startMoment, endMoment, intervalStartMoment, intervalEndMoment;
 		if(error) {
 			callback('Error selecting availability: ' + error);
 			return;
@@ -87,7 +87,6 @@ function removeInterval(gearID, startTime, endTime, callback) {
 		}
 		startMoment = Moment(startTime, 'YYYY-MM-DD HH:mm:ss');
 		endMoment = Moment(endMoment, 'YYYY-MM-DD HH:mm:ss');
-		console.log('Before for...');
 		//Check if the interval fits in any of the availability intervals
 		for(i = 0; i < rows.length; i++) {
 			intervalStartMoment = Moment(rows[i].start_time, 'YYYY-MM-DD HH:mm:ss');
@@ -116,7 +115,6 @@ function removeInterval(gearID, startTime, endTime, callback) {
 				rows[i].end_time = endMoment.format('YYYY-MM-DD HH:mm:ss');
 			}
 		}
-		console.log('Calling Availability.set');
 		//At this point rows is the new availability set
 		Availability.set(gearID, rows, function(error) {
 			callback(error);
