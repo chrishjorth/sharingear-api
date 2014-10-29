@@ -15,7 +15,9 @@ var restify = require('restify'),
 	server;
 
 server = restify.createServer({
-	name: 'Sharingear API'
+	name: 'Sharingear API'/*,
+	key: fs.readFileSync('/home/chrishjorth/keys/server.key'),
+	certificate: fs.readFileSync('/home/chrishjorth/keys/server.csr')*/
 });
 
 //Tunnelblick uses 1337 apparently
@@ -583,7 +585,7 @@ function readReservationsFromUserWithID(req, res, next) {
  * @return: The booking with id.
  */
 function createBooking(req, res, next) {
-	isAuthorized(req.params.id, function(error, status) {
+	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
 			handleError(res, next, 'Error authorizing user: ', error);
 			return;
@@ -592,7 +594,7 @@ function createBooking(req, res, next) {
 			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
 			return;
 		}
-		Booking.create(req.params.id, req.params, function(error, booking) {
+		Booking.create(req.params.user_id, req.params, function(error, booking) {
 			if(error) {
 				handleError(res, next, 'Error creating booking: ', error);
 				return;
