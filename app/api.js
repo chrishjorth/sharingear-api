@@ -14,10 +14,11 @@ var restify = require('restify'),
 	Booking = require('./booking'),
 	server;
 
+//We only run with https
 server = restify.createServer({
-	name: 'Sharingear API'/*,
+	name: 'Sharingear API',
 	key: fs.readFileSync('/home/chrishjorth/keys/server.key'),
-	certificate: fs.readFileSync('/home/chrishjorth/keys/server.csr')*/
+	certificate: fs.readFileSync('/home/chrishjorth/keys/server.csr')
 });
 
 //Tunnelblick uses 1337 apparently
