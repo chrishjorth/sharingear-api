@@ -23,21 +23,27 @@ catch(error) {
 	console.log(JSON.stringify(error));
 }
 
-/*try {
+try {
 	certificate = fs.readFileSync('/home/chrishjorth/keys/server.csr');
 }
 catch(error) {
 	console.log('Error reading server.csr:');
 	console.log(JSON.stringify(error));
-}*/
+}
 
 
 //We only run with https
-server = restify.createServer({
-	name: 'Sharingear API'/*,
-	key: key,
-	certificate: certificate*/
-});
+try {
+	server = restify.createServer({
+		name: 'Sharingear API',
+		key: key,
+		certificate: certificate
+	});
+}
+catch(error) {
+	console.log('Error creating server:');
+	console.log(JSON.stringify(error));
+}
 
 //Tunnelblick uses 1337 apparently
 server.listen(1338, function() {
