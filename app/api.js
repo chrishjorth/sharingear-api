@@ -13,13 +13,30 @@ var restify = require('restify'),
 	Gear = require('./gear'),
 	Availability = require('./availability'),
 	Booking = require('./booking'),
-	server;
+	key, certificate, server;
+
+try {
+	key = fs.readFileSync('/home/chrishjorth/keys/server.key');
+}
+catch(error) {
+	console.log('Error reading server.key:');
+	console.log(JSON.stringify(error));
+}
+
+try {
+	certificate = fs.readFileSync('/home/chrishjorth/keys/server.csr');
+}
+catch(error) {
+	console.log('Error reading server.csr:');
+	console.log(JSON.stringify(error));
+}
+
 
 //We only run with https
 server = restify.createServer({
 	name: 'Sharingear API',
-	key: fs.readFileSync('/home/chrishjorth/keys/server.key'),
-	certificate: fs.readFileSync('/home/chrishjorth/keys/server.csr')
+	key: key,
+	certificate: certificate
 });
 
 //Tunnelblick uses 1337 apparently
