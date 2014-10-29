@@ -24,7 +24,7 @@ catch(error) {
 }
 
 try {
-	certificate = fs.readFileSync('/home/chrishjorth/keys/server.csr');
+	certificate = fs.readFileSync('/home/chrishjorth/keys/server.pem');
 }
 catch(error) {
 	console.log('Error reading server.csr:');
