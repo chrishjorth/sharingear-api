@@ -45,7 +45,7 @@ function getClassification(callback) {
 			callback(error);
 			return;
 		}
-		//Assertion: the query returns rows sorted by gear type
+		//Assertion: the query returns rows sorted
 		for(i = 0; i < rows.length; i++) {
 			if(rows[i].gear_type !== currentGear) {
 				currentGear = rows[i].gear_type;
