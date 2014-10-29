@@ -15,7 +15,7 @@ var restify = require('restify'),
 	Booking = require('./booking'),
 	key, certificate, server;
 
-/*try {
+try {
 	key = fs.readFileSync('/home/chrishjorth/keys/server.key');
 }
 catch(error) {
@@ -23,7 +23,7 @@ catch(error) {
 	console.log(JSON.stringify(error));
 }
 
-try {
+/*try {
 	certificate = fs.readFileSync('/home/chrishjorth/keys/server.csr');
 }
 catch(error) {
