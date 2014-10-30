@@ -15,22 +15,8 @@ var restify = require('restify'),
 	Booking = require('./booking'),
 	key, certificate, server;
 
-try {
-	key = fs.readFileSync('/home/chrishjorth/keys/server.key');
-}
-catch(error) {
-	console.log('Error reading server.key:');
-	console.log(JSON.stringify(error));
-}
-
-try {
-	certificate = fs.readFileSync('/home/chrishjorth/keys/server.pem');
-}
-catch(error) {
-	console.log('Error reading server.csr:');
-	console.log(JSON.stringify(error));
-}
-
+key = fs.readFileSync('/home/chrishjorth/keys/server.key');
+certificate = fs.readFileSync('/home/chrishjorth/keys/server.pem');
 
 //We only run with https
 server = restify.createServer({
