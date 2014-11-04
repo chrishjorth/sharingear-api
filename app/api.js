@@ -3,7 +3,8 @@
  * @author: Chris Hjorth
  */
 
-var restify = require('restify'),
+var IS_LOCAL = false,
+	restify = require('restify'),
 	fs = require('fs'),
 	_ = require('underscore'),
 	config = require('./config'),
@@ -13,17 +14,40 @@ var restify = require('restify'),
 	Gear = require('./gear'),
 	Availability = require('./availability'),
 	Booking = require('./booking'),
-	key, certificate, server;
+	readFileSuccess = true,
+	key, certificate,server;
 
-key = fs.readFileSync('/home/chrishjorth/keys/server.key');
-certificate = fs.readFileSync('/home/chrishjorth/keys/server.pem');
 
-//We only run with https
-server = restify.createServer({
-	name: 'Sharingear API',
-	key: key,
-	certificate: certificate
-});
+try {
+	key = fs.readFileSync('/home/chrishjorth/keys/server.key');
+}
+catch(error) {
+	console.log('Could not read key file');
+	readFileSuccess = false;
+}
+
+try {
+	certificate = fs.readFileSync('/home/chrishjorth/keys/server.pem');
+}
+catch(error) {
+	console.log('Could not read certificate file.');
+	readFileSuccess = false;
+}
+
+if(IS_LOCAL === true || readFileSuccess === false) {
+	//This is so that we do not need to have keys and certificates installed for localhost development
+	server = restify.createServer({
+		name: 'Sharingear API'
+	});
+}
+else {
+	//We only run with https
+	server = restify.createServer({
+		name: 'Sharingear API',
+		key: key,
+		certificate: certificate
+	});
+}
 
 //Tunnelblick uses 1337 apparently
 server.listen(1338, function() {
@@ -713,5 +737,6 @@ function isAuthorized(userID, callback) {
 }
 
 module.exports = {
+	IS_LOCAL: IS_LOCAL,
 	server: server
 };

@@ -124,7 +124,7 @@ function getToken(userID, callback) {
 }
 
 function readUser(userID, callback) {
-	db.query("SELECT id, name, surname, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, name, surname, image_url, bio, submerchant FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -140,7 +140,7 @@ function readUser(userID, callback) {
 function update(userID, updatedInfo, callback) {
 	var userInfo;
 
-	db.query("SELECT id, email, name, surname, birthdate, city, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, phone, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -154,12 +154,17 @@ function update(userID, updatedInfo, callback) {
 			(updatedInfo.name ? updatedInfo.name : rows[0].name),
 			(updatedInfo.surname ? updatedInfo.surname : rows[0].surname),
 			(updatedInfo.birthdate ? updatedInfo.birthdate : rows[0].birthdate),
+			(updatedInfo.address ? updatedInfo.address : rows[0].address),
+			(updatedInfo.postal_code ? updatedInfo.postal_code : rows[0].postal_code),
 			(updatedInfo.city ? updatedInfo.city : rows[0].city),
+			(updatedInfo.region ? updatedInfo.region : rows[0].region),
+			(updatedInfo.country ? updatedInfo.country : rows[0].country),
+			(updatedInfo.phone ? updatedInfo.phone : rows[0].phone),
 			(updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
 			(updatedInfo.bio ? updatedInfo.bio : rows[0].bio),
 			userID
 		];
-		db.query("UPDATE users SET email=?, name=?, surname=?, birthdate=?, city=?, image_url=?, bio=? WHERE id=? LIMIT 1", userInfo, function(error, result) {
+		db.query("UPDATE users SET email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, phone=?, image_url=?, bio=? WHERE id=? LIMIT 1", userInfo, function(error, result) {
 			if(error) {
 				callback(error);
 				return;
@@ -168,6 +173,7 @@ function update(userID, updatedInfo, callback) {
 				callback('No user with id ' + userID + ' after successful select!');
 				return;
 			}
+			//Check if possible to register as submerchant if not already registered
 			callback(null, {
 				id: userID,
 				email: userInfo[0],
