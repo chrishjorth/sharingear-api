@@ -35,7 +35,7 @@ catch(error) {
 }
 
 if(IS_LOCAL === true || readFileSuccess === false) {
-	//This is so that we do not need to have keys and certificates installed for localhost development
+	//This is so that we do not need to have keys and certificates installed for localhost development, or if files could not be loaded.
 	server = restify.createServer({
 		name: 'Sharingear API'
 	});
