@@ -193,7 +193,7 @@ function update(userID, updatedInfo, callback) {
 				image_url: userInfo[10],
 				bio: userInfo[11]
 			};
-			Payment.registerSubmerchant(user, function(error) {
+			Payment.registerBankAccountForUser(user, updatedInfo.iban, updatedInfo.swift, function(error) {
 				callback(error, user);
 			});
 		});

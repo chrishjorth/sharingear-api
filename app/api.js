@@ -82,7 +82,7 @@ server.get('/users/:id/reservations', readReservationsFromUserWithID);
 server.get('/users/:id/newfilename/:filename', generateFileName);
 
 server.post('/users/:user_id/gear/:gear_id/bookings', createBooking);
-server.get('/users/:user_id/gear/:gear_id/bookings/:booking_id', readClosestBooking);
+server.get('/users/:user_id/gear/:gear_id/bookings/latest', readClosestBooking);
 server.put('/users/:user_id/gear/:gear_id/bookings/:booking_id', updateBooking);
 //server.del('/bookings/:id', deleteBooking);
 
