@@ -19,7 +19,7 @@ module.exports = {
 	updateGearWithID: updateGearWithID,
 	readGearWithID: readGearWithID,
 	search: search,
-	createGearBulk: createGearBulk,
+	//createGearBulk: createGearBulk,
 	getPrice: getPrice,
 	setStatus: setStatus
 };
@@ -161,12 +161,16 @@ function checkOwner(userID, gearID, callback) {
 	});
 }
 
+/**
+ * Latitude and longitude must be in degrees.
+ */
 function createGear(newGear, callback) {
 	var Gear = this,
 		create;
 
 	create = function() {
 		var lat, lng, gear;
+		//Convert to radians
 		lat = parseFloat(newGear.latitude) * Math.PI / 180;
 		if(isNaN(lat)) {
 			lat = null;
@@ -245,9 +249,15 @@ function createGear(newGear, callback) {
 
 function readGearFromUser(userID, callback) {
 	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, gear_status FROM gear WHERE owner_id=?", [userID], function(error, rows) {
+		var i;
 		if(error) {
 			callback(error);
 			return;
+		}
+		//Convert latitudes and longitudes
+		for(i = 0; i < rows.length; i++) {
+			rows[i].latitude *= 180 / Math.PI;
+			rows[i].longitude *= 180 / Math.PI;
 		}
 		callback(null, rows);
 	});
@@ -282,12 +292,16 @@ function addImage(userID, gearID, imageURL, callback) {
 	});
 }
 
+/**
+ * Latitude and longitude must be in degrees.
+ */
 function updateGearWithID(gearID, updatedGearData, callback) {
 	var Gear = this,
 		update;
 
 	update = function() {
 		var lat, lng, inputs;
+		//convert to radians
 		lat = parseFloat(updatedGearData.latitude) * Math.PI / 180;
 		if(isNaN(lat)) {
 			lat = null;
@@ -389,17 +403,19 @@ function readGearWithID(gearID, callback) {
 		if(gear.country === null) {
 			gear.country = '';
 		}
+		gear.latitude *= 180 / Math.PI;
+		gear.longitude *= 180 / Math.PI;
 		callback(null, rows[0]);
 	});
 }
 
 /**
- * @param lat: Latitude in radians
- * @param lng: Longitude in radians
+ * @param lat: Latitude in degrees
+ * @param lng: Longitude in degrees
  */
 function search(lat, lng, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
-	//console.log('Search gear');
+	console.log('Search gear');
 	db.search("SELECT id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
 		var sql, i;
 		if(error) {
@@ -411,7 +427,8 @@ function search(lat, lng, gear, callback) {
 			callback(null, []);
 			return;
 		}
-		//console.log('Found gear by full text search');
+		console.log('Found gear by full text search');
+		//Convert to radians
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
 		sql = "SELECT id, type, subtype, brand, model, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
@@ -420,25 +437,30 @@ function search(lat, lng, gear, callback) {
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
 		sql += ") AND distance <= 10000.0 ORDER BY distance ASC LIMIT 100";
-		//console.log('Search location');
-		//console.log('SQL:');
-		//console.log(sql);
-		//console.log('lat: ' + lat);
-		//console.log('lng: ' + lng);
+		console.log('Search location');
+		console.log('SQL:');
+		console.log(sql);
+		console.log('lat: ' + lat);
+		console.log('lng: ' + lng);
 		db.search(sql, [lat, lng], function(error, rows) {
+			var i;
 			if(error) {
 				console.log('Error filtering by location: ' + JSON.stringify(error));
 				callback(error);
 				return;
 			}
-			//console.log('Found gear by location filter');
-			//console.log(JSON.stringify(rows));
+			for(i = 0; i < rows.length; i++) {
+				rows[i].latitude *= 180 / Math.PI;
+				rows[i].longitude *= 180 / Math.PI;
+			}
+			console.log('Found gear by location filter');
+			console.log(JSON.stringify(rows));
 			callback(null, rows);
 		});
 	});
 }
 
-function createGearBulk(ownerID, gearList, callback) {
+/*function createGearBulk(ownerID, gearList, callback) {
 	var create, types, typesSQL, subtypes, subtypesSQL, brands, brandsSQL, i, gearItem;
 
 	create = function() {
@@ -606,7 +628,7 @@ function createGearBulk(ownerID, gearList, callback) {
 			});
 		});
 	});
-}
+}*/
 
 function getPrice(gearID, startTime, endTime, callback) {
 	db.query("SELECT price_a, price_b, price_c FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
