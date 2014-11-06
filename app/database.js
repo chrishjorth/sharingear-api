@@ -5,11 +5,15 @@
 /* !TODO: Handle server disconnects */
 
 var mysql = require('mysql'),
+	http = require('http'),
 	child_process = require('child_process'),
 	isIndexing = false,
 	needToReindex = false,
 	sharingearPool,
-	sphinxPool;
+	sphinxPool,
+	indexerWebHookURL;
+
+indexerWebHookURL = 'http://146.148.126.111/index-sphinx.php';
 
 sharingearPool = mysql.createPool({
 	host: '173.194.247.144',
@@ -63,12 +67,22 @@ function search(searchString, paramArray, callback) {
 	});
 }
 
+/**
+ * NOTE: Indexing is currently handled by a cron job running each minute.
+ */
 function index() {
-	var indexer, response;	
+	/*var indexer, response;	
 	indexer = child_process.spawn('/usr/bin/indexer', ['gear_delta', '--rotate']);
 	indexer.on('close', function(code) {
 		if(code !== 0) {
 			console.log('Error indexing. Indexer terminated with code: ' + code);
 		}
+	});*/
+	/*console.log('try indexing');
+	var request = http.get(indexerWebHookURL, function(result) {
+		console.log('Indexing result: ' + result);
 	});
+	request.on('error', function(error) {
+		console.log('Error calling indexer: ' + error);
+	});*/
 }
