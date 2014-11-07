@@ -20,12 +20,19 @@ module.exports = {
  */
 function set(gearID, availability, callback) {
 	//Remove all availability for the gear id
+
 	db.query("DELETE FROM availability WHERE gear_id=?", [gearID], function(error, result) {
 		var sql, i, valueArray, startMoment, endMoment;
 		if(error) {
 			callback(error);
 			return;
 		}
+
+		if (availability.length <= 0) {
+			callback(null);
+			return;
+		}
+
 		sql = 'INSERT INTO availability(start_time, end_time, gear_id) VALUES ';
 		valueArray = [];
 		for(i = 0; i < availability.length - 1; i++) {
