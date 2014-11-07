@@ -10,6 +10,7 @@ var db = require('./database'),
 module.exports = {
 	create: create,
 	readClosest: readClosest,
+    readReservationsForUser: readReservationsForUser,
 	update: update
 };
 
@@ -69,6 +70,22 @@ function readClosest(gearID, callback) {
 		}
 		callback(null, rows[0]);
 	});
+}
+
+function readReservationsForUser(renterID, callback){
+
+    db.query("SELECT bookings.id, bookings.gear_id, gear.type, gear.subtype, gear.brand, gear.model, gear.images, gear.city, bookings.start_time, bookings.end_time, bookings.price, bookings.booking_status FROM bookings INNER JOIN gear ON bookings.gear_id = gear.id WHERE bookings.renter_id=?", [renterID], function(error, rows) {
+        if(error) {
+            callback(error);
+            return;
+        }
+        if(rows.length <= 0) {
+            callback("No reservations for this user with ID: " + renterID + ".");
+            return;
+        }
+        callback(null, rows);
+    });
+
 }
 
 function update(gearID, bookingID, status, callback) {

@@ -1,10 +1,15 @@
 var mocha = require('mocha'),
 	chai = require('chai'),
 	supertest = require('supertest'),
+	api = require('../api'),
 	expect = chai.expect,
 	url = 'http://api.sharingear.com';
 
 describe('API', function() {
+	it('Is NOT local', function() {
+		expect(api.IS_LOCAL).to.equal(false);
+	});
+
 	it.skip('Supports GET /gearclassification', function(done) {
 		supertest(url).get('/gearclassification').end(function(err, res) {
 			if(err) {

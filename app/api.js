@@ -3,7 +3,8 @@
  * @author: Chris Hjorth
  */
 
-var restify = require('restify'),
+var IS_LOCAL = false,
+	restify = require('restify'),
 	fs = require('fs'),
 	_ = require('underscore'),
 	config = require('./config'),
@@ -13,17 +14,40 @@ var restify = require('restify'),
 	Gear = require('./gear'),
 	Availability = require('./availability'),
 	Booking = require('./booking'),
-	key, certificate, server;
+	readFileSuccess = true,
+	key, certificate,server;
 
-key = fs.readFileSync('/home/chrishjorth/keys/server.key');
-certificate = fs.readFileSync('/home/chrishjorth/keys/server.pem');
 
-//We only run with https
-server = restify.createServer({
-	name: 'Sharingear API',
-	key: key,
-	certificate: certificate
-});
+try {
+	key = fs.readFileSync('/home/chrishjorth/keys/server.key');
+}
+catch(error) {
+	console.log('Could not read key file');
+	readFileSuccess = false;
+}
+
+try {
+	certificate = fs.readFileSync('/home/chrishjorth/keys/server.pem');
+}
+catch(error) {
+	console.log('Could not read certificate file.');
+	readFileSuccess = false;
+}
+
+if(IS_LOCAL === true || readFileSuccess === false) {
+	//This is so that we do not need to have keys and certificates installed for localhost development, or if files could not be loaded.
+	server = restify.createServer({
+		name: 'Sharingear API'
+	});
+}
+else {
+	//We only run with https
+	server = restify.createServer({
+		name: 'Sharingear API',
+		key: key,
+		certificate: certificate
+	});
+}
 
 //Tunnelblick uses 1337 apparently
 server.listen(1338, function() {
@@ -52,13 +76,13 @@ server.get('/users/:user_id/gear', readGearFromUserWithID);
 server.put('/users/:user_id/gear/:gear_id', updateGearFromUserWithID);
 server.post('/users/:user_id/gear/:gear_id/availability', createGearAvailability);
 server.get('/users/:user_id/gear/:gear_id/availability', readGearAvailability);
-server.get('/users/:id/reservations', readReservationsFromUserWithID);
+server.get('/users/:renter_id/reservations', readReservationsFromUserWithID);
 //server.get('/users/search/:string', readUserSearchResults);
 
 server.get('/users/:id/newfilename/:filename', generateFileName);
 
 server.post('/users/:user_id/gear/:gear_id/bookings', createBooking);
-server.get('/users/:user_id/gear/:gear_id/bookings/:booking_id', readClosestBooking);
+server.get('/users/:user_id/gear/:gear_id/bookings/latest', readClosestBooking);
 server.put('/users/:user_id/gear/:gear_id/bookings/:booking_id', updateBooking);
 //server.del('/bookings/:id', deleteBooking);
 
@@ -310,7 +334,6 @@ function readGearSearchResults(req, res, next) {
  */
 function createUserSession(req, res, next) {
 	var createSession;
-
 	createSession = function(user, longToken) {
 		User.setServerAccessToken(user.fbid, longToken, function(error) {
 			if(error) {
@@ -537,55 +560,72 @@ function createGearAvailability(req, res, next) {
 	});
 }
 
+/**
+ * @param: The user_id of the renter
+ * @return: All bookings of the renter
+ */
 function readReservationsFromUserWithID(req, res, next) {
-	res.send([{
-		id: 0,
-		type: 0,
-		subtype: 0,
-		brand: 0,
-		model: 'Gibson Guitar',
-		description: 'blah blah',
-		photos: 'url,url,url',
-		price: 100.5,
-		seller_user_id: 0,
-		city: 'Copenhagen',
-		address: '',
-		price1: 4,
-		price2: 15,
-		price3: 75
-	}, {
-		id: 0,
-		type: 0,
-		subtype: 0,
-		brand: 0,
-		model: 'Gibson Guitar',
-		description: 'blah blah',
-		photos: 'url,url,url',
-		price: 100.5,
-		seller_user_id: 0,
-		city: 'Copenhagen',
-		address: '',
-		price1: 4,
-		price2: 15,
-		price3: 75
-	}, {
-		id: 0,
-		type: 0,
-		subtype: 0,
-		brand: 0,
-		model: 'Gibson Guitar',
-		description: 'blah blah',
-		photos: 'url,url,url',
-		price: 100.5,
-		seller_user_id: 0,
-		city: 'Copenhagen',
-		address: '',
-		price1: 4,
-		price2: 15,
-		price3: 75
-	}]);
-	next();
+
+    Booking.readReservationsForUser(req.params.renter_id, function (error, reservations) {
+        if (error) {
+            handleError(res,next,'Error reading reservations for user: ',error);
+            return;
+        }
+        res.send(reservations);
+        next();
+    });
+
 }
+
+//function readReservationsFromUserWithID(req, res, next) {
+//	res.send([{
+//		id: 0,
+//		type: 0,
+//		subtype: 0,
+//		brand: 0,
+//		model: 'Gibson Guitar',
+//		description: 'blah blah',
+//		photos: 'url,url,url',
+//		price: 100.5,
+//		seller_user_id: 0,
+//		city: 'Copenhagen',
+//		address: '',
+//		price1: 4,
+//		price2: 15,
+//		price3: 75
+//	}, {
+//		id: 0,
+//		type: 0,
+//		subtype: 0,
+//		brand: 0,
+//		model: 'Gibson Guitar',
+//		description: 'blah blah',
+//		photos: 'url,url,url',
+//		price: 100.5,
+//		seller_user_id: 0,
+//		city: 'Copenhagen',
+//		address: '',
+//		price1: 4,
+//		price2: 15,
+//		price3: 75
+//	}, {
+//		id: 0,
+//		type: 0,
+//		subtype: 0,
+//		brand: 0,
+//		model: 'Gibson Guitar',
+//		description: 'blah blah',
+//		photos: 'url,url,url',
+//		price: 100.5,
+//		seller_user_id: 0,
+//		city: 'Copenhagen',
+//		address: '',
+//		price1: 4,
+//		price2: 15,
+//		price3: 75
+//	}]);
+//	next();
+//}
 
 /**
  * @param: a user id, token and booking parameters
@@ -713,5 +753,6 @@ function isAuthorized(userID, callback) {
 }
 
 module.exports = {
+	IS_LOCAL: IS_LOCAL,
 	server: server
 };
