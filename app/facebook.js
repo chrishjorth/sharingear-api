@@ -50,7 +50,7 @@ function checkToken(longToken, callback) {
 
 function graphCall(apiPath, callback) {
 	var buffer = '',
-	options, request;
+		options, request;
 
 	options = {
 		host: 'graph.facebook.com',

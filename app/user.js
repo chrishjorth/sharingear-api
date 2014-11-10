@@ -7,19 +7,17 @@
 "use strict";
 
 var db = require("./database"),
-	Payment = require("./payment");
+	Payment = require("./payment"),
+	getUserFromFacebookID,
+	createUserFromFacebookInfo,
+	setServerAccessToken,
+	matchToken,
+	getToken,
+	readUser,
+	update,
+	updateBankDetails;
 
-module.exports = {
-	getUserFromFacebookID: getUserFromFacebookID,
-	createUserFromFacebookInfo: createUserFromFacebookInfo,
-	setServerAccessToken: setServerAccessToken,
-	matchToken: matchToken,
-	getToken: getToken,
-	readUser: readUser,
-	update: update
-};
-
-function getUserFromFacebookID(fbid, callback) {
+getUserFromFacebookID = function(fbid, callback) {
 	db.query("SELECT id, fbid, email, name, surname, birthdate, city, image_url, bio FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		if(error) {
 			callback(error);
@@ -31,9 +29,9 @@ function getUserFromFacebookID(fbid, callback) {
 		}
 		callback(null, rows[0]);
 	});
-}
+};
 
-var createUserFromFacebookInfo = function(userInfo, callback) {
+createUserFromFacebookInfo = function(userInfo, callback) {
 	var User = this,
 		user;
 
@@ -84,7 +82,7 @@ var createUserFromFacebookInfo = function(userInfo, callback) {
 /**
  * Stores the long term access token for a user. If the user does not exists the user is created first.
  */
-function setServerAccessToken(fbid, longToken, callback) {
+setServerAccessToken = function(fbid, longToken, callback) {
 	db.query("UPDATE users SET fb_token=? WHERE fbid=? LIMIT 1", [longToken, fbid], function(error, result) {
 		if(result.affectedRows <= 0) {
 			callback("No user updated.");
@@ -92,9 +90,9 @@ function setServerAccessToken(fbid, longToken, callback) {
 		}
 		callback(error);
 	});
-}
+};
 
-function matchToken(userID, fbLongToken, callback) {
+matchToken = function(userID, fbLongToken, callback) {
 	db.query("SELECT id FROM users WHERE id=? AND fb_token=? LIMIT 1", [userID, fbLongToken], function(error, rows) {
 		if(error) {
 			callback(error);
@@ -107,9 +105,9 @@ function matchToken(userID, fbLongToken, callback) {
 			callback(null, true);
 		}
 	});
-}
+};
 
-function getToken(userID, callback) {
+getToken = function(userID, callback) {
 	db.query("SELECT fb_token FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
@@ -125,9 +123,9 @@ function getToken(userID, callback) {
 		}
 		callback(null, rows[0].fb_token);
 	});
-}
+};
 
-function readUser(userID, callback) {
+readUser = function(userID, callback) {
 	db.query("SELECT id, name, surname, image_url, bio, submerchant FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
@@ -139,12 +137,11 @@ function readUser(userID, callback) {
 		}
 		callback(null, rows[0]);
 	});
-}
+};
 
-function update(userID, updatedInfo, callback) {
-	var userInfo;
-
-	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, phone, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+update = function(userID, updatedInfo, callback) {
+	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, phone, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+		var userInfo;
 		if(error) {
 			callback(error);
 			return;
@@ -153,49 +150,65 @@ function update(userID, updatedInfo, callback) {
 			callback("No user with id " + userID + ".");
 			return;
 		}
-		userInfo = [
-			(updatedInfo.email ? updatedInfo.email : rows[0].email),
-			(updatedInfo.name ? updatedInfo.name : rows[0].name),
-			(updatedInfo.surname ? updatedInfo.surname : rows[0].surname),
-			(updatedInfo.birthdate ? updatedInfo.birthdate : rows[0].birthdate),
-			(updatedInfo.address ? updatedInfo.address : rows[0].address),
-			(updatedInfo.postal_code ? updatedInfo.postal_code : rows[0].postal_code),
-			(updatedInfo.city ? updatedInfo.city : rows[0].city),
-			(updatedInfo.region ? updatedInfo.region : rows[0].region),
-			(updatedInfo.country ? updatedInfo.country : rows[0].country),
-			(updatedInfo.phone ? updatedInfo.phone : rows[0].phone),
-			(updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
-			(updatedInfo.bio ? updatedInfo.bio : rows[0].bio),
-			userID
-		];
-		db.query("UPDATE users SET email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, phone=?, image_url=?, bio=? WHERE id=? LIMIT 1", userInfo, function(error) {
-			var user;
+
+		userInfo = {
+			email: (updatedInfo.email ? updatedInfo.email : rows[0].email),
+			name: (updatedInfo.name ? updatedInfo.name : rows[0].name),
+			surname: (updatedInfo.surname ? updatedInfo.surname : rows[0].surname),
+			birthdate: (updatedInfo.birthdate ? updatedInfo.birthdate : rows[0].birthdate),
+			address: (updatedInfo.address ? updatedInfo.address : rows[0].address),
+			postal_code: (updatedInfo.postal_code ? updatedInfo.postal_code : rows[0].postal_code),
+			city: (updatedInfo.city ? updatedInfo.city : rows[0].city),
+			region: (updatedInfo.region ? updatedInfo.region : rows[0].region),
+			country: (updatedInfo.country ? updatedInfo.country : rows[0].country),
+			phone: (updatedInfo.phone ? updatedInfo.phone : rows[0].phone),
+			image_url: (updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
+			bio: (updatedInfo.bio ? updatedInfo.bio : rows[0].bio),
+			id: userID
+		};
+
+		Payment.updateUser(rows[0].mangopay_id, userInfo, function(error, mangopay_id) {
+			var userInfoArray;
 			if(error) {
 				callback(error);
 				return;
 			}
-			if(rows.length <= 0) {
-				callback("No user with id " + userID + " after successful select!");
-				return;
-			}
-			user = {
-				id: userID,
-				email: userInfo[0],
-				name: userInfo[1],
-				surname: userInfo[2],
-				birthdate: userInfo[3],
-				address: userInfo[4],
-				postal_code: userInfo[5],
-				city: userInfo[6],
-				region: userInfo[7],
-				country: userInfo[8],
-				phone: userInfo[9],
-				image_url: userInfo[10],
-				bio: userInfo[11]
-			};
-			Payment.registerBankAccountForUser(user, updatedInfo.iban, updatedInfo.swift, function(error) {
-				callback(error, user);
+
+			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.phone, userInfo.image_url, userInfo.bio, userInfo.id];
+
+			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, phone=?, image_url=?, bio=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				callback(null, userInfo);
 			});
 		});
 	});
-}
+};
+
+updateBankDetails = function(userID, bankDetails, callback) {
+	db.query("SELECT mangopay_id, name, surname, address FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No user with id " + userID + ".");
+			return;
+		}
+
+		Payment.registerBankAccountForUser(rows[0], bankDetails.iban, bankDetails.swift, callback);
+	});
+};
+
+module.exports = {
+	getUserFromFacebookID: getUserFromFacebookID,
+	createUserFromFacebookInfo: createUserFromFacebookInfo,
+	setServerAccessToken: setServerAccessToken,
+	matchToken: matchToken,
+	getToken: getToken,
+	readUser: readUser,
+	update: update,
+	updateBankDetails: updateBankDetails
+};

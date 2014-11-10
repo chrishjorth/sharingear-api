@@ -29,22 +29,26 @@ function create(renterID, bookingData, callback) {
 			renterID,
 			price
 		];
+		//console.log('Remove interval:');
 		Availability.removeInterval(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error) {
 			if(error) {
 				callback(error);
 				return;
 			}
+			//console.log('Insert booking');
 			db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, price) VALUES (?, ?, ?, ?, ?)", booking, function(error, result) {
 				if(error) {
 					callback('Error inserting booking: ' + error);
 					return;
 				}
 				//Set status to pending on gear
+				//console.log('Set gear status');
 				Gear.setStatus(bookingData.gear_id, 'pending', function(error) {
 					if(error) {
 						callback(error);
 						return;
 					}
+					//console.log('create booking callback');
 					callback(null, {
 						id: result.insertId,
 						gear_id: bookingData.gear_id,

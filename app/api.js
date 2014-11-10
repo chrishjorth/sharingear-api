@@ -72,6 +72,7 @@ server.get('/gear/search/:location/:gear/:daterange', readGearSearchResults);
 server.post('/users/login', createUserSession);
 server.get('/users/:id', readUserWithID);
 server.put('/users/:id', updateUserWithID);
+server.put('/users/:id/bankdetails', updateUserBankDetails);
 server.get('/users/:user_id/gear', readGearFromUserWithID);
 server.put('/users/:user_id/gear/:gear_id', updateGearFromUserWithID);
 server.post('/users/:user_id/gear/:gear_id/availability', createGearAvailability);
@@ -401,25 +402,6 @@ function readUserWithID(req, res, next) {
 }
 
 /**
- * @param: A search string
- * @return: {} or an array of search results
- */
-/*function readUserSearchResults(req, res, next) {
-	res.send([{
-		id: 0,
-		type: 0,
-		name: 'Chris',
-		surname: 'Hjorth',
-		birthdate: '1984-09-17',
-		address: 'Anders Nielsens Vej 21A, 1. tv',
-		postcode: 9400,
-		state: 'Nordjylland',
-		country: 'DNK'
-	}]);
-	next();
-}*/
-
-/**
  * @param: A user id and token
  * @return: The updated user description
  */
@@ -441,6 +423,27 @@ function updateUserWithID(req, res, next) {
 				return;
 			}
 			res.send(updatedUser);
+			next();
+		});
+	});
+}
+
+function updateUserBankDetails(req, res, next) {
+	isAuthorized(req.params.id, function(error, status) {
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		User.updateBankDetails(req.params.id, req.params, function(error) {
+			if(error) {
+				handleError(res, next, 'Error adding bank details: ', error);
+				return;
+			}
+			res.send({});
 			next();
 		});
 	});
@@ -576,56 +579,6 @@ function readReservationsFromUserWithID(req, res, next) {
     });
 
 }
-
-//function readReservationsFromUserWithID(req, res, next) {
-//	res.send([{
-//		id: 0,
-//		type: 0,
-//		subtype: 0,
-//		brand: 0,
-//		model: 'Gibson Guitar',
-//		description: 'blah blah',
-//		photos: 'url,url,url',
-//		price: 100.5,
-//		seller_user_id: 0,
-//		city: 'Copenhagen',
-//		address: '',
-//		price1: 4,
-//		price2: 15,
-//		price3: 75
-//	}, {
-//		id: 0,
-//		type: 0,
-//		subtype: 0,
-//		brand: 0,
-//		model: 'Gibson Guitar',
-//		description: 'blah blah',
-//		photos: 'url,url,url',
-//		price: 100.5,
-//		seller_user_id: 0,
-//		city: 'Copenhagen',
-//		address: '',
-//		price1: 4,
-//		price2: 15,
-//		price3: 75
-//	}, {
-//		id: 0,
-//		type: 0,
-//		subtype: 0,
-//		brand: 0,
-//		model: 'Gibson Guitar',
-//		description: 'blah blah',
-//		photos: 'url,url,url',
-//		price: 100.5,
-//		seller_user_id: 0,
-//		city: 'Copenhagen',
-//		address: '',
-//		price1: 4,
-//		price2: 15,
-//		price3: 75
-//	}]);
-//	next();
-//}
 
 /**
  * @param: a user id, token and booking parameters

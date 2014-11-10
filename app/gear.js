@@ -256,8 +256,8 @@ function readGearFromUser(userID, callback) {
 		}
 		//Convert latitudes and longitudes
 		for(i = 0; i < rows.length; i++) {
-			rows[i].latitude *= 180 / Math.PI;
-			rows[i].longitude *= 180 / Math.PI;
+			rows[i].latitude = rows[i].latitude * 180 / Math.PI;
+			rows[i].longitude = rows[i].longitude * 180 / Math.PI;
 		}
 		callback(null, rows);
 	});
@@ -403,8 +403,8 @@ function readGearWithID(gearID, callback) {
 		if(gear.country === null) {
 			gear.country = '';
 		}
-		gear.latitude *= 180 / Math.PI;
-		gear.longitude *= 180 / Math.PI;
+		gear.latitude = gear.latitude * 180 / Math.PI;
+		gear.longitude = gear.longitude * 180 / Math.PI;
 		callback(null, rows[0]);
 	});
 }
@@ -450,8 +450,8 @@ function search(lat, lng, gear, callback) {
 				return;
 			}
 			for(i = 0; i < rows.length; i++) {
-				rows[i].latitude *= 180 / Math.PI;
-				rows[i].longitude *= 180 / Math.PI;
+				rows[i].latitude = rows[i].latitude * 180 / Math.PI;
+				rows[i].longitude = rows[i].longitude * 180 / Math.PI;
 			}
 			//console.log('Found gear by location filter');
 			//console.log(JSON.stringify(rows));
@@ -648,16 +648,16 @@ function getPrice(gearID, startTime, endTime, callback) {
 		days = parseInt(endMoment.diff(startMoment, 'days'), 10);
 		endMoment.subtract(days, 'days');
 		hours = parseInt(endMoment.diff(startMoment, 'hours'), 10);
-		console.log('startTime: ' + startTime);
+		/*console.log('startTime: ' + startTime);
 		console.log('endTime: ' + endTime);
 		console.log('weeks: ' + weeks);
 		console.log('days: ' + days);
 		console.log('hours: ' + hours);
 		console.log('price_a: ' + rows[0].price_a);
 		console.log('price_b: ' + rows[0].price_b);
-		console.log('price_c: ' + rows[0].price_c);
+		console.log('price_c: ' + rows[0].price_c);*/
 		price = rows[0].price_a * hours + rows[0].price_b * days + rows[0].price_c * weeks;
-		console.log('total price: ' + price);
+		//console.log('total price: ' + price);
 		callback(null, price);
 	});
 }
