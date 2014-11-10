@@ -18,9 +18,12 @@ module.exports = {
 /**
  * @param availability: List of start and end days in the format "YYYY-MM-DD HH:MM:SS".
  */
-function set(gearID, availability, callback) {
+function set(gearID, availability, alwaysFlag, callback) {
 	//Remove all availability for the gear id
 
+	console.log('here');
+
+	//separate the wipe and call here
 	db.query("DELETE FROM availability WHERE gear_id=?", [gearID], function(error, result) {
 		var sql, i, valueArray, startMoment, endMoment;
 		if(error) {
@@ -56,7 +59,7 @@ function set(gearID, availability, callback) {
 				callback(error);
 				return;
 			}
-			callback(null);
+			callback(alwaysFlag);
 		});
 	});
 }
@@ -104,7 +107,7 @@ function removeInterval(gearID, startTime, endTime, callback) {
 				rows.splice(i, 1);
 				i--; //We removed an element and must compensate for the for loop increment
 			}
-			//interval is between availability interval -> 
+			//interval is between availability interval ->
 			else if(MomentUtilities.isBetweenExclusive(startMoment, intervalStartMoment, intervalEndMoment) === true && MomentUtilities.isBetween(endMoment, intervalStartMoment, intervalEndMoment) === true) {
 				rows.splice(i, 0, {
 					start_time: endMoment.format('YYYY-MM-DD HH:mm:ss'),

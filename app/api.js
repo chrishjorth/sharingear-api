@@ -248,7 +248,7 @@ function addImageToGear(req, res, next) {
 		handleError(res, next, 'Error adding image to gear: ', 'image url is from an invalid domain.');
 		return;
 	}
-	
+
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
 			handleError(res, next, 'Error authorizing user: ', error);
@@ -537,7 +537,7 @@ function createGearAvailability(req, res, next) {
 			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
 			return;
 		}
-		availability = JSON.parse(req.params.availability)
+		availability = JSON.parse(req.params.availability);
 		//Check that the user owns the gear
 		Gear.checkOwner(req.params.user_id, req.params.gear_id, function(error, data) {
 			if(error) {
@@ -548,14 +548,38 @@ function createGearAvailability(req, res, next) {
 				handleError(res, next, 'Error checking gear ownership: ', 'User ' + req.params.user_id + ' does not own gear ' + req.params.gear_id);
 				return;
 			}
-			Availability.set(req.params.gear_id, availability, function(error) {
+
+			Gear.getAlwaysFlag(req.params.user_id, req.params.gear_id, function(error, result) {
+
 				if(error) {
-					handleError(res, next, 'Error setting gear availability: ', error);
-					return;
+					return
 				}
-				res.send({});
-				next();
+
+				//if result != req.params.alwaysFlag  { clear, set flag} else {the same old}
+
+				console.log("test" + req.params.alwaysFlag);
+
+				console.log(result[0].always_available);
+
+
+				//async - if flag different set, then proceed... if need to clear, pass empty availabilty
+
+				Availability.set(req.params.gear_id, availability, req.params.alwaysFlag, function(error) {
+
+					if(error) {
+						handleError(res, next, 'Error setting gear availability: ', error);
+						return;
+					}
+
+					res.send({});
+					next();
+				});
+
 			});
+
+
+			//console.log(req);
+
 		});
 	});
 }
@@ -700,7 +724,7 @@ function updateBooking(req, res, next) {
 
 /**
  * @param: a booking id, user id and token
- * @return: {} or error 
+ * @return: {} or error
  */
 /*function deleteBooking(req, res, next) {
 	res.send({});

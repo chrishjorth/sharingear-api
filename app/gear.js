@@ -13,6 +13,7 @@ module.exports = {
 	checkSubtype: checkSubtype,
 	checkBrand: checkBrand,
 	checkOwner: checkOwner,
+	getAlwaysFlag: getAlwaysFlag,
 	createGear: createGear,
 	readGearFromUser: readGearFromUser,
 	addImage: addImage,
@@ -27,7 +28,7 @@ module.exports = {
 /**
  * @returns fx {
  *		guitar: ['electric', acoustic],
- *		amp: ['guitar amp', 'cabinet', 'combo']	
+ *		amp: ['guitar amp', 'cabinet', 'combo']
  * }
  */
 function getClassification(callback) {
@@ -159,6 +160,27 @@ function checkOwner(userID, gearID, callback) {
 			callback(null, true);
 		}
 	});
+}
+
+function getAlwaysFlag(userID, gearID, callback) {
+
+	db.query("SELECT always_available FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
+		if(error) {
+
+			console.log("prdel: " + error);
+			callback(error);
+
+			return;
+		}
+
+		callback(null, rows);
+
+
+
+
+	});
+
+
 }
 
 /**
@@ -364,7 +386,7 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 			}
 			update();
 		});
-	});	
+	});
 }
 
 function readGearWithID(gearID, callback) {
@@ -546,11 +568,11 @@ function search(lat, lng, gear, callback) {
 	types = [];
 	typesSQL = "CREATE TEMPORARY TABLE IF NOT EXISTS templist (gear_type VARCHAR(45) NOT NULL);";
 	typesSQL += "INSERT INTO templist(gear_type) VALUES";
-	
+
 	subtypes = [];
 	subtypesSQL = "CREATE TEMPORARY TABLE IF NOT EXISTS templist (subtype VARCHAR(45) NOT NULL);";
 	subtypesSQL += "INSERT INTO templist(subtype) VALUES";
-	
+
 	brands = [];
 	brandsSQL = "CREATE TEMPORARY TABLE IF NOT EXISTS templist (brand VARCHAR(45) NOT NULL);";
 	brandsSQL += "INSERT INTO templist(brand) VALUES";
@@ -675,4 +697,3 @@ function setStatus(gearID, status, callback) {
 		callback(null);
 	});
 }
-
