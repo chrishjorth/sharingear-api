@@ -28,8 +28,8 @@ updateUser = function(mangopay_id, user, callback) {
 		LastName: user.surname,
 		Address: user.address,
 		Birthday: parseInt((new Moment(user.birthdate, 'YYYY-MM-DD')).format('X'), 10), //MangoPay requires a unix timestamp
-		Nationality: "DK",
-		CountryOfResidence: "DK"
+		Nationality: user.nationality,
+		CountryOfResidence: user.country
 	};
 
 	handleResponse = function(error, response) {

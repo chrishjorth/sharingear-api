@@ -8,6 +8,7 @@
 
 var db = require("./database"),
 	Payment = require("./payment"),
+	Localization = require("./localization"),
 	getUserFromFacebookID,
 	createUserFromFacebookInfo,
 	setServerAccessToken,
@@ -16,10 +17,11 @@ var db = require("./database"),
 	readPublicUser,
 	readUser,
 	update,
-	updateBankDetails;
+	updateBankDetails,
+	checkLocales;
 
 getUserFromFacebookID = function(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, city, image_url, bio, submerchant FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, country, nationality, phone, image_url, bio, submerchant FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -157,7 +159,7 @@ readUser = function(userID, callback) {
 };
 
 update = function(userID, updatedInfo, callback) {
-	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, phone, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var userInfo;
 		if(error) {
 			callback(error);
@@ -178,11 +180,17 @@ update = function(userID, updatedInfo, callback) {
 			city: (updatedInfo.city ? updatedInfo.city : rows[0].city),
 			region: (updatedInfo.region ? updatedInfo.region : rows[0].region),
 			country: (updatedInfo.country ? updatedInfo.country : rows[0].country),
+			nationality: (updatedInfo.nationality ? updatedInfo.nationality : rows[0].nationality),
 			phone: (updatedInfo.phone ? updatedInfo.phone : rows[0].phone),
 			image_url: (updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
 			bio: (updatedInfo.bio ? updatedInfo.bio : rows[0].bio),
 			id: userID
 		};
+
+		if(checkLocales(userInfo) === false) {
+			callback('Locale not supported.');
+			return;
+		}
 
 		Payment.updateUser(rows[0].mangopay_id, userInfo, function(error, mangopay_id) {
 			var userInfoArray;
@@ -229,6 +237,24 @@ updateBankDetails = function(userID, bankDetails, callback) {
 			});
 		});
 	});
+};
+
+checkLocales = function(user) {
+	if(user.country !== null) {
+		user.country = user.country.toUpperCase();
+		if(Localization.isCountrySupported(user.country) === false) {
+			return false;
+		}
+	}
+
+	if(user.nationality !== null) {
+		user.nationality = user.nationality.toUpperCase();
+		if(Localization.isCountrySupported(user.nationality) === false) {
+			return false;
+		}
+	}
+
+	return true;
 };
 
 module.exports = {
