@@ -9,6 +9,7 @@
 var db = require("./database"),
 	Payment = require("./payment"),
 	Localization = require("./localization"),
+
 	getUserFromFacebookID,
 	createUserFromFacebookInfo,
 	setServerAccessToken,
@@ -18,10 +19,12 @@ var db = require("./database"),
 	readUser,
 	update,
 	updateBankDetails,
+
 	checkLocales;
 
 getUserFromFacebookID = function(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, country, nationality, phone, image_url, bio, submerchant FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, wallet_id FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+		var user;
 		if(error) {
 			callback(error);
 			return;
@@ -30,8 +33,25 @@ getUserFromFacebookID = function(fbid, callback) {
 			callback(null, null);
 			return;
 		}
-		rows[0].submerchant = (rows[0].submerchant === 1); //Convert from tinyint to boolean
-		callback(null, rows[0]);
+		user = {
+			id: rows[0].id,
+			fbid: rows[0].fbid,
+			email: rows[0].email,
+			name: rows[0].name,
+			surname: rows[0].surname,
+			birthdate: rows[0].birthdate,
+			address: rows[0].address,
+			postal_code: rows[0].postal_code,
+			city: rows[0].city,
+			region: rows[0].region,
+			country: rows[0].country,
+			nationality: rows[0].nationality,
+			phone: rows[0].phone,
+			image_url: rows[0].image_url,
+			bio: rows[0].bio,
+			submerchant: (rows[0].wallet_id !== null)
+		};
+		callback(null, user);
 	});
 };
 
@@ -144,7 +164,8 @@ readPublicUser = function(userID, callback) {
 };
 
 readUser = function(userID, callback) {
-	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, submerchant FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, wallet_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+		var user;
 		if(error) {
 			callback(error);
 			return;
@@ -153,8 +174,24 @@ readUser = function(userID, callback) {
 			callback("No user with id: " + userID + ".");
 			return;
 		}
-		rows[0].submerchant = (rows[0].submerchant === 1); //Convert from tinyint to boolean
-		callback(null, rows[0]);
+		user = {
+			id: rows[0].id,
+			email: rows[0].email,
+			name: rows[0].name,
+			surname: rows[0].surname,
+			birthdate: rows[0].birthdate,
+			address: rows[0].address,
+			postal_code: rows[0].postal_code,
+			city: rows[0].city,
+			region: rows[0].region,
+			country: rows[0].country,
+			nationality: rows[0].nationality,
+			phone: rows[0].phone,
+			image_url: rows[0].image_url,
+			bio: rows[0].bio,
+			submerchant: (rows[0].wallet_id !== null)
+		};
+		callback(null, user);
 	});
 };
 
@@ -213,7 +250,7 @@ update = function(userID, updatedInfo, callback) {
 };
 
 updateBankDetails = function(userID, bankDetails, callback) {
-	db.query("SELECT id, mangopay_id, name, surname, address FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, mangopay_id, name, surname, address, wallet_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -222,18 +259,28 @@ updateBankDetails = function(userID, bankDetails, callback) {
 			callback("No user with id " + userID + ".");
 			return;
 		}
+		if(rows[0].wallet_id !== null) {
+			callback(null);
+			return;
+		}
 
 		Payment.registerBankAccountForUser(rows[0], bankDetails.iban, bankDetails.swift, function(error) {
 			if(error) {
 				callback(error);
 				return;
 			}
-			db.query("UPDATE users SET submerchant=1 WHERE id=? LIMIT 1", [rows[0].id], function(error, result) {
+			Payment.createWalletForUser(rows[0].mangopay_id, function(error, wallet_id) {
 				if(error) {
-					callback("Error setting submerchant: " + error);
+					callback("Error creating wallet for user: " + error);
 					return;
 				}
-				callback(null);
+				db.query("UPDATE users SET wallet_id=? WHERE id=? LIMIT 1", [wallet_id, rows[0].id], function(error, result) {
+					if(error) {
+						callback("Error setting submerchant: " + error);
+						return;
+					}
+					callback(null);				
+				});
 			});
 		});
 	});

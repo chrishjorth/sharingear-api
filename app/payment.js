@@ -12,8 +12,11 @@ var MANGOPAY_SANDBOX_CLIENTID = "sharingear",
 	MANGOPAY_SANDBOX_KEY = "dX2tt67NAQyDtDWHSSHBEuHOnnYUd6pvCROsde0vTiL1Trhudg",
 	https = require("https"),
 	Moment = require("moment"),
+	
 	updateUser,
 	registerBankAccountForUser,
+	createWalletForUser,
+
 	gatewayGet,
 	gatewayPost,
 	gatewayPut,
@@ -95,6 +98,21 @@ registerBankAccountForUser = function(user, iban, swift, callback) {
 			}
 			callback(null);
 		});
+	});
+};
+
+createWalletForUser = function(mangopay_id, callback) {
+	var postData = {
+		Owners: [mangopay_id],
+		Description: "Sharingear user wallet.",
+		Currency: "EUR"
+	};
+	gatewayPost("/wallets", postData, function(error, data) {
+		if(error) {
+			console.log("Error creating wallet for user: " + error);
+			return;
+		}
+		callback(null, JSON.parse(data).Id);
 	});
 };
 
@@ -273,5 +291,6 @@ getToken = function(callback) {
 
 module.exports = {
 	updateUser: updateUser,
-	registerBankAccountForUser: registerBankAccountForUser
+	registerBankAccountForUser: registerBankAccountForUser,
+	createWalletForUser: createWalletForUser
 };
