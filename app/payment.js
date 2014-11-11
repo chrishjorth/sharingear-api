@@ -12,6 +12,8 @@ var MANGOPAY_SANDBOX_CLIENTID = "sharingear",
 	MANGOPAY_SANDBOX_KEY = "dX2tt67NAQyDtDWHSSHBEuHOnnYUd6pvCROsde0vTiL1Trhudg",
 	https = require("https"),
 	Moment = require("moment"),
+	db = require("./database"),
+	sg_user,
 	
 	updateUser,
 	registerBankAccountForUser,
@@ -20,7 +22,54 @@ var MANGOPAY_SANDBOX_CLIENTID = "sharingear",
 	gatewayGet,
 	gatewayPost,
 	gatewayPut,
-	getToken;
+	getToken,
+
+	createSharingearUser,
+	registerSharingearBankDetails;
+
+//Check if Sharingear user exists, if not create it and store ID in database
+sg_user = null;
+db.query("SELECT mangopay_id, wallet_id FROM sharingear LIMIT 1", [], function(error, rows) {
+	if(error) {
+		console.log("Error selecting Sharingear payment details: " + error);
+		return;
+	}
+	if(rows.length > 0) {
+		sg_user = {
+			mangopay_id: rows[0].mangopay_id,
+			wallet_id: rows[0].wallet_id
+		};
+		return;
+	}
+	createSharingearUser(function(error, mangopay_id) {
+		if(error) {
+			console.log("Error creating Sharingear user: " + error);
+			return;
+		}
+		registerSharingearBankDetails(mangopay_id, function(error) {
+			if(error) {
+				console.log("Error registering Sharingear bank details: " + error);
+				return;
+			}
+			createWalletForUser(mangopay_id, function(error, wallet_id) {
+				if(error) {
+					console.log("Error creating wallet for Sharingear: " + error);
+					return;
+				}
+				db.query("INSERT INTO sharingear(mangopay_id, wallet_id) VALUES(?,?)", [mangopay_id, wallet_id], function(error) {
+					if(error) {
+						console.log("Error storing Sharingear payment IDs: " + error);
+						return;
+					}
+					sg_user = {
+						mangopay_id: mangopay_id,
+						wallet_id: wallet_id
+					};
+				});
+			});
+		});
+	});
+});
 
 updateUser = function(mangopay_id, user, callback) {
 	var data, handleResponse;
@@ -30,7 +79,7 @@ updateUser = function(mangopay_id, user, callback) {
 		FirstName: user.name,
 		LastName: user.surname,
 		Address: user.address,
-		Birthday: parseInt((new Moment(user.birthdate, 'YYYY-MM-DD')).format('X'), 10), //MangoPay requires a unix timestamp
+		Birthday: parseInt((new Moment(user.birthdate, "YYYY-MM-DD")).format("X"), 10), //MangoPay requires a unix timestamp
 		Nationality: user.nationality,
 		CountryOfResidence: user.country
 	};
@@ -70,7 +119,6 @@ registerBankAccountForUser = function(user, iban, swift, callback) {
 			callback(error);
 			return;
 		}
-
 		accounts = JSON.parse(data);
 		i = 0;
 		while(i < accounts.length) {
@@ -90,7 +138,7 @@ registerBankAccountForUser = function(user, iban, swift, callback) {
 			BIC: swift
 		};
 		
-		gatewayPost("/users/" + user.mangopay_id + "/bankaccounts/IBAN", postData, function(error, data) {
+		gatewayPost("/users/" + user.mangopay_id + "/bankaccounts/IBAN", postData, function(error) {
 			if(error) {
 				console.log("Error registering bank details: " + error);
 				callback("Error registering bank details: " + error);
@@ -157,13 +205,22 @@ gatewayGet = function(apiPath, callback) {
 gatewayPost = function(apiPath, data, callback) {
 	getToken(function(error, token) {
 		var buffer = "",
-			options, postData, request;
+			options, postData, request, utf8overLoad;
 		if(error) {
 			console.log(error);
 			return;
 		}
 
 		postData = JSON.stringify(data);
+
+		//This is to send correct content length when dealing with unicode characters
+		utf8overLoad = encodeURIComponent(postData).match(/%[89ABab]/g);
+		if(utf8overLoad === null) {
+			utf8overLoad = 0;
+		}
+		else {
+			utf8overLoad = utf8overLoad.length;
+		}
 
 		options = {
 			host: MANGOPAY_SANDBOX_URL,
@@ -172,7 +229,7 @@ gatewayPost = function(apiPath, data, callback) {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"Content-Length": postData.length,
+				"Content-Length": postData.length + utf8overLoad,
 				"Authorization": "Bearer " + token
 			}
 		};
@@ -192,7 +249,7 @@ gatewayPost = function(apiPath, data, callback) {
 		request.on("error", function(error) {
 			callback("Error requesting from gateway: " + error.message);
 		});
-		request.write(postData);
+		request.write(postData, "utf8");
 		request.end();
 	});
 };
@@ -287,6 +344,52 @@ getToken = function(callback) {
 	request.write(postData);
 
 	request.end();
+};
+
+createSharingearUser = function(callback) {
+	var postData = {
+		Email: "chris@sharingear.com",
+		Name: "Sharingear",
+		LegalPersonType: "BUSINESS",
+		HeadquartersAddress: "Landemaerket 8, 1. 1119 København K, Denmark",
+		LegalRepresentativeFirstName: "Mircea Gabriel",
+		LegalRepresentativeLastName: "Eftemie",
+		LegalRepresentativeAdress: "Sigbrits Alle 5, st. th. 2300 Koebenhavn S, Denmark",
+		LegalRepresentativeEmail: "mircea@sharingear.com",
+		LegalRepresentativeBirthday: parseInt((new Moment("1980-06-03", "YYYY-MM-DD")).format("X"), 10), //MangoPay requires a unix timestamp
+		LegalRepresentativeNationality: "DK",
+		LegalRepresentativeCountryOfResidence: "DK"
+	};
+	gatewayPost("/users/legal", postData, function(error, data) {
+		var parsedData;
+		if(error) {
+			callback(error);
+			return;
+		}
+		parsedData = JSON.parse(data);
+		if(parsedData.Type === "param_error") {
+			console.log(data);
+			callback("Parameter error.");
+			return;
+		}
+		callback(null, JSON.parse(data).Id);
+	});
+};
+
+registerSharingearBankDetails = function(mangopay_id, callback) {
+	var iban = "DK1073120001003930",
+		swift = "JYBADKKK",
+		user;
+	user = {
+		mangopay_id: mangopay_id,
+		name: "Mircea Gabriel",
+		surname: "Eftemie",
+		id: "sharingear",
+		address: "Landemærket 8, 1. 1119 København K, Denmark"
+	};
+	registerBankAccountForUser(user, iban, swift, function(error) {
+		callback(error);
+	});
 };
 
 module.exports = {
