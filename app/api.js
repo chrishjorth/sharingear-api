@@ -391,13 +391,26 @@ function createUserSession(req, res, next) {
  * @return: A JSON description of a user
  */
 function readUserWithID(req, res, next) {
-	User.readUser(req.params.id, function(error, user) {
+	isAuthorized(req.params.id, function(error, status) {
+		var updatedGearData, handleRead;
 		if(error) {
-			handleError(res, next, 'Error reading user: ', error);
+			handleError(res, next, 'Error authorizing user: ', error);
 			return;
 		}
-		res.send(user);
-		next();
+		handleRead = function(error, user) {
+			if(error) {
+				handleError(res, next, 'Error reading user: ', error);
+				return;
+			}
+			res.send(user);
+			next();
+		};
+		if(status === true) {
+			User.readUser(req.params.id, handleRead);
+		}
+		else {
+			User.readPublicUser(req.params.id, handleRead);
+		}
 	});
 }
 

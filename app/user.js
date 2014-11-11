@@ -13,12 +13,13 @@ var db = require("./database"),
 	setServerAccessToken,
 	matchToken,
 	getToken,
+	readPublicUser,
 	readUser,
 	update,
 	updateBankDetails;
 
 getUserFromFacebookID = function(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, city, image_url, bio FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, city, image_url, bio, submerchant FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -27,6 +28,7 @@ getUserFromFacebookID = function(fbid, callback) {
 			callback(null, null);
 			return;
 		}
+		rows[0].submerchant = (rows[0].submerchant === 1); //Convert from tinyint to boolean
 		callback(null, rows[0]);
 	});
 };
@@ -125,8 +127,8 @@ getToken = function(userID, callback) {
 	});
 };
 
-readUser = function(userID, callback) {
-	db.query("SELECT id, name, surname, image_url, bio, submerchant FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+readPublicUser = function(userID, callback) {
+	db.query("SELECT id, name, surname, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -135,6 +137,21 @@ readUser = function(userID, callback) {
 			callback("No user with id: " + userID + ".");
 			return;
 		}
+		callback(null, rows[0]);
+	});
+};
+
+readUser = function(userID, callback) {
+	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, submerchant FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No user with id: " + userID + ".");
+			return;
+		}
+		rows[0].submerchant = (rows[0].submerchant === 1); //Convert from tinyint to boolean
 		callback(null, rows[0]);
 	});
 };
@@ -188,7 +205,7 @@ update = function(userID, updatedInfo, callback) {
 };
 
 updateBankDetails = function(userID, bankDetails, callback) {
-	db.query("SELECT mangopay_id, name, surname, address FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, mangopay_id, name, surname, address FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -198,7 +215,19 @@ updateBankDetails = function(userID, bankDetails, callback) {
 			return;
 		}
 
-		Payment.registerBankAccountForUser(rows[0], bankDetails.iban, bankDetails.swift, callback);
+		Payment.registerBankAccountForUser(rows[0], bankDetails.iban, bankDetails.swift, function(error) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			db.query("UPDATE users SET submerchant=1 WHERE id=? LIMIT 1", [rows[0].id], function(error, result) {
+				if(error) {
+					callback("Error setting submerchant: " + error);
+					return;
+				}
+				callback(null);
+			});
+		});
 	});
 };
 
@@ -208,6 +237,7 @@ module.exports = {
 	setServerAccessToken: setServerAccessToken,
 	matchToken: matchToken,
 	getToken: getToken,
+	readPublicUser: readPublicUser,
 	readUser: readUser,
 	update: update,
 	updateBankDetails: updateBankDetails
