@@ -123,7 +123,7 @@ registerBankAccountForUser = function(user, iban, swift, callback) {
 		i = 0;
 		while(i < accounts.length) {
 			if(accounts[i].IBAN === iban && accounts[i].BIC === swift) {
-				callback(null); //Is already registered so we ignore the request
+				callback(null, accounts[i].Id); //Is already registered so we ignore the request
 				return;
 			}
 			i++;
@@ -138,13 +138,13 @@ registerBankAccountForUser = function(user, iban, swift, callback) {
 			BIC: swift
 		};
 		
-		gatewayPost("/users/" + user.mangopay_id + "/bankaccounts/IBAN", postData, function(error) {
+		gatewayPost("/users/" + user.mangopay_id + "/bankaccounts/IBAN", postData, function(error, data) {
 			if(error) {
 				console.log("Error registering bank details: " + error);
 				callback("Error registering bank details: " + error);
 				return;
 			}
-			callback(null);
+			callback(null, JSON.parse(data).Id);
 		});
 	});
 };
