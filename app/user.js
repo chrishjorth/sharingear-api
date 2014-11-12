@@ -198,7 +198,7 @@ readUser = function(userID, callback) {
 
 update = function(userID, updatedInfo, callback) {
 	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
-		var userInfo;
+		var userInfo, updateUser;
 		if(error) {
 			callback(error);
 			return;
@@ -230,15 +230,9 @@ update = function(userID, updatedInfo, callback) {
 			return;
 		}
 
-		Payment.updateUser(rows[0].mangopay_id, userInfo, function(error, mangopay_id) {
+		updateUser = function(mangopay_id) {
 			var userInfoArray;
-			if(error) {
-				callback(error);
-				return;
-			}
-
 			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, userInfo.id];
-
 			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, nationality=?, phone=?, image_url=?, bio=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
 				if(error) {
 					callback(error);
@@ -246,7 +240,21 @@ update = function(userID, updatedInfo, callback) {
 				}
 				callback(null, userInfo);
 			});
-		});
+		};
+
+		if(userInfo.birthdate === null || userInfo.address === null || userInfo.country === null || userInfo.nationality === null) {
+			//We do not have enough data to create a Payment user
+			updateUser(null);
+		}
+		else {
+			Payment.updateUser(rows[0].mangopay_id, userInfo, function(error, mangopay_id) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				updateUser(mangopay_id);
+			});
+		}
 	});
 };
 

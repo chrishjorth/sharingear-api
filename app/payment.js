@@ -113,12 +113,14 @@ updateUser = function(mangopay_id, user, callback) {
 
 registerBankAccountForUser = function(user, iban, swift, callback) {
 	//Check if user has a bank account, if different then update
+	//console.log('mangopay id: ' + user.mangopay_id);
 	gatewayGet("/users/" + user.mangopay_id + "/bankaccounts", function(error, data) {
 		var postData, accounts, i;
 		if(error) {
 			callback(error);
 			return;
 		}
+		//console.log(data);
 		accounts = JSON.parse(data);
 		i = 0;
 		while(i < accounts.length) {
@@ -144,6 +146,7 @@ registerBankAccountForUser = function(user, iban, swift, callback) {
 				callback("Error registering bank details: " + error);
 				return;
 			}
+			//console.log(data);
 			callback(null, JSON.parse(data).Id);
 		});
 	});
