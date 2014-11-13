@@ -3,25 +3,24 @@
  * @author: Chris Hjorth
  */
 
-var db = require('./database'),
-	Moment = require('moment'),
-	MomentUtilities = require('./momentutilities');
+/*jslint node: true */
+"use strict";
 
-module.exports = {
-	set: set,
-	get: get,
-	removeInterval: removeInterval,
-	//isAvailable: isAvailable,
-	//setToUnavailableFromStartToEnd: setToUnavailableFromStartToEnd
-};
+var db = require("./database"),
+	Moment = require("moment"),
+	MomentUtilities = require("./momentutilities"),
+
+	set,
+	get,
+	removeInterval;
 
 /**
  * @param availability: List of start and end days in the format "YYYY-MM-DD HH:MM:SS".
  */
-function set(gearID, availability, callback) {
+set = function(gearID, availability, callback) {
 	//Remove all availability for the gear id
 
-	db.query("DELETE FROM availability WHERE gear_id=?", [gearID], function(error, result) {
+	db.query("DELETE FROM availability WHERE gear_id=?", [gearID], function(error) {
 		var sql, i, valueArray, startMoment, endMoment;
 		if(error) {
 			callback(error);
@@ -33,25 +32,25 @@ function set(gearID, availability, callback) {
 			return;
 		}
 
-		sql = 'INSERT INTO availability(start_time, end_time, gear_id) VALUES ';
+		sql = "INSERT INTO availability(start_time, end_time, gear_id) VALUES ";
 		valueArray = [];
 		for(i = 0; i < availability.length - 1; i++) {
 			if(!availability[i].start_time || !availability[i].end_time) {
-				callback('Bad parameters in availability array.');
+				callback("Bad parameters in availability array.");
 				return;
 			}
-			startMoment = Moment(availability[i].start_time);
-			endMoment = Moment(availability[i].end_time);
+			startMoment = new Moment(availability[i].start_time);
+			endMoment = new Moment(availability[i].end_time);
 			if(startMoment.isValid() === false || endMoment.isValid() === false) {
-				callback('Invalid date in availability array.');
+				callback("Invalid date in availability array.");
 				return;
 			}
-			sql += '(?, ?, ?), ';
+			sql += "(?, ?, ?), ";
 			valueArray.push(availability[i].start_time, availability[i].end_time, gearID);
 		}
-		sql += '(?, ?, ?)';
+		sql += "(?, ?, ?)";
 		valueArray.push(availability[i].start_time, availability[i].end_time, gearID);
-		db.query(sql, valueArray, function(error, result) {
+		db.query(sql, valueArray, function(error) {
 			if(error) {
 				callback(error);
 				return;
@@ -59,9 +58,9 @@ function set(gearID, availability, callback) {
 			callback(null);
 		});
 	});
-}
+};
 
-function get(gearID, callback) {
+get = function(gearID, callback) {
 	db.query("SELECT start_time, end_time FROM availability WHERE gear_id=?", [gearID], function(error, rows) {
 		var availabilityArray, i;
 		if(error) {
@@ -77,27 +76,28 @@ function get(gearID, callback) {
 		}
 		callback(null, availabilityArray);
 	});
-}
+};
 
-function removeInterval(gearID, startTime, endTime, callback) {
+removeInterval = function(gearID, startTime, endTime, callback) {
 	var Availability = this;
 	//Get availability sorted, add data and then call set
 	db.query("SELECT id, start_time, end_time, gear_id FROM availability WHERE gear_id=? ORDER BY start_time DESC", [gearID], function(error, rows) {
-		var i, startMoment, endMoment, intervalStartMoment, intervalEndMoment;
+		var i, startMoment, endMoment, intervalStartMoment, intervalEndMoment, dummyMoment;
 		if(error) {
-			callback('Error selecting availability: ' + error);
+			callback("Error selecting availability: " + error);
 			return;
 		}
 		if(rows.length <= 0) {
+			console.log("Found no interval to remove");
 			callback(null); //This counts as correct since it is like removing something that was already not there.
 			return;
 		}
-		startMoment = Moment(startTime, 'YYYY-MM-DD HH:mm:ss');
-		endMoment = Moment(endMoment, 'YYYY-MM-DD HH:mm:ss');
+		startMoment = new Moment(startTime, "YYYY-MM-DD HH:mm:ss");
+		endMoment = new Moment(endTime, "YYYY-MM-DD HH:mm:ss");
 		//Check if the interval fits in any of the availability intervals
 		for(i = 0; i < rows.length; i++) {
-			intervalStartMoment = Moment(rows[i].start_time, 'YYYY-MM-DD HH:mm:ss');
-			intervalEndMoment = Moment(rows[i].endTime, 'YYYY-MM-DD HH:mm:ss');
+			intervalStartMoment = new Moment(rows[i].start_time, "YYYY-MM-DD HH:mm:ss");
+			intervalEndMoment = new Moment(rows[i].end_time, "YYYY-MM-DD HH:mm:ss");
 			//Interval is the same or includes availability interval -> delete
 			if(MomentUtilities.isBetween(intervalStartMoment, startMoment, endMoment) === true && MomentUtilities.isBetween(intervalEndMoment, startMoment, endMoment) === true) {
 				//Delete the interval
@@ -106,20 +106,28 @@ function removeInterval(gearID, startTime, endTime, callback) {
 			}
 			//interval is between availability interval -> 
 			else if(MomentUtilities.isBetweenExclusive(startMoment, intervalStartMoment, intervalEndMoment) === true && MomentUtilities.isBetween(endMoment, intervalStartMoment, intervalEndMoment) === true) {
+				dummyMoment = new Moment(endMoment);
+				dummyMoment.add(1, "days");
 				rows.splice(i, 0, {
-					start_time: endMoment.format('YYYY-MM-DD HH:mm:ss'),
-					end_time: rows[i].end_time
-				})
-				rows[i].end_time = startMoment.format('YYYY-MM-DD HH:mm:ss');
+					start_time: dummyMoment.format("YYYY-MM-DD HH:mm:ss"),
+					end_time: intervalEndMoment.format("YYYY-MM-DD HH:mm:ss")
+				});
+				dummyMoment = new Moment(startMoment);
+				dummyMoment.subtract(1, 'days');
+				rows[i + 1].end_time = dummyMoment.format("YYYY-MM-DD HH:mm:ss");
 				i++; //Beacuse we inserted an element and we do not need to loop over it
 			}
 			//interval includes start of availability interval
 			else if(MomentUtilities.isBetween(startMoment, intervalStartMoment, intervalEndMoment) === true) {
-				rows[i].start_time = startMoment.format('YYYY-MM-DD HH:mm:ss');
+				dummyMoment = new Moment(startMoment);
+				dummyMoment.add(1, 'days');
+				rows[i].start_time = dummyMoment.format("YYYY-MM-DD HH:mm:ss");
 			}
 			//interval includes end of availability interval
 			else if(MomentUtilities.isBetween(endMoment, intervalStartMoment, intervalEndMoment) === true) {
-				rows[i].end_time = endMoment.format('YYYY-MM-DD HH:mm:ss');
+				dummyMoment = new Moment(endMoment);
+				dummyMoment.subtract(1, 'days');
+				rows[i].end_time = endMoment.format("YYYY-MM-DD HH:mm:ss");
 			}
 		}
 		//At this point rows is the new availability set
@@ -127,7 +135,7 @@ function removeInterval(gearID, startTime, endTime, callback) {
 			callback(error);
 		});
 	});
-}
+};
 
 /*function isAvailable(gearID, startTime, endTime, callback) {
 	db.query('SELECT id FROM availability WHERE start <= ? AND end >= ? AND gear_id = ? LIMIT 1', [startTime, endTime, gearID], function(error, rows) {
@@ -209,3 +217,11 @@ function removeInterval(gearID, startTime, endTime, callback) {
 		}
 	});
 }*/
+
+module.exports = {
+	set: set,
+	get: get,
+	removeInterval: removeInterval,
+	//isAvailable: isAvailable,
+	//setToUnavailableFromStartToEnd: setToUnavailableFromStartToEnd
+};

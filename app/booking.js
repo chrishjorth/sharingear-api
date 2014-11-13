@@ -45,7 +45,6 @@ create = function(renterID, bookingData, callback) {
 					callback(error);
 					return;
 				}
-				//console.log('Insert booking');
 				db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, price) VALUES (?, ?, ?, ?, ?)", booking, function(error, result) {
 					if(error) {
 						callback("Error inserting booking: " + error);
