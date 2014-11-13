@@ -691,7 +691,6 @@ function createCardObject(req, res, next) {
 			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
 			return;
 		}
-		console.log('GET USER CARD OBJECT');
 		User.getCardObject(req.params.user_id, function(error, cardObject) {
 			if(error) {
 				handleError(res, next, 'Error getting card object: ', error);

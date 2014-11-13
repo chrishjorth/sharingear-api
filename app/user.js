@@ -19,8 +19,9 @@ var db = require("./database"),
 	readUser,
 	update,
 	updateBankDetails,
-	createWallet,
+	//createWallet,
 	getCardObject,
+	getMangoPayData,
 
 	checkLocales;
 
@@ -198,7 +199,7 @@ readUser = function(userID, callback) {
 };
 
 update = function(userID, updatedInfo, callback) {
-	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, wallet_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var userInfo, updateUser;
 		if(error) {
 			callback(error);
@@ -223,6 +224,8 @@ update = function(userID, updatedInfo, callback) {
 			phone: (updatedInfo.phone ? updatedInfo.phone : rows[0].phone),
 			image_url: (updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
 			bio: (updatedInfo.bio ? updatedInfo.bio : rows[0].bio),
+			hasWallet: (rows[0].wallet_id !== null),
+			hasBank: (rows[0].bank_id !== null),
 			id: userID
 		};
 
@@ -231,29 +234,30 @@ update = function(userID, updatedInfo, callback) {
 			return;
 		}
 
-		updateUser = function(mangopay_id) {
+		updateUser = function(mangopay_id, wallet_id) {
 			var userInfoArray;
-			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, userInfo.id];
-			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, nationality=?, phone=?, image_url=?, bio=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
+			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, wallet_id, userInfo.id];
+			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, nationality=?, phone=?, image_url=?, bio=?, wallet_id=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
 				if(error) {
 					callback(error);
 					return;
 				}
+				userInfo.hasWallet = true;
 				callback(null, userInfo);
 			});
 		};
 
 		if(userInfo.birthdate === null || userInfo.address === null || userInfo.country === null || userInfo.nationality === null) {
 			//We do not have enough data to create a Payment user
-			updateUser(null);
+			updateUser(rows[0].mangopay_id, rows[0].wallet_id);
 		}
 		else {
-			Payment.updateUser(rows[0].mangopay_id, userInfo, function(error, mangopay_id) {
+			Payment.updateUser(rows[0].mangopay_id, rows[0].wallet_id, userInfo, function(error, mangopay_id, wallet_id) {
 				if(error) {
 					callback(error);
 					return;
 				}
-				updateUser(mangopay_id);
+				updateUser(mangopay_id, wallet_id);
 			});
 		}
 	});
@@ -293,7 +297,7 @@ updateBankDetails = function(userID, bankDetails, callback) {
 	});
 };
 
-createWallet = function(userID, callback) {
+/*createWallet = function(userID, callback) {
 	db.query("SELECT id, mangopay_id, name, surname, address, wallet_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
@@ -321,7 +325,7 @@ createWallet = function(userID, callback) {
 			});
 		});
 	});
-};
+};*/
 
 getCardObject = function(userID, callback) {
 	db.query("SELECT mangopay_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
@@ -340,6 +344,20 @@ getCardObject = function(userID, callback) {
 			}
 			callback(null, cardObject);
 		});
+	});
+};
+
+getMangoPayData = function(userID, callback) {
+	db.query("SELECT id, mangopay_id, wallet_id, bank_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No user with id " + userID + ".");
+			return;
+		}
+		callback(null, rows[0]);
 	});
 };
 
@@ -371,6 +389,7 @@ module.exports = {
 	readUser: readUser,
 	update: update,
 	updateBankDetails: updateBankDetails,
-	createWallet: createWallet,
-	getCardObject: getCardObject
+	//createWallet: createWallet, deprecated
+	getCardObject: getCardObject,
+	getMangoPayData: getMangoPayData
 };

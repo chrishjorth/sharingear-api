@@ -19,6 +19,7 @@ var MANGOPAY_SANDBOX_CLIENTID = "sharingear",
 	registerBankAccountForUser,
 	createWalletForUser,
 	getCardObject,
+	preAuthorize,
 
 	gatewayGet,
 	gatewayPost,
@@ -72,7 +73,7 @@ db.query("SELECT mangopay_id, wallet_id FROM sharingear LIMIT 1", [], function(e
 	});
 });
 
-updateUser = function(mangopay_id, user, callback) {
+updateUser = function(mangopay_id, wallet_id, user, callback) {
 	var data, handleResponse;
 
 	data = {
@@ -86,7 +87,7 @@ updateUser = function(mangopay_id, user, callback) {
 	};
 
 	handleResponse = function(error, response) {
-		var responseData;
+		var responseData, mangopay_id;
 		if(error) {
 			callback("Payment gateway error: " + response);
 			return;
@@ -101,7 +102,19 @@ updateUser = function(mangopay_id, user, callback) {
 			callback("Gateway errors: " + response);
 			return;
 		}
-		callback(null, responseData.Id);
+		mangopay_id = responseData.Id;
+		if(wallet_id !== null) {
+			callback(null, mangopay_id, wallet_id);
+		}
+		else {
+			createWalletForUser(mangopay_id, function(error, wallet_id) {
+				if(error) {
+					callback("Error creating wallet for updated user: " + error);
+					return;
+				}
+				callback(null, mangopay_id, wallet_id);
+			});
+		}
 	};
 
 	if(mangopay_id === null) {
@@ -157,7 +170,7 @@ createWalletForUser = function(mangopay_id, callback) {
 	var postData = {
 		Owners: [mangopay_id],
 		Description: "Sharingear user wallet.",
-		Currency: "EUR"
+		Currency: "DKK"
 	};
 	gatewayPost("/wallets", postData, function(error, data) {
 		if(error) {
@@ -171,7 +184,7 @@ createWalletForUser = function(mangopay_id, callback) {
 getCardObject = function(mangopay_id, callback) {
 	var postData = {
 		UserId: mangopay_id,
-		Currency: "EUR",
+		Currency: "DKK",
 	};
 	gatewayPost("/cardregistrations", postData, function(error, data) {
 		var parsedData, cardObject;
@@ -179,8 +192,6 @@ getCardObject = function(mangopay_id, callback) {
 			callback("Error getting card registration object: " + error);
 			return;
 		}
-		console.log("cardregistrations post");
-		console.log(data);
 		parsedData = JSON.parse(data);
 		cardObject = {
 			id: parsedData.Id,
@@ -189,6 +200,32 @@ getCardObject = function(mangopay_id, callback) {
 			accessKey: parsedData.AccessKey
 		};
 		callback(null, cardObject);
+	});
+};
+
+preAuthorize = function(sellerMangoPayData, cardID, price, returnURL, callback) {
+	var postData = {
+		AuthorId: sellerMangoPayData.mangopay_id,
+		CardId: cardID,
+		DebitedFunds: {
+			Currency: "DKK",
+			Amount: parseInt(price, 10) * 100
+		},
+		SecureMode: "FORCE",
+		SecureModeReturnURL: returnURL
+	};
+	gatewayPost("/preauthorizations/card/direct", postData, function(error, data) {
+		var parsedData;
+		if(error) {
+			callback("Error preauthorizing debit: " + error);
+			return;
+		}
+		parsedData = JSON.parse(data);
+		if(parsedData.Status === "FAILED") {
+			callback("Error preauthorizing debit: " + parsedData.ResultMessage);
+			return;
+		}
+		callback(null);
 	});
 };
 
@@ -423,6 +460,7 @@ registerSharingearBankDetails = function(mangopay_id, callback) {
 module.exports = {
 	updateUser: updateUser,
 	registerBankAccountForUser: registerBankAccountForUser,
-	createWalletForUser: createWalletForUser,
-	getCardObject: getCardObject
+	//createWalletForUser: createWalletForUser, deprecated: wallet is created on update
+	getCardObject: getCardObject,
+	preAuthorize: preAuthorize
 };
