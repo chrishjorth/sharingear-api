@@ -29,6 +29,10 @@ function create(renterID, bookingData, callback) {
 			renterID,
 			price
 		];
+
+		//
+
+
 		//console.log('Remove interval:');
 		Availability.removeInterval(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error) {
 			if(error) {

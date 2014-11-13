@@ -87,6 +87,8 @@ server.get('/users/:user_id/gear/:gear_id/bookings/latest', readClosestBooking);
 server.put('/users/:user_id/gear/:gear_id/bookings/:booking_id', updateBooking);
 //server.del('/bookings/:id', deleteBooking);
 
+server.get('/users/:user_id/cardobject', createCardObject);
+
 
 
 //ROUTE HANDLERS
@@ -678,6 +680,28 @@ function updateBooking(req, res, next) {
 	res.send({});
 	next();
 }*/
+
+function createCardObject(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, 'Error authorizing user: ', error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
+			return;
+		}
+		console.log('GET USER CARD OBJECT');
+		User.getCardObject(req.params.user_id, function(error, cardObject) {
+			if(error) {
+				handleError(res, next, 'Error getting card object: ', error);
+				return;
+			}
+			res.send(cardObject);
+			next();
+		});
+	});
+}
 
 /* UTILITIES */
 function handleError(res, next, message, error) {

@@ -18,6 +18,7 @@ var MANGOPAY_SANDBOX_CLIENTID = "sharingear",
 	updateUser,
 	registerBankAccountForUser,
 	createWalletForUser,
+	getCardObject,
 
 	gatewayGet,
 	gatewayPost,
@@ -164,6 +165,30 @@ createWalletForUser = function(mangopay_id, callback) {
 			return;
 		}
 		callback(null, JSON.parse(data).Id);
+	});
+};
+
+getCardObject = function(mangopay_id, callback) {
+	var postData = {
+		UserId: mangopay_id,
+		Currency: "EUR",
+	};
+	gatewayPost("/cardregistrations", postData, function(error, data) {
+		var parsedData, cardObject;
+		if(error) {
+			callback("Error getting card registration object: " + error);
+			return;
+		}
+		console.log("cardregistrations post");
+		console.log(data);
+		parsedData = JSON.parse(data);
+		cardObject = {
+			id: parsedData.Id,
+			cardRegistrationURL: parsedData.CardRegistrationURL,
+			preregistrationData: parsedData.PreregistrationData,
+			accessKey: parsedData.AccessKey
+		};
+		callback(null, cardObject);
 	});
 };
 
@@ -398,5 +423,6 @@ registerSharingearBankDetails = function(mangopay_id, callback) {
 module.exports = {
 	updateUser: updateUser,
 	registerBankAccountForUser: registerBankAccountForUser,
-	createWalletForUser: createWalletForUser
+	createWalletForUser: createWalletForUser,
+	getCardObject: getCardObject
 };

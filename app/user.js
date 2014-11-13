@@ -20,6 +20,7 @@ var db = require("./database"),
 	update,
 	updateBankDetails,
 	createWallet,
+	getCardObject,
 
 	checkLocales;
 
@@ -322,6 +323,26 @@ createWallet = function(userID, callback) {
 	});
 };
 
+getCardObject = function(userID, callback) {
+	db.query("SELECT mangopay_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No user with id " + userID + ".");
+			return;
+		}
+		Payment.getCardObject(rows[0].mangopay_id, function(error, cardObject) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			callback(null, cardObject);
+		});
+	});
+};
+
 checkLocales = function(user) {
 	if(user.country !== null) {
 		user.country = user.country.toUpperCase();
@@ -350,5 +371,6 @@ module.exports = {
 	readUser: readUser,
 	update: update,
 	updateBankDetails: updateBankDetails,
-	createWallet: createWallet
+	createWallet: createWallet,
+	getCardObject: getCardObject
 };
