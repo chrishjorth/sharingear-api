@@ -18,10 +18,11 @@ module.exports = {
 /**
  * @param availability: List of start and end days in the format "YYYY-MM-DD HH:MM:SS".
  */
-function set(gearID, availability, alwaysFlag, callback) {
+
+function set(gearID, availability, callback) {
 	//Remove all availability for the gear id
 
-	console.log('here');
+	console.log("setting availability");
 
 	//separate the wipe and call here
 	db.query("DELETE FROM availability WHERE gear_id=?", [gearID], function(error, result) {
@@ -35,6 +36,8 @@ function set(gearID, availability, alwaysFlag, callback) {
 			callback(null);
 			return;
 		}
+
+		console.log("got here 1");
 
 		sql = 'INSERT INTO availability(start_time, end_time, gear_id) VALUES ';
 		valueArray = [];
@@ -59,7 +62,8 @@ function set(gearID, availability, alwaysFlag, callback) {
 				callback(error);
 				return;
 			}
-			callback(alwaysFlag);
+			// callback(alwaysFlag);
+			console.log("got here");
 		});
 	});
 }

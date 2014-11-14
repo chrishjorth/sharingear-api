@@ -14,6 +14,7 @@ module.exports = {
 	checkBrand: checkBrand,
 	checkOwner: checkOwner,
 	getAlwaysFlag: getAlwaysFlag,
+	setAlwaysFlag: setAlwaysFlag,
 	createGear: createGear,
 	readGearFromUser: readGearFromUser,
 	addImage: addImage,
@@ -164,23 +165,29 @@ function checkOwner(userID, gearID, callback) {
 
 function getAlwaysFlag(userID, gearID, callback) {
 
+	console.log("here yo");
+
 	db.query("SELECT always_available FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
 		if(error) {
-
-			console.log("prdel: " + error);
+			console.log("getAlwaysFlag: " + error);
 			callback(error);
-
 			return;
 		}
-
 		callback(null, rows);
+	});
+}
 
+function setAlwaysFlag(userID, gearID, alwaysFlag, callback) {
 
+	console.log("Setting flag");
 
+	db.query("UPDATE gear SET always_available=? WHERE id=? AND owner_id=? LIMIT 1", [alwaysFlag, gearID, userID], function(error, result) {
+
+	console.log("setFlag" + result);
 
 	});
 
-
+	//callback(null, result)
 }
 
 /**

@@ -506,6 +506,10 @@ function updateGearFromUserWithID(req, res, next) {
 }
 
 function readGearAvailability(req, res, next) {
+	var responseObject = {};
+	var avArray;
+	var alwaysFlag;
+
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
 			handleError(res, next, 'Error authorizing user: ', error);
@@ -515,13 +519,31 @@ function readGearAvailability(req, res, next) {
 			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
 			return;
 		}
+
 		Availability.get(req.params.gear_id, function(error, availabilityArray) {
 			if(error) {
 				handleError(res, next, 'Error getting gear availability: ', error);
 				return;
 			}
-			res.send(availabilityArray);
-			next();
+			console.log("availabilityArray: " + availabilityArray);
+			avArray = availabilityArray;
+
+			Gear.getAlwaysFlag(req.params.user_id, req.params.gear_id, function(error, result) {
+
+				if(error) {
+					return;
+				}
+
+				console.log("mutherfucking flag: " + result[0].always_available);
+				alwaysFlag = result[0].always_available;
+
+				//console.log("avArray: " + avArray);
+				responseObject = {availabilityArray: avArray, alwaysFlag: alwaysFlag};
+				console.log("resObject: " + responseObject);
+				res.send(responseObject);
+				next();
+
+			});
 		});
 	});
 }
@@ -555,25 +577,35 @@ function createGearAvailability(req, res, next) {
 					return
 				}
 
-				//if result != req.params.alwaysFlag  { clear, set flag} else {the same old}
+				console.log(req.params.alwaysFlag);
 
-				console.log("test" + req.params.alwaysFlag);
+				if(result[0].always_available != req.params.alwaysFlag) { //if result != req.params.alwaysFlag  { clear, set flag} else {the same old}
+					console.log("flag different, set it");
+					Gear.setAlwaysFlag(req.params.user_id, req.params.gear_id, req.params.alwaysFlag, function(error, result) {
 
-				console.log(result[0].always_available);
+						if(error) {
+							return
+						}
 
+						console.log("flag set: " + result);
 
-				//async - if flag different set, then proceed... if need to clear, pass empty availabilty
+					});
 
-				Availability.set(req.params.gear_id, availability, req.params.alwaysFlag, function(error) {
+					return
 
-					if(error) {
-						handleError(res, next, 'Error setting gear availability: ', error);
-						return;
-					}
+				} else {
+					console.log("flag the same or nothing clicked");
+					Availability.set(req.params.gear_id, availability, req.params.alwaysFlag, function(error) {
 
-					res.send({});
-					next();
-				});
+						if(error) {
+							handleError(res, next, 'Error setting gear availability: ', error);
+							return
+						}
+
+						res.send({});
+						next();
+					});
+				}
 
 			});
 
