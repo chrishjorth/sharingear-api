@@ -1,5 +1,15 @@
 /**
  * Defines Sharingear booking.
+ * When a renter books the booking status changes to waiting and then to pending once the payment preauthorization is confirmed
+ * When a user's gear is retrieved we check if there is a booking pending and in that case we send along the booking status.
+ * When a user's gear is retrieved we check if there is an accepted booking that is current or past and in that case change the gear status to rented-out.
+ * When an owner denies a booking the status must be set to denied.
+ * When a renter views a denied booking the status must be set to ended.
+ * When an owner accepts a booking the status must be set to accepted.
+ * When a renter ends a booking the gear status must be set to renter-returned.
+ * When an owner ends a booking the gear status must be set to owner-returned.
+ * When a gear status return state is to be set, if it already was in a return state, set it to null. Then change the booking status to ended and do the payout.
+ * 
  * @author: Chris Hjorth
  */
 
@@ -106,7 +116,6 @@ readReservationsForUser = function(renterID, callback){
     });
 };
 
-//Possible booking statuses: pending, denied, accepted, failed, cancelled
 update = function(bookingData, callback) {
 	var status = bookingData.booking_status,
 		bookingID = bookingData.booking_id,

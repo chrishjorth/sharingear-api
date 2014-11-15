@@ -22,7 +22,9 @@ var db = require("./database"),
 	readGearWithID,
 	search,
 	getPrice,
-	setStatus;
+	setStatus,
+
+	checkForRentals;
 
 /**
  * @returns fx {
@@ -246,18 +248,25 @@ createGear = function(newGear, callback) {
 };
 
 readGearFromUser = function(userID, callback) {
-	db.query("SELECT zegear.id, zegear.type, zegear.subtype, zegear.brand, zegear.model, zegear.description, zegear.images, zegear.price_a, zegear.price_b, zegear.price_c, zegear.address, zegear.postal_code, zegear.city, zegear.region, zegear.country, zegear.latitude, zegear.longitude, bookings.booking_status AS gear_status FROM bookings RIGHT JOIN (SELECT gear.id, gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude FROM gear WHERE gear.owner_id=?) as zegear ON bookings.gear_id=zegear.id;", [userID], function(error, rows) {
-		var i;
+	//Check if any gear is rented out
+	checkForRentals(userID, function(error) {
 		if(error) {
-			callback(error);
+			console.log("Error checking users gear for rentals: " + error);
 			return;
 		}
-		//Convert latitudes and longitudes
-		for(i = 0; i < rows.length; i++) {
-			rows[i].latitude = rows[i].latitude * 180 / Math.PI;
-			rows[i].longitude = rows[i].longitude * 180 / Math.PI;
-		}
-		callback(null, rows);
+		db.query("SELECT usergear.id, usergear.type, usergear.subtype, usergear.brand, usergear.model, usergear.description, usergear.images, usergear.price_a, usergear.price_b, usergear.price_c, usergear.address, usergear.postal_code, usergear.city, usergear.region, usergear.country, usergear.latitude, usergear.longitude, usergear.gear_status, bookings.booking_status FROM bookings RIGHT JOIN (SELECT gear.id, gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status FROM gear WHERE gear.owner_id=?) as usergear ON bookings.gear_id=usergear.id;", [userID], function(error, rows) {
+			var i;
+			if(error) {
+				callback(error);
+				return;
+			}
+			//Convert latitudes and longitudes
+			for(i = 0; i < rows.length; i++) {
+				rows[i].latitude = rows[i].latitude * 180 / Math.PI;
+				rows[i].longitude = rows[i].longitude * 180 / Math.PI;
+			}
+			callback(null, rows);
+		});
 	});
 };
 
@@ -671,6 +680,36 @@ setStatus = function(gearID, status, callback) {
 			return;
 		}
 		callback(null);
+	});
+};
+
+checkForRentals = function(userID, callback) {
+	//Get bookings that are before or equal to the current day and for instruments that belong to the user
+	db.query("SELECT gear.id FROM bookings INNER JOIN gear ON DATE(bookings.start_time) <= DATE(NOW()) AND bookings.gear_id=gear.id AND gear.owner_id=?", [userID], function(error, rows) {
+		var sql, i, params;
+		if(error) {
+			callback("Error selecting gear bookings equal or prior to current day: " + error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null);
+			return;
+		}
+		sql = "UPDATE gear SET gear_status='rented-out' WHERE id IN(";
+		params = [];
+		for(i = 0; i < rows.length - 1; i++) {
+			sql += "?,";
+			params.push(rows[i].id);
+		}
+		sql += "?)";
+		params.push(rows[rows.length - 1].id);
+		db.query(sql, params, function(error) {
+			if(error) {
+				callback("Error setting gear_status to rented-out: " + error);
+				return;
+			}
+			callback(null);
+		});
 	});
 };
 
