@@ -77,6 +77,7 @@ server.get('/users/:user_id/gear', readGearFromUserWithID);
 server.put('/users/:user_id/gear/:gear_id', updateGearFromUserWithID);
 server.post('/users/:user_id/gear/:gear_id/availability', createGearAvailability);
 server.get('/users/:user_id/gear/:gear_id/availability', readGearAvailability);
+
 server.get('/users/:renter_id/reservations', readReservationsFromUserWithID);
 //server.get('/users/search/:string', readUserSearchResults);
 
@@ -597,7 +598,6 @@ function readReservationsFromUserWithID(req, res, next) {
         res.send(reservations);
         next();
     });
-
 }
 
 /**
