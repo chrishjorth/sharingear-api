@@ -246,7 +246,7 @@ createGear = function(newGear, callback) {
 };
 
 readGearFromUser = function(userID, callback) {
-	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, gear_status FROM gear WHERE owner_id=?", [userID], function(error, rows) {
+	db.query("SELECT zegear.id, zegear.type, zegear.subtype, zegear.brand, zegear.model, zegear.description, zegear.images, zegear.price_a, zegear.price_b, zegear.price_c, zegear.address, zegear.postal_code, zegear.city, zegear.region, zegear.country, zegear.latitude, zegear.longitude, bookings.booking_status AS gear_status FROM bookings RIGHT JOIN (SELECT gear.id, gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude FROM gear WHERE gear.owner_id=?) as zegear ON bookings.gear_id=zegear.id;", [userID], function(error, rows) {
 		var i;
 		if(error) {
 			callback(error);

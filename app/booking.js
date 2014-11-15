@@ -17,7 +17,8 @@ var db = require("./database"),
 	readReservationsForUser,
 	update,
 
-	preAuthorize;
+	preAuthorize,
+	chargePreAuthorization;
 
 create = function(renterID, bookingData, callback) {
 	//get gear prices and calculate correct price
@@ -34,38 +35,43 @@ create = function(renterID, bookingData, callback) {
 			renterID,
 			price
 		];
-
-		preAuthorize(renterID, bookingData.cardId, price, bookingData.returnURL, function(error) {
+		Availability.removeInterval(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error) {	
 			if(error) {
 				callback(error);
 				return;
 			}
-			Availability.removeInterval(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error) {
+			db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, price) VALUES (?, ?, ?, ?, ?)", booking, function(error, result) {
+				var url;
 				if(error) {
-					callback(error);
+					callback("Error inserting booking: " + error);
 					return;
 				}
-				db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, price) VALUES (?, ?, ?, ?, ?)", booking, function(error, result) {
+				//Assertion: only returnURLs with #route are valid
+				url = bookingData.returnURL.split("#");
+				bookingData.returnURL = url[0] + "?booking_id=" + result.insertId + "#" + url[1];
+				preAuthorize(renterID, bookingData.cardId, price, bookingData.returnURL, function(error, preAuthData) {
 					if(error) {
-						callback("Error inserting booking: " + error);
+						callback(error);
 						return;
 					}
-					//Set status to pending on gear
-					//console.log('Set gear status');
-					Gear.setStatus(bookingData.gear_id, "pending", function(error) {
-						if(error) {
-							callback(error);
-							return;
-						}
-						//console.log('create booking callback');
-						callback(null, {
-							id: result.insertId,
-							gear_id: bookingData.gear_id,
-							start_time: bookingData.start_time,
-							end_time: bookingData.end_time,
-							price: price
-						});
+					callback(null, {
+						id: result.insertId,
+						gear_id: bookingData.gear_id,
+						start_time: bookingData.start_time,
+						end_time: bookingData.end_time,
+						price: price,
+						verificationURL: preAuthData.verificationURL
 					});
+				//Set status to pending on gear
+				//console.log('Set gear status');
+				/*Gear.setStatus(bookingData.gear_id, "pending", function(error) {
+					if(error) {
+						callback(error);
+						return;
+					}
+						//console.log('create booking callback');
+						
+				});*/
 				});
 			});
 		});
@@ -93,45 +99,64 @@ readReservationsForUser = function(renterID, callback){
             return;
         }
         if(rows.length <= 0) {
-            callback("No reservations for this user with ID: " + renterID + ".");
+            callback(null, []);
             return;
         }
         callback(null, rows);
     });
 };
 
-update = function(gearID, bookingID, status, callback) {
-	if(status !== "denied" && status !== "accepted") {
+//Possible booking statuses: pending, denied, accepted, failed, cancelled
+update = function(bookingData, callback) {
+	var status = bookingData.booking_status,
+		bookingID = bookingData.booking_id,
+		gearID = bookingData.gear_id;
+	if(status !== "pending" && status !== "denied" && status !== "accepted") {
 		callback("Unacceptable booking status.");
 		return;
 	}
-	db.query("UPDATE bookings SET status=? WHERE id=? LIMIT 1", [status, bookingID], function(error) {
+	
+	db.query("SELECT renter_id, start_time, end_time, price, preauth_id FROM bookings WHERE id=? LIMIT 1", [bookingID], function(error, rows) {
+		var completeUpdate;
 		if(error) {
-			callback("Error updating booking status: " + error);
+			callback("Error selecting booking interval: " + error);
 			return;
 		}
-		if(status === "denied") {
-			db.query("SELECT start_time, end_time FROM bookings WHERE id=? LIMIT 1", [bookingID], function(error, rows) {
+		if(rows.length <= 0) {
+			callback("No booking found for id " + bookingID + ".");
+			return;
+		}
+
+		completeUpdate = function (status, preAuthID) {
+			db.query("UPDATE bookings SET booking_status=?, preauth_id=? WHERE id=? LIMIT 1", [status, preAuthID, bookingID], function(error) {
 				if(error) {
-					callback("Error selecting booking interval: " + error);
+					callback("Error updating booking status: " + error);
 					return;
 				}
-				if(rows.length <= 0) {
-					callback("No booking found for id " + bookingID + ".");
+				callback(null, rows[0]);
+			});
+		};
+
+		if(status === "pending") {
+			completeUpdate(status, bookingData.preauth_id);
+		}
+		else if(status === "denied") {
+			Availability.removeInterval(gearID, rows[0].start_time, rows[0].end_time, function(error) {
+				if(error) {
+					callback(error);
 					return;
 				}
-				Availability.removeInterval(gearID, rows[0].start_time, rows[0].end_time, function(error) {
-					if(error) {
-						callback(error);
-					}
-					else {
-						callback(null);
-					}
-				});
+				completeUpdate(status, null);
 			});
 		}
 		else {
-			callback(null);
+			chargePreAuthorization(rows[0].renter_id, rows[0].price, rows[0].preauth_id, function(error) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				completeUpdate(status, rows[0].preauth_id);
+			});
 		}
 	});
 };
@@ -143,6 +168,16 @@ preAuthorize = function(renterID, cardID, price, returnURL, callback) {
 			return;
 		}
 		Payment.preAuthorize(renterMangoPayData, cardID, price, returnURL, callback);
+	});
+};
+
+chargePreAuthorization = function(renterID, price, preAuthId, callback) {
+	User.getMangoPayData(renterID, function(error, renterMangoPayData) {
+		if(error) {
+			callback("Error getting MangoPay data for gear renter: " + error);
+			return;
+		}
+		Payment.chargePreAuthorization(renterMangoPayData, price, preAuthId, callback);
 	});
 };
 

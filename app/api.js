@@ -589,7 +589,6 @@ function createGearAvailability(req, res, next) {
  * @return: All bookings of the renter
  */
 function readReservationsFromUserWithID(req, res, next) {
-
     Booking.readReservationsForUser(req.params.renter_id, function (error, reservations) {
         if (error) {
             handleError(res,next,'Error reading reservations for user: ',error);
@@ -661,7 +660,7 @@ function updateBooking(req, res, next) {
 			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
 			return;
 		}
-		Booking.update(req.params.gear_id, req.params.booking_id, req.params.booking_status, function(error) {
+		Booking.update(req.params, function(error) {
 			if(error) {
 				handleError(res, next, 'Error updating booking: ', error);
 				return;
