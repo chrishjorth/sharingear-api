@@ -115,9 +115,17 @@ updateUser = function(mangopay_id, wallet_id, user, callback) {
 		}
 		//console.log("Update response: " + response);
 		responseData = JSON.parse(response);
+		if(responseData.type === "param_error") {
+			callback("Bad parameter in gateway request: " + response);
+			return;
+		}
 		if(responseData.Type === "forbidden_ressource") {
 			callback("Error calling gateway: " + responseData.Message);
 			return;
+		}
+		if(responseData.Type === "other") {
+			callback("Error from gateway: " + response);
+			return;	
 		}
 		if(responseData.errors) {
 			callback("Gateway errors: " + response);
@@ -203,6 +211,7 @@ createWalletForUser = function(mangopay_id, callback) {
 };
 
 getCardObject = function(mangopay_id, callback) {
+	console.log(mangopay_id);
 	var postData = {
 		UserId: mangopay_id,
 		Currency: "DKK",
@@ -214,6 +223,10 @@ getCardObject = function(mangopay_id, callback) {
 			return;
 		}
 		parsedData = JSON.parse(data);
+		if(!parsedData.CardRegistrationURL || !parsedData.PreregistrationData || !parsedData.AccessKey) {
+			callback("Error getting card registration object: " + data);
+			return;
+		}
 		cardObject = {
 			id: parsedData.Id,
 			cardRegistrationURL: parsedData.CardRegistrationURL,

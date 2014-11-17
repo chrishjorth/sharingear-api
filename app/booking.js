@@ -210,8 +210,6 @@ chargePreAuthorization = function(renterID, price, preAuthId, callback) {
 			callback("Error getting MangoPay data for gear renter: " + error);
 			return;
 		}
-		console.log("price: " + price);
-		console.log("preAuthID: " + preAuthId);
 		Payment.chargePreAuthorization(renterMangoPayData, price, preAuthId, callback);
 	});
 };
