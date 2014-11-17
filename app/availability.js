@@ -20,10 +20,10 @@ module.exports = {
  */
 
 function set(gearID, availability, callback) {
+
+	console.log("\nsetting availability\n");
+
 	//Remove all availability for the gear id
-
-	console.log("setting availability");
-
 	//separate the wipe and call here
 	db.query("DELETE FROM availability WHERE gear_id=?", [gearID], function(error, result) {
 		var sql, i, valueArray, startMoment, endMoment;
@@ -36,8 +36,6 @@ function set(gearID, availability, callback) {
 			callback(null);
 			return;
 		}
-
-		console.log("got here 1");
 
 		sql = 'INSERT INTO availability(start_time, end_time, gear_id) VALUES ';
 		valueArray = [];
@@ -62,8 +60,6 @@ function set(gearID, availability, callback) {
 				callback(error);
 				return;
 			}
-			// callback(alwaysFlag);
-			console.log("got here");
 		});
 	});
 }

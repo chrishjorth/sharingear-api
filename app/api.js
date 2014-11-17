@@ -525,7 +525,7 @@ function readGearAvailability(req, res, next) {
 				handleError(res, next, 'Error getting gear availability: ', error);
 				return;
 			}
-			console.log("availabilityArray: " + availabilityArray);
+
 			avArray = availabilityArray;
 
 			Gear.getAlwaysFlag(req.params.user_id, req.params.gear_id, function(error, result) {
@@ -534,12 +534,11 @@ function readGearAvailability(req, res, next) {
 					return;
 				}
 
-				console.log("mutherfucking flag: " + result[0].always_available);
 				alwaysFlag = result[0].always_available;
 
-				//console.log("avArray: " + avArray);
 				responseObject = {availabilityArray: avArray, alwaysFlag: alwaysFlag};
-				console.log("resObject: " + responseObject);
+				console.log("\nresObject: ");
+				console.log(responseObject);
 				res.send(responseObject);
 				next();
 
@@ -574,44 +573,27 @@ function createGearAvailability(req, res, next) {
 			Gear.getAlwaysFlag(req.params.user_id, req.params.gear_id, function(error, result) {
 
 				if(error) {
-					return
+					return;
 				}
 
-				console.log(req.params.alwaysFlag);
-
-				if(result[0].always_available != req.params.alwaysFlag) { //if result != req.params.alwaysFlag  { clear, set flag} else {the same old}
-					console.log("flag different, set it");
+				if(result[0].always_available != req.params.alwaysFlag) { //if flag changed, set it
 					Gear.setAlwaysFlag(req.params.user_id, req.params.gear_id, req.params.alwaysFlag, function(error, result) {
-
 						if(error) {
-							return
+							return;
 						}
-
-						console.log("flag set: " + result);
-
 					});
+				};
 
-					return
-
-				} else {
-					console.log("flag the same or nothing clicked");
-					Availability.set(req.params.gear_id, availability, req.params.alwaysFlag, function(error) {
-
-						if(error) {
-							handleError(res, next, 'Error setting gear availability: ', error);
-							return
-						}
-
-						res.send({});
-						next();
-					});
-				}
+				Availability.set(req.params.gear_id, availability, req.params.alwaysFlag, function(error) {
+					if(error) {
+						handleError(res, next, 'Error setting gear availability: ', error);
+						return;
+					}
+					res.send({});
+					next();
+				});
 
 			});
-
-
-			//console.log(req);
-
 		});
 	});
 }
