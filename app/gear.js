@@ -3,38 +3,39 @@
  * @author: Chris Hjorth
  */
 
-var db = require('./database'),
-	Moment = require('moment');
+/*jslint node: true */
+"use strict";
 
-module.exports = {
-	getClassification: getClassification,
-	checkTypes: checkTypes,
-	checkType: checkType,
-	checkSubtype: checkSubtype,
-	checkBrand: checkBrand,
-	checkOwner: checkOwner,
-	getAlwaysFlag: getAlwaysFlag,
-	setAlwaysFlag: setAlwaysFlag,
-	createGear: createGear,
-	readGearFromUser: readGearFromUser,
-	addImage: addImage,
-	updateGearWithID: updateGearWithID,
-	readGearWithID: readGearWithID,
-	search: search,
-	//createGearBulk: createGearBulk,
-	getPrice: getPrice,
-	setStatus: setStatus
-};
+var db = require("./database"),
+	Moment = require("moment"),
+
+	getClassification,
+	checkTypes,
+	checkType,
+	checkSubtype,
+	checkBrand,
+	checkOwner,
+	createGear,
+	readGearFromUser,
+	addImage,
+	updateGearWithID,
+	readGearWithID,
+	search,
+	getPrice,
+	getOwner,
+	setStatus,
+
+	checkForRentals;
 
 /**
  * @returns fx {
  *		guitar: ['electric', acoustic],
- *		amp: ['guitar amp', 'cabinet', 'combo']
+ *		amp: ['guitar amp', 'cabinet', 'combo']	
  * }
  */
-function getClassification(callback) {
+getClassification = function(callback) {
 	db.query("SELECT gear_types.gear_type, gear_subtypes.subtype FROM gear_types, gear_subtypes WHERE gear_subtypes.type_id=gear_types.id ORDER BY gear_types.sorting", [], function(error, rows) {
-		var currentGear = '',
+		var currentGear = "",
 			gearClassification, classification, i;
 
 		gearClassification = {
@@ -68,13 +69,13 @@ function getClassification(callback) {
 			for(i = 0; i < rows.length; i++) {
 				gearClassification.brands.push(rows[i].name);
 			}
-			gearClassification.brands.push('Other');
+			gearClassification.brands.push("Other");
 			callback(null, gearClassification);
 		});
 	});
-}
+};
 
-function checkTypes(gearType, subtype, callback) {
+checkTypes = function(gearType, subtype, callback) {
 	db.query("SELECT gear_types.id, gear_subtypes.id FROM gear_types, gear_subtypes WHERE gear_types.gear_type=? AND gear_subtypes.subtype=? AND gear_subtypes.type_id=gear_types.id LIMIT 1", [gearType, subtype], function(error, rows) {
 		if(error) {
 			callback(error);
@@ -87,9 +88,9 @@ function checkTypes(gearType, subtype, callback) {
 			callback(null, true);
 		}
 	});
-}
+};
 
-function checkType(gearType, callback) {
+checkType = function(gearType, callback) {
 	db.query("SELECT id FROM gear_types WHERE gear_type=? LIMIT 1", [gearType], function(error, rows) {
 		if(error) {
 			callback(error);
@@ -102,13 +103,13 @@ function checkType(gearType, callback) {
 			callback(null, true);
 		}
 	});
-}
+};
 
 /**
  * @return true for valid subtype or empty string. Empty string counts as valid in order to allow undefined subtype.
  */
-function checkSubtype(subtype, callback) {
-	if(subtype === '') {
+checkSubtype = function(subtype, callback) {
+	if(subtype === "") {
 		callback(null, true);
 		return;
 	}
@@ -124,13 +125,13 @@ function checkSubtype(subtype, callback) {
 			callback(null, true);
 		}
 	});
-}
+};
 
 /**
  * @return true for valid subtype or empty string. Empty string counts as valid in order to allow undefined brand.
  */
-function checkBrand(brand, callback) {
-	if(brand === '') {
+checkBrand = function(brand, callback) {
+	if(brand === "") {
 		callback(null, true);
 		return;
 	}
@@ -146,9 +147,9 @@ function checkBrand(brand, callback) {
 			callback(null, true);
 		}
 	});
-}
+};
 
-function checkOwner(userID, gearID, callback) {
+checkOwner = function(userID, gearID, callback) {
 	db.query("SELECT id FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
 		if(error) {
 			callback(error);
@@ -161,39 +162,12 @@ function checkOwner(userID, gearID, callback) {
 			callback(null, true);
 		}
 	});
-}
-
-function getAlwaysFlag(userID, gearID, callback) {
-
-	db.query("SELECT always_available FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
-		if(error) {
-			callback(error);
-			return;
-		}
-		console.log("got flag " + rows[0].always_available);
-		callback(null, rows);
-	});
-
-
-}
-
-function setAlwaysFlag(userID, gearID, alwaysFlag, callback) {
-
-	console.log("Setting flag to " + alwaysFlag);
-
-	db.query("UPDATE gear SET always_available=? WHERE id=? AND owner_id=? LIMIT 1", [alwaysFlag, gearID, userID], function(error, result) {
-
-	console.log("Flag set to: \n" + result);
-
-	});
-
-	//callback(null, result)
-}
+};
 
 /**
  * Latitude and longitude must be in degrees.
  */
-function createGear(newGear, callback) {
+createGear = function(newGear, callback) {
 	var Gear = this,
 		create;
 
@@ -240,13 +214,12 @@ function createGear(newGear, callback) {
 
 
 	this.checkType(newGear.type, function(error, correct) {
-		var gear;
 		if(error) {
 			callback(error);
 			return;
 		}
 		if(correct === false) {
-			callback('Wrong type.');
+			callback("Wrong type.");
 			return;
 		}
 
@@ -256,75 +229,81 @@ function createGear(newGear, callback) {
 				return;
 			}
 			if(correct === false) {
-				callback('Wrong subtype.');
+				callback("Wrong subtype.");
 				return;
 			}
 
 			Gear.checkBrand(newGear.brand, function(error, correct) {
-				var lat, lng, gear;
 				if(error) {
 					callback(error);
 					return;
 				}
 				if(correct === false) {
-					callback('Wrong brand.');
+					callback("Wrong brand.");
 					return;
 				}
 				create();
 			});
 		});
 	});
-}
+};
 
-function readGearFromUser(userID, callback) {
-	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, gear_status FROM gear WHERE owner_id=?", [userID], function(error, rows) {
-		var i;
+readGearFromUser = function(userID, callback) {
+	//Check if any gear is rented out
+	checkForRentals(userID, function(error) {
 		if(error) {
-			callback(error);
+			console.log("Error checking users gear for rentals: " + error);
 			return;
 		}
-		//Convert latitudes and longitudes
-		for(i = 0; i < rows.length; i++) {
-			rows[i].latitude *= 180 / Math.PI;
-			rows[i].longitude *= 180 / Math.PI;
-		}
-		callback(null, rows);
+		db.query("SELECT usergear.id, usergear.type, usergear.subtype, usergear.brand, usergear.model, usergear.description, usergear.images, usergear.price_a, usergear.price_b, usergear.price_c, usergear.address, usergear.postal_code, usergear.city, usergear.region, usergear.country, usergear.latitude, usergear.longitude, usergear.gear_status, usergear.owner_id, bookings.booking_status FROM bookings RIGHT JOIN (SELECT gear.id, gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id FROM gear WHERE gear.owner_id=?) as usergear ON bookings.gear_id=usergear.id;", [userID], function(error, rows) {
+			var i;
+			if(error) {
+				callback(error);
+				return;
+			}
+			//Convert latitudes and longitudes
+			for(i = 0; i < rows.length; i++) {
+				rows[i].latitude = rows[i].latitude * 180 / Math.PI;
+				rows[i].longitude = rows[i].longitude * 180 / Math.PI;
+			}
+			callback(null, rows);
+		});
 	});
-}
+};
 
-function addImage(userID, gearID, imageURL, callback) {
+addImage = function(userID, gearID, imageURL, callback) {
 	db.query("SELECT images FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
-		var images = '';
+		var images = "";
 		if(error) {
 			callback(error);
 			return;
 		}
 		if(rows.length <= 0) {
-			callback('No gear found.');
+			callback("No gear found.");
 			return;
 		}
-		console.log('images selected');
-		images = rows[0].images + imageURL + ',';
+		console.log("images selected");
+		images = rows[0].images + imageURL + ",";
 		db.query("UPDATE gear SET images=? WHERE id=? AND owner_id=?", [images, gearID, userID], function(error, result) {
 			if(error) {
 				callback(error);
 				return;
 			}
 			if(result.affectedRows <= 0) {
-				callback('No gear found to update.');
+				callback("No gear found to update.");
 				return;
 			}
-			console.log('images updated');
+			console.log("images updated");
 			callback(null, images);
 			db.index();
 		});
 	});
-}
+};
 
 /**
  * Latitude and longitude must be in degrees.
  */
-function updateGearWithID(gearID, updatedGearData, callback) {
+updateGearWithID = function(gearID, updatedGearData, callback) {
 	var Gear = this,
 		update;
 
@@ -364,7 +343,7 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 				return;
 			}
 			if(result.affectedRows <= 0) {
-				callback('No gear found to update.');
+				callback("No gear found to update.");
 				return;
 			}
 			callback(null);
@@ -378,7 +357,7 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 			return;
 		}
 		if(correct === false) {
-			callback('Wrong subtype.');
+			callback("Wrong subtype.");
 			return;
 		}
 
@@ -388,15 +367,15 @@ function updateGearWithID(gearID, updatedGearData, callback) {
 				return;
 			}
 			if(correct === false) {
-				callback('Wrong brand.');
+				callback("Wrong brand.");
 				return;
 			}
 			update();
 		});
-	});
-}
+	});	
+};
 
-function readGearWithID(gearID, callback) {
+readGearWithID = function(gearID, callback) {
 	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, gear_status, owner_id FROM gear WHERE id=? LIMIT 1", gearID, function(error, rows) {
 		var gear;
 		if(error) {
@@ -404,51 +383,51 @@ function readGearWithID(gearID, callback) {
 			return;
 		}
 		if(rows.length <= 0) {
-			callback('No gear found for the id.');
+			callback("No gear found for the id.");
 			return;
 		}
 		gear = rows[0];
 		if(gear.model === null) {
-			gear.model = '';
+			gear.model = "";
 		}
 		if(gear.description === null) {
-			gear.description = '';
+			gear.description = "";
 		}
 		if(gear.images === null) {
-			gear.images = '';
+			gear.images = "";
 		}
 		if(gear.address === null) {
-			gear.address = '';
+			gear.address = "";
 		}
 		if(gear.postal_code === null) {
-			gear.postal_code = '';
+			gear.postal_code = "";
 		}
 		if(gear.city === null) {
-			gear.city = '';
+			gear.city = "";
 		}
 		if(gear.region === null) {
-			gear.region = '';
+			gear.region = "";
 		}
 		if(gear.country === null) {
-			gear.country = '';
+			gear.country = "";
 		}
-		gear.latitude *= 180 / Math.PI;
-		gear.longitude *= 180 / Math.PI;
+		gear.latitude = gear.latitude * 180 / Math.PI;
+		gear.longitude = gear.longitude * 180 / Math.PI;
 		callback(null, rows[0]);
 	});
-}
+};
 
 /**
  * @param lat: Latitude in degrees
  * @param lng: Longitude in degrees
  */
-function search(lat, lng, gear, callback) {
+search = function(lat, lng, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
 	//console.log('Search gear');
 	db.search("SELECT id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
 		var sql, i;
 		if(error) {
-			console.log('Error searching for match: ' + JSON.stringify(error));
+			console.log("Error searching for match: " + JSON.stringify(error));
 			callback(error);
 			return;
 		}
@@ -462,7 +441,7 @@ function search(lat, lng, gear, callback) {
 		lng = parseFloat(lng) * Math.PI / 180;
 		sql = "SELECT id, type, subtype, brand, model, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
-			sql += rows[i].id + ',';
+			sql += rows[i].id + ",";
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
 		sql += ") AND distance <= 10000.0 ORDER BY distance ASC LIMIT 100";
@@ -474,20 +453,20 @@ function search(lat, lng, gear, callback) {
 		db.search(sql, [lat, lng], function(error, rows) {
 			var i;
 			if(error) {
-				console.log('Error filtering by location: ' + JSON.stringify(error));
+				console.log("Error filtering by location: " + JSON.stringify(error));
 				callback(error);
 				return;
 			}
 			for(i = 0; i < rows.length; i++) {
-				rows[i].latitude *= 180 / Math.PI;
-				rows[i].longitude *= 180 / Math.PI;
+				rows[i].latitude = rows[i].latitude * 180 / Math.PI;
+				rows[i].longitude = rows[i].longitude * 180 / Math.PI;
 			}
 			//console.log('Found gear by location filter');
 			//console.log(JSON.stringify(rows));
 			callback(null, rows);
 		});
 	});
-}
+};
 
 /*function createGearBulk(ownerID, gearList, callback) {
 	var create, types, typesSQL, subtypes, subtypesSQL, brands, brandsSQL, i, gearItem;
@@ -659,48 +638,112 @@ function search(lat, lng, gear, callback) {
 	});
 }*/
 
-function getPrice(gearID, startTime, endTime, callback) {
+getPrice = function(gearID, startTime, endTime, callback) {
 	db.query("SELECT price_a, price_b, price_c FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
 		var startMoment, endMoment, weeks, days, hours, price;
 		if(error) {
-			callback('Error retrieving prices for gear: ' + error);
+			callback("Error retrieving prices for gear: " + error);
 			return;
 		}
 		if(rows.length <= 0) {
-			callback('No gear with id ' + gearID + '.');
+			callback("No gear with id " + gearID + ".");
 			return;
 		}
-		startMoment = Moment(startTime, 'YYYY-MM-DD HH:mm:ss');
-		endMoment = Moment(endTime, 'YYYY-MM-DD HH:mm:ss');
-		weeks = parseInt(endMoment.diff(startMoment, 'weeks'), 10);
-		endMoment.subtract(weeks, 'weeks');
-		days = parseInt(endMoment.diff(startMoment, 'days'), 10);
-		endMoment.subtract(days, 'days');
-		hours = parseInt(endMoment.diff(startMoment, 'hours'), 10);
-		console.log('startTime: ' + startTime);
+		startMoment = new Moment(startTime, "YYYY-MM-DD HH:mm:ss");
+		endMoment = new Moment(endTime, "YYYY-MM-DD HH:mm:ss");
+		weeks = parseInt(endMoment.diff(startMoment, "weeks"), 10);
+		endMoment.subtract(weeks, "weeks");
+		days = parseInt(endMoment.diff(startMoment, "days"), 10);
+		endMoment.subtract(days, "days");
+		hours = parseInt(endMoment.diff(startMoment, "hours"), 10);
+		/*console.log('startTime: ' + startTime);
 		console.log('endTime: ' + endTime);
 		console.log('weeks: ' + weeks);
 		console.log('days: ' + days);
 		console.log('hours: ' + hours);
 		console.log('price_a: ' + rows[0].price_a);
 		console.log('price_b: ' + rows[0].price_b);
-		console.log('price_c: ' + rows[0].price_c);
+		console.log('price_c: ' + rows[0].price_c);*/
 		price = rows[0].price_a * hours + rows[0].price_b * days + rows[0].price_c * weeks;
-		console.log('total price: ' + price);
+		//console.log('total price: ' + price);
 		callback(null, price);
 	});
-}
+};
 
-function setStatus(gearID, status, callback) {
-	if(status !== 'available' && status !== 'unavailable' && status !== 'pending' && status !== 'rented') {
-		callback('Error: invalid gear status.');
+getOwner = function(gearID, callback) {
+	db.query("SELECT owner_id FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
+		if(error) {
+			callback("Error retrieving owner of gear: " + error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No gear found for id.");
+			return;
+		}
+		callback(null, rows[0]);
+	});
+};
+
+setStatus = function(gearID, status, callback) {
+	if(status !== "available" && status !== "unavailable" && status !== "pending" && status !== "rented") {
+		callback("Error: invalid gear status.");
 		return;
 	}
-	db.query("UPDATE gear SET gear_status=? WHERE id=? LIMIT 1", [status, gearID], function(error, result) {
+	db.query("UPDATE gear SET gear_status=? WHERE id=? LIMIT 1", [status, gearID], function(error) {
 		if(error) {
-			callback('Error updating gear status: ' + error);
+			callback("Error updating gear status: " + error);
 			return;
 		}
 		callback(null);
 	});
-}
+};
+
+checkForRentals = function(userID, callback) {
+	//Get bookings that are before or equal to the current day and for instruments that belong to the user
+	db.query("SELECT gear.id FROM bookings INNER JOIN gear ON DATE(bookings.start_time) <= DATE(NOW()) AND bookings.gear_id=gear.id AND gear.owner_id=?", [userID], function(error, rows) {
+		var sql, i, params;
+		if(error) {
+			callback("Error selecting gear bookings equal or prior to current day: " + error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null);
+			return;
+		}
+		sql = "UPDATE gear SET gear_status='rented-out' WHERE id IN(";
+		params = [];
+		for(i = 0; i < rows.length - 1; i++) {
+			sql += "?,";
+			params.push(rows[i].id);
+		}
+		sql += "?)";
+		params.push(rows[rows.length - 1].id);
+		db.query(sql, params, function(error) {
+			if(error) {
+				callback("Error setting gear_status to rented-out: " + error);
+				return;
+			}
+			callback(null);
+		});
+	});
+};
+
+module.exports = {
+	getClassification: getClassification,
+	checkTypes: checkTypes,
+	checkType: checkType,
+	checkSubtype: checkSubtype,
+	checkBrand: checkBrand,
+	checkOwner: checkOwner,
+	createGear: createGear,
+	readGearFromUser: readGearFromUser,
+	addImage: addImage,
+	updateGearWithID: updateGearWithID,
+	readGearWithID: readGearWithID,
+	search: search,
+	//createGearBulk: createGearBulk,
+	getPrice: getPrice,
+	getOwner: getOwner,
+	setStatus: setStatus
+};
+
