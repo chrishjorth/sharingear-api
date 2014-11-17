@@ -84,7 +84,7 @@ server.get('/users/:renter_id/reservations', readReservationsFromUserWithID);
 server.get('/users/:id/newfilename/:filename', generateFileName);
 
 server.post('/users/:user_id/gear/:gear_id/bookings', createBooking);
-server.get('/users/:user_id/gear/:gear_id/bookings/latest', readClosestBooking);
+server.get('/users/:user_id/gear/:gear_id/bookings/:booking_id', readBooking);
 server.put('/users/:user_id/gear/:gear_id/bookings/:booking_id', updateBooking);
 //server.del('/bookings/:id', deleteBooking);
 
@@ -625,8 +625,9 @@ function createBooking(req, res, next) {
 	});
 }
 
-function readClosestBooking(req, res, next) {
+function readBooking(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
+		var handleBookingResponse;
 		if(error) {
 			handleError(res, next, 'Error authorizing user: ', error);
 			return;
@@ -635,14 +636,20 @@ function readClosestBooking(req, res, next) {
 			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
 			return;
 		}
-		Booking.readClosest(req.params.gear_id, function(error, closestBooking) {
+		handleBookingResponse = function(error, booking) {
 			if(error) {
-				handleError(res, next, 'Error reading closes booking: ', error);
+				handleError(res, next, 'Error reading booking: ', error);
 				return;
 			}
-			res.send(closestBooking);
+			res.send(booking);
 			next();
-		});
+		};
+		if(req.params.booking_id === "latest") {
+			Booking.readClosest(req.params.gear_id, handleBookingResponse);
+		}
+		else {
+			Booking.read(req.params.booking_id, handleBookingResponse);
+		}
 	});
 }
 

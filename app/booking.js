@@ -4,7 +4,7 @@
  * When a user's gear is retrieved we check if there is a booking pending and in that case we send along the booking status.
  * When a user's gear is retrieved we check if there is an accepted booking that is current or past and in that case change the gear status to rented-out.
  * When an owner denies a booking the status must be set to denied.
- * When a renter views a denied booking the status must be set to ended.
+ * When a renter views a denied booking the status must be set to ended-denied.
  * When an owner accepts a booking the status must be set to accepted.
  * When a renter ends a booking the gear status must be set to renter-returned.
  * When an owner ends a booking the gear status must be set to owner-returned.
@@ -23,6 +23,7 @@ var db = require("./database"),
 	Payment = require("./payment"),
 
 	create,
+	read,
 	readClosest,
 	readReservationsForUser,
 	update,
@@ -88,8 +89,22 @@ create = function(renterID, bookingData, callback) {
 	});
 };
 
+read = function(bookingID, callback) {
+	db.query("SELECT id, gear_id, start_time, end_time, renter_id, price, booking_status FROM bookings WHERE id=?", [bookingID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No booking found for id.");
+			return;
+		}
+		callback(null, rows[0]);
+	});
+};
+
 readClosest = function(gearID, callback) {
-	db.query("SELECT id, gear_id, MIN(start_time) as start_time, end_time, renter_id, price, booking_status FROM bookings WHERE gear_id=?", [gearID], function(error, rows) {
+	db.query("SELECT id, gear_id, MIN(start_time) as start_time, end_time, renter_id, price, booking_status FROM bookings WHERE gear_id=? AND booking_status!='ended-denied' AND booking_status!='ended'", [gearID], function(error, rows) {
 		if(error) {
 			callback("Error selecting closest booking for gear " + gearID + ": " + error);
 			return;
@@ -103,7 +118,7 @@ readClosest = function(gearID, callback) {
 };
 
 readReservationsForUser = function(renterID, callback){
-    db.query("SELECT bookings.id, bookings.gear_id, gear.type, gear.subtype, gear.brand, gear.model, gear.images, gear.city, gear.gear_status, bookings.start_time, bookings.end_time, bookings.price, bookings.booking_status FROM bookings INNER JOIN gear ON bookings.gear_id = gear.id WHERE bookings.renter_id=?", [renterID], function(error, rows) {
+    db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear.type, gear.subtype, gear.brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.price, bookings.booking_status FROM bookings INNER JOIN gear ON bookings.gear_id = gear.id WHERE bookings.renter_id=? AND bookings.booking_status!='ended-denied' AND bookings.booking_status!='ended'", [renterID], function(error, rows) {
         if(error) {
             callback(error);
             return;
@@ -120,7 +135,7 @@ update = function(bookingData, callback) {
 	var status = bookingData.booking_status,
 		bookingID = bookingData.booking_id,
 		gearID = bookingData.gear_id;
-	if(status !== "pending" && status !== "denied" && status !== "accepted") {
+	if(status !== "pending" && status !== "denied" && status !== "accepted" && status !== "ended-denied") {
 		callback("Unacceptable booking status.");
 		return;
 	}
@@ -158,7 +173,7 @@ update = function(bookingData, callback) {
 				completeUpdate(status, null);
 			});
 		}
-		else {
+		else if (status === "accepted") {
 			chargePreAuthorization(rows[0].renter_id, rows[0].price, rows[0].preauth_id, function(error) {
 				if(error) {
 					callback(error);
@@ -166,6 +181,9 @@ update = function(bookingData, callback) {
 				}
 				completeUpdate(status, rows[0].preauth_id);
 			});
+		}
+		else if(status === "ended-denied") {
+			completeUpdate(status, null);
 		}
 	});
 };
@@ -192,6 +210,7 @@ chargePreAuthorization = function(renterID, price, preAuthId, callback) {
 
 module.exports = {
 	create: create,
+	read: read,
 	readClosest: readClosest,
     readReservationsForUser: readReservationsForUser,
 	update: update
