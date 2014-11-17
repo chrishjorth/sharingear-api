@@ -15,6 +15,8 @@ var db = require("./database"),
 	checkSubtype,
 	checkBrand,
 	checkOwner,
+	getAlwaysFlag,
+	setAlwaysFlag,
 	createGear,
 	readGearFromUser,
 	addImage,
@@ -161,6 +163,31 @@ checkOwner = function(userID, gearID, callback) {
 		else {
 			callback(null, true);
 		}
+	});
+};
+
+getAlwaysFlag = function(userID, gearID, callback) {
+	db.query("SELECT always_available FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		console.log("got flag " + rows[0].always_available);
+		callback(null, rows);
+	});
+};
+
+setAlwaysFlag = function(userID, gearID, alwaysFlag, callback) {
+
+	console.log("Setting flag to " + alwaysFlag);
+
+	db.query("UPDATE gear SET always_available=? WHERE id=? AND owner_id=? LIMIT 1", [alwaysFlag, gearID, userID], function(error, result) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		console.log("Flag set to: \n" + result);
+		callback(null, result);
 	});
 };
 
@@ -735,6 +762,8 @@ module.exports = {
 	checkSubtype: checkSubtype,
 	checkBrand: checkBrand,
 	checkOwner: checkOwner,
+	getAlwaysFlag: getAlwaysFlag,
+	setAlwaysFlag: setAlwaysFlag,
 	createGear: createGear,
 	readGearFromUser: readGearFromUser,
 	addImage: addImage,
