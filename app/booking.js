@@ -74,16 +74,6 @@ create = function(renterID, bookingData, callback) {
 						price: price,
 						verificationURL: preAuthData.verificationURL
 					});
-				//Set status to pending on gear
-				//console.log('Set gear status');
-				/*Gear.setStatus(bookingData.gear_id, "pending", function(error) {
-					if(error) {
-						callback(error);
-						return;
-					}
-						//console.log('create booking callback');
-						
-				});*/
 				});
 			});
 		});
@@ -220,6 +210,8 @@ chargePreAuthorization = function(renterID, price, preAuthId, callback) {
 			callback("Error getting MangoPay data for gear renter: " + error);
 			return;
 		}
+		console.log("price: " + price);
+		console.log("preAuthID: " + preAuthId);
 		Payment.chargePreAuthorization(renterMangoPayData, price, preAuthId, callback);
 	});
 };

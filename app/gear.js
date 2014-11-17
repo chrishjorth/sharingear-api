@@ -166,28 +166,27 @@ checkOwner = function(userID, gearID, callback) {
 	});
 };
 
-getAlwaysFlag = function(userID, gearID, callback) {
-	db.query("SELECT always_available FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
+getAlwaysFlag = function(gearID, callback) {
+	db.query("SELECT always_available FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
 		}
-		console.log("got flag " + rows[0].always_available);
-		callback(null, rows);
+		if(rows.length <= 0) {
+			callback("No gear found for ID.");
+			return;
+		}
+		callback(null, rows[0]);
 	});
 };
 
-setAlwaysFlag = function(userID, gearID, alwaysFlag, callback) {
-
-	console.log("Setting flag to " + alwaysFlag);
-
-	db.query("UPDATE gear SET always_available=? WHERE id=? AND owner_id=? LIMIT 1", [alwaysFlag, gearID, userID], function(error, result) {
+setAlwaysFlag = function(gearID, alwaysFlag, callback) {
+	db.query("UPDATE gear SET always_available=? WHERE id=? LIMIT 1", [alwaysFlag, gearID], function(error) {
 		if(error) {
 			callback(error);
 			return;
 		}
-		console.log("Flag set to: \n" + result);
-		callback(null, result);
+		callback(null);
 	});
 };
 

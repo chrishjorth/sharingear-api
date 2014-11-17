@@ -531,10 +531,6 @@ function updateGearFromUserWithID(req, res, next) {
 }
 
 function readGearAvailability(req, res, next) {
-	var responseObject = {};
-	var avArray;
-	var alwaysFlag;
-
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
 			handleError(res, next, 'Error authorizing user: ', error);
@@ -544,30 +540,21 @@ function readGearAvailability(req, res, next) {
 			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
 			return;
 		}
-
 		Availability.get(req.params.gear_id, function(error, availabilityArray) {
 			if(error) {
 				handleError(res, next, 'Error getting gear availability: ', error);
 				return;
 			}
-
-			avArray = availabilityArray;
-
 			Gear.getAlwaysFlag(req.params.gear_id, function(error, result) {
-
 				if(error) {
 					handleError(res, next, 'Error getting alwaysFlag: ', error);
 					return;
 				}
-
-				alwaysFlag = result.always_available;
-
-				responseObject = {availabilityArray: avArray, alwaysFlag: alwaysFlag};
-				console.log("\nresObject: ");
-				console.log(responseObject);
-				res.send(responseObject);
+				res.send({
+					availabilityArray: availabilityArray,
+					alwaysFlag: result.always_available
+				});
 				next();
-
 			});
 		});
 	});
@@ -595,29 +582,34 @@ function createGearAvailability(req, res, next) {
 				handleError(res, next, 'Error checking gear ownership: ', 'User ' + req.params.user_id + ' does not own gear ' + req.params.gear_id);
 				return;
 			}
-			Gear.getAlwaysFlag(req.params.user_id, req.params.gear_id, function(error, result) {
-
+			Gear.getAlwaysFlag(req.params.gear_id, function(error, result) {
+				var setAvailability;
 				if(error) {
+					handleError(res, next, 'Error getting always flag: ', error);
 					return;
 				}
-
-				if(result.always_available != req.params.alwaysFlag) { //if flag changed, set it
-					Gear.setAlwaysFlag(req.params.user_id, req.params.gear_id, req.params.alwaysFlag, function(error, result) {
+				setAvailability = function() {
+					Availability.set(req.params.gear_id, availability, function(error) {
 						if(error) {
+							handleError(res, next, 'Error setting gear availability: ', error);
 							return;
 						}
+						res.send({});
+						next();
 					});
 				};
-
-				Availability.set(req.params.gear_id, availability, req.params.alwaysFlag, function(error) {
-					if(error) {
-						handleError(res, next, 'Error setting gear availability: ', error);
-						return;
-					}
-					res.send({});
-					next();
-				});
-
+				if(result.always_available != req.params.alwaysFlag) { //if flag changed, set it
+					Gear.setAlwaysFlag(req.params.gear_id, req.params.alwaysFlag, function(error, result) {
+						if(error) {
+							handleError(res, next, 'Error setting always flag: ', error);
+							return;
+						}
+						setAvailability();
+					});
+				}
+				else {
+					setAvailability();
+				}
 			});
 		});
 	});
