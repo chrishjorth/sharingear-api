@@ -22,6 +22,7 @@ var db = require("./database"),
 	readGearWithID,
 	search,
 	getPrice,
+	getOwner,
 	setStatus,
 
 	checkForRentals;
@@ -254,7 +255,7 @@ readGearFromUser = function(userID, callback) {
 			console.log("Error checking users gear for rentals: " + error);
 			return;
 		}
-		db.query("SELECT usergear.id, usergear.type, usergear.subtype, usergear.brand, usergear.model, usergear.description, usergear.images, usergear.price_a, usergear.price_b, usergear.price_c, usergear.address, usergear.postal_code, usergear.city, usergear.region, usergear.country, usergear.latitude, usergear.longitude, usergear.gear_status, bookings.booking_status FROM bookings RIGHT JOIN (SELECT gear.id, gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status FROM gear WHERE gear.owner_id=?) as usergear ON bookings.gear_id=usergear.id;", [userID], function(error, rows) {
+		db.query("SELECT usergear.id, usergear.type, usergear.subtype, usergear.brand, usergear.model, usergear.description, usergear.images, usergear.price_a, usergear.price_b, usergear.price_c, usergear.address, usergear.postal_code, usergear.city, usergear.region, usergear.country, usergear.latitude, usergear.longitude, usergear.gear_status, usergear.owner_id, bookings.booking_status FROM bookings RIGHT JOIN (SELECT gear.id, gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id FROM gear WHERE gear.owner_id=?) as usergear ON bookings.gear_id=usergear.id;", [userID], function(error, rows) {
 			var i;
 			if(error) {
 				callback(error);
@@ -669,6 +670,20 @@ getPrice = function(gearID, startTime, endTime, callback) {
 	});
 };
 
+getOwner = function(gearID, callback) {
+	db.query("SELECT owner_id FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
+		if(error) {
+			callback("Error retrieving owner of gear: " + error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No gear found for id.");
+			return;
+		}
+		callback(null, rows[0]);
+	});
+};
+
 setStatus = function(gearID, status, callback) {
 	if(status !== "available" && status !== "unavailable" && status !== "pending" && status !== "rented") {
 		callback("Error: invalid gear status.");
@@ -728,6 +743,7 @@ module.exports = {
 	search: search,
 	//createGearBulk: createGearBulk,
 	getPrice: getPrice,
+	getOwner: getOwner,
 	setStatus: setStatus
 };
 

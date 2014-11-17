@@ -29,7 +29,8 @@ var db = require("./database"),
 	update,
 
 	preAuthorize,
-	chargePreAuthorization;
+	chargePreAuthorization,
+	endBooking;
 
 create = function(renterID, bookingData, callback) {
 	//get gear prices and calculate correct price
@@ -135,12 +136,12 @@ update = function(bookingData, callback) {
 	var status = bookingData.booking_status,
 		bookingID = bookingData.booking_id,
 		gearID = bookingData.gear_id;
-	if(status !== "pending" && status !== "denied" && status !== "accepted" && status !== "ended-denied") {
+	if(status !== "pending" && status !== "denied" && status !== "accepted" && status !== "ended-denied" && status !== 'owner-returned' && status !== 'renter-returned') {
 		callback("Unacceptable booking status.");
 		return;
 	}
 	
-	db.query("SELECT renter_id, start_time, end_time, price, preauth_id FROM bookings WHERE id=? LIMIT 1", [bookingID], function(error, rows) {
+	db.query("SELECT renter_id, start_time, end_time, price, preauth_id, booking_status FROM bookings WHERE id=? LIMIT 1", [bookingID], function(error, rows) {
 		var completeUpdate;
 		if(error) {
 			callback("Error selecting booking interval: " + error);
@@ -185,6 +186,21 @@ update = function(bookingData, callback) {
 		else if(status === "ended-denied") {
 			completeUpdate(status, null);
 		}
+		else if(status === 'renter-returned' || status === 'owner-returned') {
+			if((status === 'owner-returned' && rows[0].booking_status === 'renter-returned') || (status === 'renter-returned' && rows[0].booking_status === 'owner-returned')) {
+				console.log('END BOOKING');
+				endBooking(function(error) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					completeUpdate('ended', null);
+				});
+			}
+			else {
+				completeUpdate(status, null);
+			}
+		}
 	});
 };
 
@@ -205,6 +221,22 @@ chargePreAuthorization = function(renterID, price, preAuthId, callback) {
 			return;
 		}
 		Payment.chargePreAuthorization(renterMangoPayData, price, preAuthId, callback);
+	});
+};
+
+endBooking = function(gearID, price, callback) {
+	Gear.getOwner(gearID, function(error, ownerID) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		User.getMangoPayData(ownerID, function(error, ownerMangoPayData) {
+			if(error) {
+				callback("Error getting MangoPay data for gear owner: " + error);
+				return;
+			}
+			Payment.payOutSeller(ownerMangoPayData, price, callback);
+		});
 	});
 };
 

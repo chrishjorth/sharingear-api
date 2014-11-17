@@ -21,6 +21,7 @@ var MANGOPAY_SANDBOX_CLIENTID = "sharingear",
 	getCardObject,
 	preAuthorize,
 	chargePreAuthorization,
+	payOutSeller,
 
 	gatewayGet,
 	gatewayPost,
@@ -289,6 +290,73 @@ chargePreAuthorization = function(buyerMangoPayData, price, preAuthID, callback)
 	});
 };
 
+payOutSeller = function(sellerMangoPayData, price, callback) {
+	//Transfer from SG wallet to seller wallet
+	//Payout seller from his wallet
+	var fee, postData;
+
+	fee = parseInt(price, 10) / 100.0 * sellerMangoPayData.seller_fee;
+
+	postData = {
+		AuthorId: sg_user.mangopay_id,
+		CreditedUserId: sellerMangoPayData.mangopay_id,
+		DebitedFunds: {
+			Amount: parseInt(price, 10) * 100,
+			Currency: "DKK"
+		},
+		Fees: {
+			Amount: fee * 100,
+			Currency: "DKK"
+		},
+		DebitedWalletID: sg_user.wallet_id,
+		CreditedWalletID: sellerMangoPayData.wallet_id
+	};
+
+	gatewayPost("/transfers", postData, function(error, data) {
+		var parsedData;
+		if(error) {
+			callback("Error transfering between wallets: " + error);
+			return;
+		}
+		console.log("transfer data:");
+		console.log(data);
+		parsedData = JSON.parse(data);
+		if(parsedData.Status !== "SUCCEEDED") {
+			callback("Error transfering between wallets: " + data);
+			return;
+		}
+		postData = {
+			AuthorId: sellerMangoPayData.mangopay_id,
+			DebitedFunds: {
+				Amount: parsedData.CreditedFunds.Amount,
+				Currency: "DKK"
+			},
+			Fees: {
+				Amount: 0,
+				Currency: "DKK"
+			},
+			DebitedWalletID: sellerMangoPayData.wallet_id,
+			BankAccountId: sellerMangoPayData.bank_id,
+			BankWireRef: "Sharingear rental"
+		};
+		gatewayPost("/payouts/bankwire", postData, function(error, data) {
+			var parsedData;
+			if(error) {
+				callback("Error wiring from wallet: " + error);
+				return;
+			}
+			console.log("wire data:");
+			console.log(data);
+			parsedData = JSON.parse(data);
+			if(parsedData.Status !== "SUCCEEDED") {
+				callback("Error wiring from wallet: " + data);
+				return;
+			}
+			callback(null);
+		});
+	});
+};
+
 gatewayGet = function(apiPath, callback) {
 	getToken(function(error, token) {
 		var buffer = "",
@@ -529,5 +597,6 @@ module.exports = {
 	//createWalletForUser: createWalletForUser, deprecated: wallet is created on update
 	getCardObject: getCardObject,
 	preAuthorize: preAuthorize,
-	chargePreAuthorization: chargePreAuthorization
+	chargePreAuthorization: chargePreAuthorization,
+	payOutSeller: payOutSeller
 };
