@@ -55,11 +55,13 @@ function set(gearID, availability, callback) {
 		}
 		sql += '(?, ?, ?)';
 		valueArray.push(availability[i].start_time, availability[i].end_time, gearID);
+		console.log("funck");
 		db.query(sql, valueArray, function(error, result) {
 			if(error) {
 				callback(error);
 				return;
 			}
+			callback(null);
 		});
 	});
 }
@@ -126,6 +128,7 @@ function removeInterval(gearID, startTime, endTime, callback) {
 			}
 		}
 		//At this point rows is the new availability set
+
 		Availability.set(gearID, rows, function(error) {
 			callback(error);
 		});

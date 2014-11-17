@@ -9,7 +9,7 @@
  * When a renter ends a booking the gear status must be set to renter-returned.
  * When an owner ends a booking the gear status must be set to owner-returned.
  * When a gear status return state is to be set, if it already was in a return state, set it to null. Then change the booking status to ended and do the payout.
- * 
+ *
  * @author: Chris Hjorth
  */
 
@@ -46,7 +46,7 @@ create = function(renterID, bookingData, callback) {
 			renterID,
 			price
 		];
-		Availability.removeInterval(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error) {	
+		Availability.removeInterval(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error) {
 			if(error) {
 				callback(error);
 				return;
@@ -81,7 +81,7 @@ create = function(renterID, bookingData, callback) {
 						return;
 					}
 						//console.log('create booking callback');
-						
+
 				});*/
 				});
 			});
@@ -139,7 +139,7 @@ update = function(bookingData, callback) {
 		callback("Unacceptable booking status.");
 		return;
 	}
-	
+
 	db.query("SELECT renter_id, start_time, end_time, price, preauth_id FROM bookings WHERE id=? LIMIT 1", [bookingID], function(error, rows) {
 		var completeUpdate;
 		if(error) {
