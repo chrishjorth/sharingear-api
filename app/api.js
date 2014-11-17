@@ -252,7 +252,7 @@ function addImageToGear(req, res, next) {
 		handleError(res, next, 'Error adding image to gear: ', 'image url is from an invalid domain.');
 		return;
 	}
-	
+
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
 			handleError(res, next, 'Error authorizing user: ', error);
@@ -531,6 +531,10 @@ function updateGearFromUserWithID(req, res, next) {
 }
 
 function readGearAvailability(req, res, next) {
+	var responseObject = {};
+	var avArray;
+	var alwaysFlag;
+
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
 			handleError(res, next, 'Error authorizing user: ', error);
@@ -540,13 +544,30 @@ function readGearAvailability(req, res, next) {
 			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
 			return;
 		}
+
 		Availability.get(req.params.gear_id, function(error, availabilityArray) {
 			if(error) {
 				handleError(res, next, 'Error getting gear availability: ', error);
 				return;
 			}
-			res.send(availabilityArray);
-			next();
+
+			avArray = availabilityArray;
+
+			Gear.getAlwaysFlag(req.params.user_id, req.params.gear_id, function(error, result) {
+
+				if(error) {
+					return;
+				}
+
+				alwaysFlag = result[0].always_available;
+
+				responseObject = {availabilityArray: avArray, alwaysFlag: alwaysFlag};
+				console.log("\nresObject: ");
+				console.log(responseObject);
+				res.send(responseObject);
+				next();
+
+			});
 		});
 	});
 }
@@ -562,7 +583,7 @@ function createGearAvailability(req, res, next) {
 			handleError(res, next, 'Error authorizing user: ', 'User is not authorized.');
 			return;
 		}
-		availability = JSON.parse(req.params.availability)
+		availability = JSON.parse(req.params.availability);
 		//Check that the user owns the gear
 		Gear.checkOwner(req.params.user_id, req.params.gear_id, function(error, data) {
 			if(error) {
@@ -573,13 +594,30 @@ function createGearAvailability(req, res, next) {
 				handleError(res, next, 'Error checking gear ownership: ', 'User ' + req.params.user_id + ' does not own gear ' + req.params.gear_id);
 				return;
 			}
-			Availability.set(req.params.gear_id, availability, function(error) {
+
+			Gear.getAlwaysFlag(req.params.user_id, req.params.gear_id, function(error, result) {
+
 				if(error) {
-					handleError(res, next, 'Error setting gear availability: ', error);
 					return;
 				}
-				res.send({});
-				next();
+
+				if(result[0].always_available != req.params.alwaysFlag) { //if flag changed, set it
+					Gear.setAlwaysFlag(req.params.user_id, req.params.gear_id, req.params.alwaysFlag, function(error, result) {
+						if(error) {
+							return;
+						}
+					});
+				};
+
+				Availability.set(req.params.gear_id, availability, req.params.alwaysFlag, function(error) {
+					if(error) {
+						handleError(res, next, 'Error setting gear availability: ', error);
+						return;
+					}
+					res.send({});
+					next();
+				});
+
 			});
 		});
 	});
@@ -680,7 +718,7 @@ function updateBooking(req, res, next) {
 
 /**
  * @param: a booking id, user id and token
- * @return: {} or error 
+ * @return: {} or error
  */
 /*function deleteBooking(req, res, next) {
 	res.send({});
