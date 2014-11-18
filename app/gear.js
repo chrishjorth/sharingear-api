@@ -26,7 +26,6 @@ var db = require("./database"),
 	getPrice,
 	getOwner,
 	setStatus,
-
 	checkForRentals;
 
 /**
@@ -278,7 +277,7 @@ readGearFromUser = function(userID, callback) {
 	//Check if any gear is rented out
 	checkForRentals(userID, function(error) {
 		if(error) {
-			console.log("Error checking users gear for rentals: " + error);
+			callback("Error checking users gear for rentals: " + error);
 			return;
 		}
 		db.query("SELECT usergear.id, usergear.type, usergear.subtype, usergear.brand, usergear.model, usergear.description, usergear.images, usergear.price_a, usergear.price_b, usergear.price_c, usergear.address, usergear.postal_code, usergear.city, usergear.region, usergear.country, usergear.latitude, usergear.longitude, usergear.gear_status, usergear.owner_id, bookings.booking_status FROM bookings RIGHT JOIN (SELECT gear.id, gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id FROM gear WHERE gear.owner_id=?) as usergear ON bookings.gear_id=usergear.id GROUP BY usergear.id;", [userID], function(error, rows) {
@@ -706,12 +705,12 @@ getOwner = function(gearID, callback) {
 			callback("No gear found for id.");
 			return;
 		}
-		callback(null, rows[0]);
+		callback(null, rows[0].owner_id);
 	});
 };
 
 setStatus = function(gearID, status, callback) {
-	if(status !== "available" && status !== "unavailable" && status !== "pending" && status !== "rented") {
+	if(status !== "rented-out" && status !== null) {
 		callback("Error: invalid gear status.");
 		return;
 	}
@@ -724,9 +723,12 @@ setStatus = function(gearID, status, callback) {
 	});
 };
 
+/**
+ * Checks status of gear owned by the user id as well as gear currently booked by the user id
+ */
 checkForRentals = function(userID, callback) {
 	//Get bookings that are before or equal to the current day and for instruments that belong to the user
-	db.query("SELECT gear.id FROM bookings INNER JOIN gear ON DATE(bookings.start_time) <= DATE(NOW()) AND bookings.gear_id=gear.id AND gear.owner_id=?", [userID], function(error, rows) {
+	db.query("SELECT gear.id FROM bookings INNER JOIN gear ON DATE(bookings.start_time) <= DATE(NOW()) AND bookings.gear_id=gear.id AND (gear.owner_id=? OR bookings.renter_id=?) AND bookings.booking_status='accepted'", [userID, userID], function(error, rows) {
 		var sql, i, params;
 		if(error) {
 			callback("Error selecting gear bookings equal or prior to current day: " + error);
@@ -772,6 +774,7 @@ module.exports = {
 	//createGearBulk: createGearBulk,
 	getPrice: getPrice,
 	getOwner: getOwner,
-	setStatus: setStatus
+	setStatus: setStatus,
+	checkForRentals: checkForRentals
 };
 

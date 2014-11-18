@@ -109,29 +109,35 @@ readClosest = function(gearID, callback) {
 };
 
 readReservationsForUser = function(renterID, callback){
-    db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear.type, gear.subtype, gear.brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.price, bookings.booking_status FROM bookings INNER JOIN gear ON bookings.gear_id = gear.id WHERE bookings.renter_id=? AND bookings.booking_status!='ended-denied' AND bookings.booking_status!='ended'", [renterID], function(error, rows) {
-        if(error) {
-            callback(error);
-            return;
-        }
-        if(rows.length <= 0) {
-            callback(null, []);
-            return;
-        }
-        callback(null, rows);
-    });
+	Gear.checkForRentals(renterID, function(error) {
+		if(error) {
+			callback("Error checking gear for rentals: " + error);
+			return;
+		}
+		db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear.type, gear.subtype, gear.brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.price, bookings.booking_status FROM bookings INNER JOIN gear ON bookings.gear_id = gear.id WHERE bookings.renter_id=? AND bookings.booking_status!='ended-denied' AND bookings.booking_status!='ended'", [renterID], function(error, rows) {
+        	if(error) {
+            	callback(error);
+            	return;
+        	}
+        	if(rows.length <= 0) {
+            	callback(null, []);
+            	return;
+        	}
+        	callback(null, rows);
+    	});
+	});
 };
 
 update = function(bookingData, callback) {
 	var status = bookingData.booking_status,
 		bookingID = bookingData.booking_id,
 		gearID = bookingData.gear_id;
-	if(status !== "pending" && status !== "denied" && status !== "accepted" && status !== "ended-denied" && status !== 'owner-returned' && status !== 'renter-returned') {
+	if(status !== "pending" && status !== "denied" && status !== "accepted" && status !== "ended-denied" && status !== "owner-returned" && status !== "renter-returned") {
 		callback("Unacceptable booking status.");
 		return;
 	}
 	
-	db.query("SELECT renter_id, start_time, end_time, price, preauth_id, booking_status FROM bookings WHERE id=? LIMIT 1", [bookingID], function(error, rows) {
+	db.query("SELECT gear_id, renter_id, start_time, end_time, price, preauth_id, booking_status FROM bookings WHERE id=? AND gear_id=? LIMIT 1", [bookingID, gearID], function(error, rows) {
 		var completeUpdate;
 		if(error) {
 			callback("Error selecting booking interval: " + error);
@@ -156,7 +162,7 @@ update = function(bookingData, callback) {
 			completeUpdate(status, bookingData.preauth_id);
 		}
 		else if(status === "denied") {
-			Availability.removeInterval(gearID, rows[0].start_time, rows[0].end_time, function(error) {
+			Availability.removeInterval(rows[0].gear_id, rows[0].start_time, rows[0].end_time, function(error) {
 				if(error) {
 					callback(error);
 					return;
@@ -176,15 +182,14 @@ update = function(bookingData, callback) {
 		else if(status === "ended-denied") {
 			completeUpdate(status, null);
 		}
-		else if(status === 'renter-returned' || status === 'owner-returned') {
-			if((status === 'owner-returned' && rows[0].booking_status === 'renter-returned') || (status === 'renter-returned' && rows[0].booking_status === 'owner-returned')) {
-				console.log('END BOOKING');
-				endBooking(function(error) {
+		else if(status === "renter-returned" || status === "owner-returned") {
+			if((status === "owner-returned" && rows[0].booking_status === "renter-returned") || (status === "renter-returned" && rows[0].booking_status === "owner-returned")) {
+				endBooking(rows[0].gear_id, rows[0].price, function(error) {
 					if(error) {
 						callback(error);
 						return;
 					}
-					completeUpdate('ended', null);
+					completeUpdate("ended", null);
 				});
 			}
 			else {
@@ -225,7 +230,19 @@ endBooking = function(gearID, price, callback) {
 				callback("Error getting MangoPay data for gear owner: " + error);
 				return;
 			}
-			Payment.payOutSeller(ownerMangoPayData, price, callback);
+			Payment.payOutSeller(ownerMangoPayData, price, function(error) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				Gear.setStatus(gearID, null, function(error) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					callback(null);
+				});
+			});
 		});
 	});
 };

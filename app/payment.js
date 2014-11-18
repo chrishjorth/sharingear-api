@@ -361,7 +361,7 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 			console.log("wire data:");
 			console.log(data);
 			parsedData = JSON.parse(data);
-			if(parsedData.Status !== "SUCCEEDED") {
+			if(parsedData.Status !== "SUCCEEDED" && parsedData.Status !== "CREATED") {
 				callback("Error wiring from wallet: " + data);
 				return;
 			}
