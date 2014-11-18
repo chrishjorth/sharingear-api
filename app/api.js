@@ -7,7 +7,7 @@ var IS_LOCAL = false,
 	restify = require('restify'),
 	fs = require('fs'),
 	_ = require('underscore'),
-	config = require('./config'),
+	Config = require('./config'),
 	fb = require('./facebook'),
 	Sec = require('./sec'),
 	User = require('./user'),
@@ -248,7 +248,7 @@ function addImageToGear(req, res, next) {
 
 	imageURL = imageURL.split('?')[0]; //Remove eventual query string parameters inserted by meddlers
 	validation = imageURL.split('/');
-	if(validation[2] !== 'dev.sharingear.com') {
+	if(validation[2] !== Config.VALID_IMAGE_HOST) {
 		handleError(res, next, 'Error adding image to gear: ', 'image url is from an invalid domain.');
 		return;
 	}
