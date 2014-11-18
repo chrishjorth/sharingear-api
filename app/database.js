@@ -4,49 +4,43 @@
  */
 /* !TODO: Handle server disconnects */
 
-var mysql = require('mysql'),
-	http = require('http'),
-	child_process = require('child_process'),
-	isIndexing = false,
-	needToReindex = false,
+/*jslint node: true */
+"use strict";
+
+var mysql = require("mysql"),
+	Config = require("./config"),
 	sharingearPool,
 	sphinxPool,
-	indexerWebHookURL;
 
-indexerWebHookURL = 'http://146.148.126.111/index-sphinx.php';
+	query,
+	search;
 
 sharingearPool = mysql.createPool({
-	host: '173.194.247.144',
+	host: Config.MYSQL_URL,
 	port: 3306,
-	user: 'root',
-	password: '20mircea14chris',
-	database: 'sharingear',
+	user: "root",
+	password: "20mircea14chris",
+	database: "sharingear",
 	supportBigNumbers: true, //Required for working with Facebook IDs stored as bigint.
 	multipleStatements: true, //Required for Minus operation from dynamic data set, which requires temp table
 	dateStrings: true
 });
 
 sphinxPool = mysql.createPool({
-	host: '146.148.126.111',
+	host: Config.SPHINX_URL,
 	port: 9306
 });
 
-module.exports = {
-	query: query,
-	search: search,
-	index: index
-};
-
-function query(queryString, paramArray, callback) {
+query = function(queryString, paramArray, callback) {
 	sharingearPool.getConnection(function(error, connection) {
 		if(error) {
-			console.log('Error opening database connection.');
+			console.log("Error opening database connection.");
 			callback(error);
 			return;
 		}
 		connection.query(queryString, paramArray, function(error, rows) {
 			if(error) {
-				console.log('Error running query: ' + queryString + '. ' + error.code);
+				console.log("Error running query: " + queryString + ". " + error.code);
 			}
 			callback(error, rows);
 			connection.destroy();
@@ -54,10 +48,10 @@ function query(queryString, paramArray, callback) {
 	});
 };
 
-function search(searchString, paramArray, callback) {
+search = function(searchString, paramArray, callback) {
 	sphinxPool.getConnection(function(error, connection) {
 		if(error) {
-			callback('Error opening sphinx connection: ' + error);
+			callback("Error opening sphinx connection: " + error);
 			return;
 		}
 		connection.query(searchString, paramArray, function(error, rows) {
@@ -65,24 +59,9 @@ function search(searchString, paramArray, callback) {
 			connection.destroy();
 		});
 	});
-}
+};
 
-/**
- * NOTE: Indexing is currently handled by a cron job running each minute.
- */
-function index() {
-	/*var indexer, response;	
-	indexer = child_process.spawn('/usr/bin/indexer', ['gear_delta', '--rotate']);
-	indexer.on('close', function(code) {
-		if(code !== 0) {
-			console.log('Error indexing. Indexer terminated with code: ' + code);
-		}
-	});*/
-	/*console.log('try indexing');
-	var request = http.get(indexerWebHookURL, function(result) {
-		console.log('Indexing result: ' + result);
-	});
-	request.on('error', function(error) {
-		console.log('Error calling indexer: ' + error);
-	});*/
-}
+module.exports = {
+	query: query,
+	search: search
+};
