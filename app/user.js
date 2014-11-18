@@ -22,6 +22,7 @@ var db = require("./database"),
 	//createWallet,
 	getCardObject,
 	getMangoPayData,
+	hasClosedBetaAccess,
 
 	checkLocales;
 
@@ -361,6 +362,20 @@ getMangoPayData = function(userID, callback) {
 	});
 };
 
+hasClosedBetaAccess = function(fbid, callback) {
+	db.query("SELECT id FROM closedbeta WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, false);
+			return;
+		}
+		callback(null, true);
+	});
+};
+
 checkLocales = function(user) {
 	if(user.country !== null) {
 		user.country = user.country.toUpperCase();
@@ -391,5 +406,6 @@ module.exports = {
 	updateBankDetails: updateBankDetails,
 	//createWallet: createWallet, deprecated
 	getCardObject: getCardObject,
-	getMangoPayData: getMangoPayData
+	getMangoPayData: getMangoPayData,
+	hasClosedBetaAccess: hasClosedBetaAccess
 };

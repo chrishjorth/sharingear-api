@@ -345,46 +345,56 @@ function createUserSession(req, res, next) {
 				return;
 			}
 
-			/*_.extend(user, {
-				fb_token: longToken
-			});*/
-
 			res.send(user);
 			next();
 		});
 	};
 
-	fb.getServerSideToken(req.params.accesstoken, function(error, longToken) {
+	//Remove this check once we are done with closed beta
+	User.hasClosedBetaAccess(req.params.fbid, function(error, result) {
 		if(error) {
-			handleError(res, next, 'Error authenticating with facebook: ', error);
+			handleError(res, next, 'Error checking closed beta access: ', error);
 			return;
 		}
-
-		//Get user for facebook id, if not exists create user
-		User.getUserFromFacebookID(req.params.fbid, function(error, user) {
+		if(result === false) {
+			res.send({
+				id: null
+			});
+			next();
+			return;
+		}
+		fb.getServerSideToken(req.params.accesstoken, function(error, longToken) {
 			if(error) {
-				handleError(res, next, 'Error retrieving user by Facebook ID: ', error);
+				handleError(res, next, 'Error authenticating with facebook: ', error);
 				return;
 			}
-			if(user === null) {
-				//Create user
-				fb.getUserInfo(longToken, function(error, fbUserInfo) {
-					if(error) {
-						handleError(res, next, 'Error retrieving user from Facebook: ', error);
-						return;
-					}
-					User.createUserFromFacebookInfo(fbUserInfo, function(error, user) {
+
+			//Get user for facebook id, if not exists create user
+			User.getUserFromFacebookID(req.params.fbid, function(error, user) {
+				if(error) {
+					handleError(res, next, 'Error retrieving user by Facebook ID: ', error);
+					return;
+				}
+				if(user === null) {
+					//Create user
+					fb.getUserInfo(longToken, function(error, fbUserInfo) {
 						if(error) {
-							handleError(res, next, 'Error creating user: ', error);
+							handleError(res, next, 'Error retrieving user from Facebook: ', error);
 							return;
 						}
-						createSession(user, longToken);
+						User.createUserFromFacebookInfo(fbUserInfo, function(error, user) {
+							if(error) {
+								handleError(res, next, 'Error creating user: ', error);
+								return;
+							}
+							createSession(user, longToken);
+						});
 					});
-				});
-			}
-			else {
-				createSession(user, longToken);
-			}
+				}
+				else {
+					createSession(user, longToken);
+				}
+			});
 		});
 	});
 }
