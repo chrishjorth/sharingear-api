@@ -13,7 +13,7 @@ var IS_PRODUCTION = true, //This variable should be set and saved according to t
 
 if(IS_PRODUCTION === true) {
 	MYSQL_URL = "173.194.246.188";
-	SPHINX_URL = "146.148.126.111";
+	SPHINX_URL = "130.211.79.103";
 	VALID_IMAGE_HOST = "prod-static.sharingear.com";
 }
 else {
