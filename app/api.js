@@ -130,7 +130,7 @@ function createGear(req, res, next) {
 			subtype: params.subtype,
 			brand: params.brand,
 			model: params.model,
-			decription: params.description,
+			description: params.description,
 			images: params.images,
 			price_a: params.price_a,
 			price_b: params.price_b,

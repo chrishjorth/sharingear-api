@@ -213,7 +213,6 @@ createWalletForUser = function(mangopay_id, callback) {
 };
 
 getCardObject = function(mangopay_id, callback) {
-	console.log(mangopay_id);
 	var postData = {
 		UserId: mangopay_id,
 		Currency: "DKK",
