@@ -156,14 +156,12 @@ updateUser = function(mangopay_id, wallet_id, user, callback) {
 
 registerBankAccountForUser = function(user, iban, swift, callback) {
 	//Check if user has a bank account, if different then update
-	//console.log('mangopay id: ' + user.mangopay_id);
 	gatewayGet("/users/" + user.mangopay_id + "/bankaccounts", function(error, data) {
 		var postData, accounts, i;
 		if(error) {
 			callback(error);
 			return;
 		}
-		//console.log(data);
 		accounts = JSON.parse(data);
 		i = 0;
 		while(i < accounts.length) {
@@ -184,13 +182,17 @@ registerBankAccountForUser = function(user, iban, swift, callback) {
 		};
 		
 		gatewayPost("/users/" + user.mangopay_id + "/bankaccounts/IBAN", postData, function(error, data) {
+			var parsedData;
 			if(error) {
-				console.log("Error registering bank details: " + error);
 				callback("Error registering bank details: " + error);
 				return;
 			}
-			//console.log(data);
-			callback(null, JSON.parse(data).Id);
+			parsedData = JSON.parse(data);
+			if(parsedData.Type === "param_error") {
+				callback("Parameter error in registering bank details: " + data);
+				return;
+			}
+			callback(null, parsedData.Id);
 		});
 	});
 };
