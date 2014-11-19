@@ -292,6 +292,7 @@ updateBankDetails = function(userID, bankDetails, callback) {
 					callback("Error setting bank_id: " + error);
 					return;
 				}
+				console.log('Updated DB');
 				callback(null);
 			});
 		});

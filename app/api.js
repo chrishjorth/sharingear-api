@@ -469,14 +469,8 @@ function updateUserBankDetails(req, res, next) {
 				handleError(res, next, 'Error adding bank details: ', error);
 				return;
 			}
-			User.createWallet(req.params.id, function(error) {
-				if(error) {
-					handleError(res, next, 'Error creating wallet: ', error);
-					return;
-				}
-				res.send({});
-				next();
-			});
+			res.send({});
+			next();
 		});
 	});
 }
