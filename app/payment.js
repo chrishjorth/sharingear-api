@@ -6,13 +6,10 @@
 /*jslint node: true */
 "use strict";
 
-var MANGOPAY_SANDBOX_CLIENTID = "sharingear",
-	MANGOPAY_SANDBOX_URL = "api.sandbox.mangopay.com",
-	MANGOPAY_USERNAME = "sharingear",
-	MANGOPAY_SANDBOX_KEY = "dX2tt67NAQyDtDWHSSHBEuHOnnYUd6pvCROsde0vTiL1Trhudg",
-	https = require("https"),
+var https = require("https"),
 	Moment = require("moment"),
 	db = require("./database"),
+	Config = require("./config"),
 	sg_user,
 	
 	updateUser,
@@ -381,9 +378,9 @@ gatewayGet = function(apiPath, callback) {
 		}
 
 		options = {
-			host: MANGOPAY_SANDBOX_URL,
+			host: Config.MANGOPAY_SANDBOX_URL,
 			port: 443,
-			path: "/v2/" + MANGOPAY_SANDBOX_CLIENTID + apiPath,
+			path: "/v2/" + Config.MANGOPAY_SANDBOX_CLIENTID + apiPath,
 			method: "GET",
 			headers: {
 				"Authorization": "Bearer " + token
@@ -430,9 +427,9 @@ gatewayPost = function(apiPath, data, callback) {
 		}
 
 		options = {
-			host: MANGOPAY_SANDBOX_URL,
+			host: Config.MANGOPAY_SANDBOX_URL,
 			port: 443,
-			path: "/v2/" + MANGOPAY_SANDBOX_CLIENTID + apiPath,
+			path: "/v2/" + Config.MANGOPAY_SANDBOX_CLIENTID + apiPath,
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -473,9 +470,9 @@ gatewayPut = function(apiPath, data, callback) {
 		postData = JSON.stringify(data);
 
 		options = {
-			host: MANGOPAY_SANDBOX_URL,
+			host: Config.MANGOPAY_SANDBOX_URL,
 			port: 443,
-			path: "/v2/" + MANGOPAY_SANDBOX_CLIENTID + apiPath,
+			path: "/v2/" + Config.MANGOPAY_SANDBOX_CLIENTID + apiPath,
 			method: "PUT",
 			headers: {
 				"Content-Type": "application/json",
@@ -508,12 +505,12 @@ getToken = function(callback) {
 	var buffer = "",
 		request, options, postData, auth;
 
-	auth = new Buffer(MANGOPAY_USERNAME + ":" + MANGOPAY_SANDBOX_KEY).toString("base64");
+	auth = new Buffer(Config.MANGOPAY_USERNAME + ":" + Config.MANGOPAY_SANDBOX_KEY).toString("base64");
 	
 	postData = "grant_type=client_credentials";
 
 	options = {
-		host: MANGOPAY_SANDBOX_URL,
+		host: Config.MANGOPAY_SANDBOX_URL,
 		port: 443,
 		path: "/v2/oauth/token",
 		method: "POST",
