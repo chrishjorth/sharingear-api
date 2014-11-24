@@ -18,7 +18,7 @@ if(IS_PRODUCTION === true) {
 }
 else {
 	MYSQL_URL = "173.194.247.144";
-	SPHINX_URL = "146.148.126.111";
+	SPHINX_URL = "130.211.86.240";
 	VALID_IMAGE_HOST = "dev.sharingear.com";
 }
 
