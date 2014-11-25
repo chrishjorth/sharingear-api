@@ -7,7 +7,11 @@
 "use strict";
 
 var IS_PRODUCTION = false, //This variable should be set and saved according to the git branch: true for master and false for develop
+	fs = require('fs'),
 	MYSQL_URL,
+	MYSQL_CA,
+	MYSQL_CERT,
+	MYSQL_KEY,
 	SPHINX_URL,
 	VALID_IMAGE_HOST,
 	MANGOPAY_SANDBOX_CLIENTID,
@@ -17,6 +21,9 @@ var IS_PRODUCTION = false, //This variable should be set and saved according to 
 
 if(IS_PRODUCTION === true) {
 	MYSQL_URL = "173.194.246.188";
+	MYSQL_CA = fs.readFileSync("../certificates/prod_server-ca.pem");
+	MYSQL_CERT = fs.readFileSync("../certificates/prod_client-cert.pem");
+	MYSQL_KEY = fs.readFileSync("../certificates/prod_client-key.pem");
 	SPHINX_URL = "130.211.79.103";
 	VALID_IMAGE_HOST = "prod-static.sharingear.com";
 	MANGOPAY_SANDBOX_CLIENTID = "sharingear";
@@ -26,6 +33,9 @@ if(IS_PRODUCTION === true) {
 }
 else {
 	MYSQL_URL = "173.194.247.144";
+	MYSQL_CA = fs.readFileSync("../certificates/dev_server-ca.pem");
+	MYSQL_CERT = fs.readFileSync("../certificates/dev_client-cert.pem");
+	MYSQL_KEY = fs.readFileSync("../certificates/dev_client-key.pem");
 	SPHINX_URL = "130.211.86.240";
 	VALID_IMAGE_HOST = "dev.sharingear.com";
 	MANGOPAY_SANDBOX_CLIENTID = "sharingear";
@@ -36,6 +46,9 @@ else {
 
 module.exports = {
 	MYSQL_URL: MYSQL_URL,
+	MYSQL_CA: MYSQL_CA,
+	MYSQL_CERT: MYSQL_CERT,
+	MYSQL_KEY: MYSQL_KEY,
 	SPHINX_URL: SPHINX_URL,
 	VALID_IMAGE_HOST: VALID_IMAGE_HOST,
 	MANGOPAY_SANDBOX_CLIENTID: MANGOPAY_SANDBOX_CLIENTID,
