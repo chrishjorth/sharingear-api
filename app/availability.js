@@ -8,9 +8,9 @@
 
 var db = require("./database"),
 	Moment = require("moment"),
-	MomentUtilities = require("./momentutilities");
+	MomentUtilities = require("./momentutilities"),
 
-var set,
+	set,
 	get,
 	removeInterval;
 
