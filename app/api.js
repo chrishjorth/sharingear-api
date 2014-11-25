@@ -59,6 +59,7 @@ server.use(restify.fullResponse());
 server.use(restify.bodyParser());
 
 //ROUTES
+server.get('/', healthCheck);
 server.get('/gearclassification', readGearClassification);
 
 server.post('/gear', createGear);
@@ -93,6 +94,11 @@ server.get('/users/:user_id/cardobject', createCardObject);
 
 
 //ROUTE HANDLERS
+
+function healthCheck(req, res, next) {
+	res.send({});
+	next();
+}
 
 /**
  * @response: JSON description of the Sharingear gear classification
