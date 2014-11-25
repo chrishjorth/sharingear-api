@@ -21,9 +21,9 @@ var IS_PRODUCTION = true, //This variable should be set and saved according to t
 
 if(IS_PRODUCTION === true) {
 	MYSQL_URL = "173.194.246.188";
-	MYSQL_CA = fs.readFileSync("../certificates/prod_server-ca.pem");
-	MYSQL_CERT = fs.readFileSync("../certificates/prod_client-cert.pem");
-	MYSQL_KEY = fs.readFileSync("../certificates/prod_client-key.pem");
+	MYSQL_CA = fs.readFileSync(__dirname + "/../certificates/prod_server-ca.pem");
+	MYSQL_CERT = fs.readFileSync(__dirname + "/../certificates/prod_client-cert.pem");
+	MYSQL_KEY = fs.readFileSync(__dirname + "/../certificates/prod_client-key.pem");
 	SPHINX_URL = "130.211.79.103";
 	VALID_IMAGE_HOST = "prod-static.sharingear.com";
 	MANGOPAY_SANDBOX_CLIENTID = "sharingear";
@@ -33,9 +33,9 @@ if(IS_PRODUCTION === true) {
 }
 else {
 	MYSQL_URL = "173.194.247.144";
-	MYSQL_CA = fs.readFileSync("../certificates/dev_server-ca.pem");
-	MYSQL_CERT = fs.readFileSync("../certificates/dev_client-cert.pem");
-	MYSQL_KEY = fs.readFileSync("../certificates/dev_client-key.pem");
+	MYSQL_CA = fs.readFileSync(__dirname + "/../certificates/dev_server-ca.pem");
+	MYSQL_CERT = fs.readFileSync(__dirname + "/../certificates/dev_client-cert.pem");
+	MYSQL_KEY = fs.readFileSync(__dirname + "/../certificates/dev_client-key.pem");
 	SPHINX_URL = "130.211.86.240";
 	VALID_IMAGE_HOST = "dev.sharingear.com";
 	MANGOPAY_SANDBOX_CLIENTID = "sharingear";
