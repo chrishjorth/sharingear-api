@@ -40,7 +40,7 @@ var restify = require("restify"),
 	handleError,
 	isAuthorized,
 
-	key, certificate,server;
+	key, certificate, server, secureServer;
 
 
 try {
@@ -61,13 +61,13 @@ catch(error) {
 
 if(readFileSuccess === false) {
 	//This is so that we do not need to have keys and certificates installed for localhost development, or if files could not be loaded.
-	server = restify.createServer({
+	secureServer = restify.createServer({
 		name: "Sharingear API"
 	});
 }
 else {
 	//We only run with https
-	server = restify.createServer({
+	secureServer = restify.createServer({
 		name: "Sharingear API",
 		key: key,
 		certificate: certificate
@@ -75,13 +75,19 @@ else {
 }
 
 //Tunnelblick uses 1337 apparently
-server.listen(1338, function() {
-	console.log("%s listening at %s", server.name, server.url);
+secureServer.listen(1338, function() {
+	console.log("%s listening at %s", secureServer.name, secureServer.url);
 });
 
-server.use(restify.CORS());
-server.use(restify.fullResponse());
-server.use(restify.bodyParser());
+secureServer.use(restify.CORS());
+secureServer.use(restify.fullResponse());
+secureServer.use(restify.bodyParser());
+
+server = restify.createServer({
+	name: "Sharingear health check"
+});
+
+server.listen(1339);
 
 //ROUTE HANDLERS
 
@@ -673,28 +679,29 @@ isAuthorized = function(userID, callback) {
 
 //ROUTES
 server.get("/", healthCheck);
-server.get("/gearclassification", readGearClassification);
 
-server.post("/gear", createGear);
-server.post("/gearlist", createGearFromList);
-server.get("/gear/:id", readGearWithID);
-server.post("/gear/image", addImageToGear);
-server.get("/gear/search/:location/:gear/:daterange", readGearSearchResults);
+secureServer.get("/gearclassification", readGearClassification);
 
-server.post("/users/login", createUserSession);
-server.get("/users/:id", readUserWithID);
-server.put("/users/:id", updateUserWithID);
-server.put("/users/:id/bankdetails", updateUserBankDetails);
-server.get("/users/:user_id/gear", readGearFromUserWithID);
-server.put("/users/:user_id/gear/:gear_id", updateGearFromUserWithID);
-server.post("/users/:user_id/gear/:gear_id/availability", createGearAvailability);
-server.get("/users/:user_id/gear/:gear_id/availability", readGearAvailability);
-server.get("/users/:renter_id/reservations", readReservationsFromUserWithID);
-server.get("/users/:id/newfilename/:filename", generateFileName);
-server.post("/users/:user_id/gear/:gear_id/bookings", createBooking);
-server.get("/users/:user_id/gear/:gear_id/bookings/:booking_id", readBooking);
-server.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateBooking);
-server.get("/users/:user_id/cardobject", createCardObject);
+secureServer.post("/gear", createGear);
+secureServer.post("/gearlist", createGearFromList);
+secureServer.get("/gear/:id", readGearWithID);
+secureServer.post("/gear/image", addImageToGear);
+secureServer.get("/gear/search/:location/:gear/:daterange", readGearSearchResults);
+
+secureServer.post("/users/login", createUserSession);
+secureServer.get("/users/:id", readUserWithID);
+secureServer.put("/users/:id", updateUserWithID);
+secureServer.put("/users/:id/bankdetails", updateUserBankDetails);
+secureServer.get("/users/:user_id/gear", readGearFromUserWithID);
+secureServer.put("/users/:user_id/gear/:gear_id", updateGearFromUserWithID);
+secureServer.post("/users/:user_id/gear/:gear_id/availability", createGearAvailability);
+secureServer.get("/users/:user_id/gear/:gear_id/availability", readGearAvailability);
+secureServer.get("/users/:renter_id/reservations", readReservationsFromUserWithID);
+secureServer.get("/users/:id/newfilename/:filename", generateFileName);
+secureServer.post("/users/:user_id/gear/:gear_id/bookings", createBooking);
+secureServer.get("/users/:user_id/gear/:gear_id/bookings/:booking_id", readBooking);
+secureServer.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateBooking);
+secureServer.get("/users/:user_id/cardobject", createCardObject);
 
 module.exports = {
 	server: server
