@@ -519,6 +519,7 @@ createGearAvailability = function(req, res, next) {
 							handleError(res, next, "Error setting always flag: ", error);
 							return;
 						}
+						availability = []; //If the flag changed it means that gear has been set to either always available or never available
 						setAvailability();
 					});
 				}
