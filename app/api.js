@@ -513,13 +513,12 @@ createGearAvailability = function(req, res, next) {
 						next();
 					});
 				};
-				if(result.always_available != req.params.alwaysFlag && availability.length <= 0) { //if flag changed and availability is empty, set it
+				if(result.always_available != req.params.alwaysFlag) { //if flag changed and availability is empty, set it
 					Gear.setAlwaysFlag(req.params.gear_id, req.params.alwaysFlag, function(error) {
 						if(error) {
 							handleError(res, next, "Error setting always flag: ", error);
 							return;
 						}
-						availability = []; //If the flag changed it means that gear has been set to either always available or never available
 						setAvailability();
 					});
 				}
