@@ -297,7 +297,6 @@ readGearFromUser = function(userID, callback) {
 };
 
 addImage = function(userID, gearID, imageURL, callback) {
-	console.log('addImage: SELECT images');
 	db.query("SELECT images FROM gear WHERE id=? AND owner_id=? LIMIT 1", [gearID, userID], function(error, rows) {
 		var images = "";
 		if(error) {

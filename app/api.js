@@ -194,8 +194,6 @@ addImageToGear = function(req, res, next) {
 	var imageURL = req.params.image_url,
 		validation;
 
-	console.log('Add image to gear.');
-
 	imageURL = imageURL.split("?")[0]; //Remove eventual query string parameters inserted by meddlers
 	validation = imageURL.split("/");
 	if(validation[2] !== Config.VALID_IMAGE_HOST) {
@@ -212,7 +210,6 @@ addImageToGear = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		console.log('Call Gear.addImage');
 		Gear.addImage(req.params.user_id, req.params.gear_id, imageURL, function(error, images) {
 			if(error) {
 				handleError(res, next, "Error authorizing user: ", error);
@@ -226,8 +223,6 @@ addImageToGear = function(req, res, next) {
 
 generateFileName = function(req, res, next) {
 	var params = req.params;
-
-	console.log('generate file name');
 
 	isAuthorized(params.id, function(error, status) {
 		var newFileName, dot, extension, secret;
