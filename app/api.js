@@ -42,6 +42,10 @@ var restify = require("restify"),
 
 	key, certificate, server, secureServer;
 
+process.on("uncaughtException", function(error) {
+	console.log("Uncaught exception: " + error.stack);
+});
+
 
 try {
 	key = fs.readFileSync("/home/chrishjorth/keys/server.key");
@@ -704,5 +708,6 @@ secureServer.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateBoo
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
 module.exports = {
-	server: server
+	server: server,
+	secureServer: secureServer
 };
