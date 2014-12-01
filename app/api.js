@@ -42,6 +42,10 @@ var restify = require("restify"),
 
 	key, certificate, server, secureServer;
 
+if(Config.isProduction() === true) {
+	require('newrelic');
+}
+
 process.on("uncaughtException", function(error) {
 	console.log("Uncaught exception: " + error.stack);
 });
