@@ -233,7 +233,6 @@ createGear = function(newGear, callback) {
 				return;
 			}
 			callback(null, result.insertId);
-			db.index();
 		});
 	};
 
@@ -320,7 +319,6 @@ addImage = function(userID, gearID, imageURL, callback) {
 			}
 			console.log("images updated");
 			callback(null, images);
-			db.index();
 		});
 	});
 };
@@ -372,7 +370,6 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 				return;
 			}
 			callback(null);
-			db.index();
 		});
 	};
 
@@ -571,7 +568,6 @@ search = function(lat, lng, gear, callback) {
 				return;
 			}
 			callback(null);
-			db.index();
 		});
 	};
 
