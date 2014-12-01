@@ -5,16 +5,9 @@
 /*jslint node: true */
 "use strict";
 
-var restify = require("restify"),
-	fs = require("fs"),
-	Config = require("./config"),
-	fb = require("./facebook"),
-	Sec = require("./sec"),
-	User = require("./user"),
-	Gear = require("./gear"),
-	Availability = require("./availability"),
-	Booking = require("./booking"),
-	readFileSuccess = true,
+var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking,
+
+	readFileSuccess,
 
 	healthCheck,
 	readGearClassification,
@@ -42,15 +35,25 @@ var restify = require("restify"),
 
 	key, certificate, server, secureServer;
 
+Config = require("./config");
 if(Config.isProduction() === true) {
 	require('newrelic');
 }
+
+restify = require("restify");
+fs = require("fs");
+fb = require("./facebook");
+Sec = require("./sec");
+User = require("./user");
+Gear = require("./gear");
+Availability = require("./availability");
+Booking = require("./booking");
 
 process.on("uncaughtException", function(error) {
 	console.log("Uncaught exception: " + error.stack);
 });
 
-
+readFileSuccess = true;
 try {
 	key = fs.readFileSync("/home/chrishjorth/keys/server.key");
 }
