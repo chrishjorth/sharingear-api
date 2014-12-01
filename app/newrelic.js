@@ -19,7 +19,7 @@ exports.config = {
      * issues with the agent, 'info' and higher will impose the least overhead on
      * production applications.
      */
-    level : 'info',
+    level : 'warn',
     filepath : '/home/chrishjorth/sg_logs/newrelic_agent.log'
   }
 };
