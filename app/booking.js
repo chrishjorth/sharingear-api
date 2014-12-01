@@ -53,14 +53,21 @@ create = function(renterID, bookingData, callback) {
 				return;
 			}
 			db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, price) VALUES (?, ?, ?, ?, ?)", booking, function(error, result) {
-				var url;
+				var url, queryIndex;
 				if(error) {
 					callback("Error inserting booking: " + error);
 					return;
 				}
 				//Assertion: only returnURLs with #route are valid
 				url = bookingData.returnURL.split("#");
-				bookingData.returnURL = url[0] + "?booking_id=" + result.insertId + "#" + url[1];
+				queryIndex = url[0].indexOf('?');
+				if(queryIndex < 0) {
+					bookingData.returnURL = url[0] + "?booking_id=" + result.insertId + "#" + url[1];
+				}
+				else {
+					bookingData.returnURL = url[0] + "&booking_id=" + result.insertId + "#" + url[1];
+				}
+				
 				preAuthorize(renterID, bookingData.cardId, price, bookingData.returnURL, function(error, preAuthData) {
 					if(error) {
 						callback(error);
