@@ -71,7 +71,7 @@ createUserFromFacebookInfo = function(userInfo, callback) {
 		userInfo.last_name, //surname
 		null, //birthdate
 		null, //city
-		"http://graph.facebook.com/" + userInfo.id + "/picture?type=large" //image_url
+		"https://graph.facebook.com/" + userInfo.id + "/picture?type=large" //image_url
 	];
 	if(userInfo.middle_name && userInfo.middle_name.length > 0) {
 		user[2] += " " + userInfo.middle_name;
