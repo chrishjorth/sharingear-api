@@ -148,8 +148,13 @@ update = function(bookingData, callback) {
 			return;
 		}
 
-		completeUpdate = function (status, preAuthID) {
-			db.query("UPDATE bookings SET booking_status=?, preauth_id=? WHERE id=? LIMIT 1", [status, preAuthID, bookingID], function(error) {
+		completeUpdate = function (status, preAuthID, withTimestamp) {
+			var sql = "UPDATE bookings SET booking_status=?, preauth_id=?";
+			if(withTimestamp === true) {
+				sql += ", payment_timestamp=NOW()";
+			}
+			sql += " WHERE id=? LIMIT 1";
+			db.query(sql, [status, preAuthID, bookingID], function(error) {
 				if(error) {
 					callback("Error updating booking status: " + error);
 					return;
@@ -159,7 +164,7 @@ update = function(bookingData, callback) {
 		};
 
 		if(status === "pending") {
-			completeUpdate(status, bookingData.preauth_id);
+			completeUpdate(status, bookingData.preauth_id, false);
 		}
 		else if(status === "denied") {
 			Availability.removeInterval(rows[0].gear_id, rows[0].start_time, rows[0].end_time, function(error) {
@@ -167,7 +172,7 @@ update = function(bookingData, callback) {
 					callback(error);
 					return;
 				}
-				completeUpdate(status, null);
+				completeUpdate(status, null, false);
 			});
 		}
 		else if (status === "accepted") {
@@ -176,11 +181,11 @@ update = function(bookingData, callback) {
 					callback(error);
 					return;
 				}
-				completeUpdate(status, rows[0].preauth_id);
+				completeUpdate(status, rows[0].preauth_id, true);
 			});
 		}
 		else if(status === "ended-denied") {
-			completeUpdate(status, null);
+			completeUpdate(status, null, false);
 		}
 		else if(status === "renter-returned" || status === "owner-returned") {
 			if((status === "owner-returned" && rows[0].booking_status === "renter-returned") || (status === "renter-returned" && rows[0].booking_status === "owner-returned")) {
@@ -189,11 +194,11 @@ update = function(bookingData, callback) {
 						callback(error);
 						return;
 					}
-					completeUpdate("ended", null);
+					completeUpdate("ended", null, false);
 				});
 			}
 			else {
-				completeUpdate(status, null);
+				completeUpdate(status, null, false);
 			}
 		}
 	});
