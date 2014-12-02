@@ -364,6 +364,7 @@ getMangoPayData = function(userID, callback) {
 };
 
 hasClosedBetaAccess = function(fbid, callback) {
+	console.log("hasBetaAccess: " + fbid);
 	db.query("SELECT id FROM closedbeta WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		if(error) {
 			callback(error);
