@@ -37,7 +37,7 @@ var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking,
 
 Config = require("./config");
 if(Config.isProduction() === true) {
-	require('newrelic');
+	require("newrelic");
 }
 
 restify = require("restify");
@@ -285,51 +285,60 @@ createUserSession = function(req, res, next) {
 		});
 	};
 
-	//Remove this check once we are done with closed beta
-	User.hasClosedBetaAccess(req.params.fbid, function(error, result) {
+	
+	fb.getServerSideToken(req.params.accesstoken, function(error, longToken) {
 		if(error) {
-			handleError(res, next, "Error checking closed beta access: ", error);
+			handleError(res, next, "Error authenticating with facebook: ", error);
 			return;
 		}
-		if(result === false) {
-			res.send({
-				id: null
-			});
-			next();
-			return;
-		}
-		fb.getServerSideToken(req.params.accesstoken, function(error, longToken) {
+
+		//Get user for facebook id, if not exists create user
+		User.getUserFromFacebookID(req.params.fbid, function(error, user) {
+			var hasClosedBetaAccess;
 			if(error) {
-				handleError(res, next, "Error authenticating with facebook: ", error);
+				handleError(res, next, "Error retrieving user by Facebook ID: ", error);
 				return;
 			}
 
-			//Get user for facebook id, if not exists create user
-			User.getUserFromFacebookID(req.params.fbid, function(error, user) {
-				if(error) {
-					handleError(res, next, "Error retrieving user by Facebook ID: ", error);
-					return;
-				}
-				if(user === null) {
-					//Create user
-					fb.getUserInfo(longToken, function(error, fbUserInfo) {
+			hasClosedBetaAccess = function(user) {
+				//Remove this check once we are done with closed beta
+				User.hasClosedBetaAccess(user, function(error, result) {
+					if(error) {
+						handleError(res, next, "Error checking closed beta access: ", error);
+						return;
+					}
+					if(result === false) {
+						res.send({
+							id: null
+						});
+						next();
+						return;
+					}
+					createSession(user, longToken);
+				});
+			};
+
+			if(user === null) {
+				//Create user
+				fb.getUserInfo(longToken, function(error, fbUserInfo) {
+					if(error) {
+						handleError(res, next, "Error retrieving user from Facebook: ", error);
+						return;
+					}
+
+					User.createUserFromFacebookInfo(fbUserInfo, function(error, user) {
 						if(error) {
-							handleError(res, next, "Error retrieving user from Facebook: ", error);
+							handleError(res, next, "Error creating user: ", error);
 							return;
 						}
-						User.createUserFromFacebookInfo(fbUserInfo, function(error, user) {
-							if(error) {
-								handleError(res, next, "Error creating user: ", error);
-								return;
-							}
-							createSession(user, longToken);
-						});
+						hasClosedBetaAccess(user);
 					});
-				}
-				else {
-					createSession(user, longToken);
-				}
-			});
+				});
+
+			}
+			else {
+				hasClosedBetaAccess(user);
+			}
 		});
 	});
 };
