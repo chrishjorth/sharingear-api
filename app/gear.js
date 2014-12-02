@@ -67,8 +67,11 @@ getClassification = function(callback) {
 				callback(error);
 				return;
 			}
+			//We want Other to be at the bottom of the list
 			for(i = 0; i < rows.length; i++) {
-				gearClassification.brands.push(rows[i].name);
+				if(rows[i].name !== "Other") {
+					gearClassification.brands.push(rows[i].name);
+				}
 			}
 			gearClassification.brands.push("Other");
 			callback(null, gearClassification);
