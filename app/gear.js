@@ -464,7 +464,7 @@ search = function(lat, lng, gear, callback) {
 		//Convert to radians
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
-		sql = "SELECT id, type, subtype, brand, model, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
+		sql = "SELECT id, type, subtype, brand, model, city, country, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ",";
 		}
