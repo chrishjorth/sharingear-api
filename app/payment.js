@@ -20,6 +20,8 @@ var https = require("https"),
 	chargePreAuthorization,
 	payOutSeller,
 
+	getSGBalance,
+
 	gatewayGet,
 	gatewayPost,
 	gatewayPut,
@@ -368,6 +370,17 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 	});
 };
 
+getSGBalance = function(callback) {
+	gatewayGet("wallets/" + sg_user.wallet_id, function(error, data) {
+		if(error) {
+			callback("Error getting Sharingear wallet: " + error);
+			return;
+		}
+		console.log(data);
+		callback(null);
+	});
+};
+
 gatewayGet = function(apiPath, callback) {
 	getToken(function(error, token) {
 		var buffer = "",
@@ -605,9 +618,10 @@ registerSharingearBankDetails = function(mangopay_id, callback) {
 module.exports = {
 	updateUser: updateUser,
 	registerBankAccountForUser: registerBankAccountForUser,
-	//createWalletForUser: createWalletForUser, deprecated: wallet is created on update
 	getCardObject: getCardObject,
 	preAuthorize: preAuthorize,
 	chargePreAuthorization: chargePreAuthorization,
-	payOutSeller: payOutSeller
+	payOutSeller: payOutSeller,
+
+	getSGBalance: getSGBalance
 };

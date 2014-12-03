@@ -5,7 +5,7 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking,
+var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment,
 
 	readFileSuccess,
 
@@ -30,6 +30,8 @@ var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking,
 	readBooking,
 	updateBooking,
 	createCardObject,
+	readSGBalance,
+
 	handleError,
 	isAuthorized,
 
@@ -48,6 +50,7 @@ User = require("./user");
 Gear = require("./gear");
 Availability = require("./availability");
 Booking = require("./booking");
+Payment = require("./payment");
 
 process.on("uncaughtException", function(error) {
 	console.log("Uncaught exception: " + error.stack);
@@ -652,6 +655,32 @@ createCardObject = function(req, res, next) {
 	});
 };
 
+readSGBalance = function(req, res, next) {
+	if(req.params.user_id === "1" || req.params.user_id === "2") {
+		isAuthorized(req.params.user_id, function(error, status) {
+			if(error) {
+				handleError(res, next, "Error authorizing user: ", error);
+				return;
+			}
+			if(status === false) {
+				handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+				return;
+			}
+			Payment.getSGBalance(function(error, balance) {
+				if(error) {
+					handleError(res, next, "Error retrieving Sharingear balance: ", error);
+					return;
+				}
+				res.send({balance: balance});
+				next();
+			});
+		});
+	}
+	else {
+		handleError(res, next, "Error authorizing user: ", "User id is not authorized.");
+	}
+};
+
 /* UTILITIES */
 handleError = function(res, next, message, error) {
 	console.log(message + JSON.stringify(error));
@@ -722,6 +751,8 @@ secureServer.post("/users/:user_id/gear/:gear_id/bookings", createBooking);
 secureServer.get("/users/:user_id/gear/:gear_id/bookings/:booking_id", readBooking);
 secureServer.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateBooking);
 secureServer.get("/users/:user_id/cardobject", createCardObject);
+
+secureServer.get("/users/:user_id/dashboard/balance", readSGBalance);
 
 module.exports = {
 	server: server,

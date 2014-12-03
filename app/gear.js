@@ -448,7 +448,6 @@ readGearWithID = function(gearID, callback) {
  */
 search = function(lat, lng, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
-	//console.log('Search gear');
 	db.search("SELECT id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
 		var sql, i;
 		if(error) {
@@ -460,7 +459,6 @@ search = function(lat, lng, gear, callback) {
 			callback(null, []);
 			return;
 		}
-		//console.log('Found gear by full text search');
 		//Convert to radians
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
@@ -470,11 +468,6 @@ search = function(lat, lng, gear, callback) {
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
 		sql += ") AND distance <= 10000.0 ORDER BY distance ASC LIMIT 100";
-		//console.log('Search location');
-		//console.log('SQL:');
-		//console.log(sql);
-		//console.log('lat: ' + lat);
-		//console.log('lng: ' + lng);
 		db.search(sql, [lat, lng], function(error, rows) {
 			var i;
 			if(error) {
@@ -486,8 +479,6 @@ search = function(lat, lng, gear, callback) {
 				rows[i].latitude = rows[i].latitude * 180 / Math.PI;
 				rows[i].longitude = rows[i].longitude * 180 / Math.PI;
 			}
-			//console.log('Found gear by location filter');
-			//console.log(JSON.stringify(rows));
 			callback(null, rows);
 		});
 	});
