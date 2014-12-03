@@ -656,7 +656,7 @@ createCardObject = function(req, res, next) {
 };
 
 readSGBalance = function(req, res, next) {
-	if(req.params.user_id === "3" || req.params.user_id === "2") {
+	if(req.params.user_id === "1" || req.params.user_id === "2") {
 		isAuthorized(req.params.user_id, function(error, status) {
 			if(error) {
 				handleError(res, next, "Error authorizing user: ", error);
