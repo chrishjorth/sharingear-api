@@ -253,7 +253,6 @@ update = function(userID, updatedInfo, callback) {
 			updateUser(rows[0].mangopay_id, rows[0].wallet_id);
 		}
 		else {
-			console.log("Update payment user");
 			Payment.updateUser(rows[0].mangopay_id, rows[0].wallet_id, userInfo, function(error, mangopay_id, wallet_id) {
 				if(error) {
 					callback(error);
