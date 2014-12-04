@@ -311,6 +311,8 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 
 	fee = parseInt(price, 10) / 100.0 * sellerMangoPayData.seller_fee;
 
+	console.log("seller wallet id: " + sellerMangoPayData.wallet_id);
+
 	postData = {
 		AuthorId: sg_user.mangopay_id,
 		CreditedUserId: sellerMangoPayData.mangopay_id,
