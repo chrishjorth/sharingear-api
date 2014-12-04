@@ -556,13 +556,23 @@ createGearAvailability = function(req, res, next) {
 };
 
 readReservationsFromUserWithID = function(req, res, next) {
-    Booking.readReservationsForUser(req.params.renter_id, function (error, reservations) {
-        if (error) {
-            handleError(res,next,"Error reading reservations for user: ",error);
-            return;
-        }
-        res.send(reservations);
-        next();
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+    	Booking.readReservationsForUser(req.params.user_id, function (error, reservations) {
+        	if (error) {
+            	handleError(res,next,"Error reading reservations for user: ",error);
+            	return;
+        	}
+        	res.send(reservations);
+        	next();
+    	});
     });
 };
 
@@ -773,7 +783,7 @@ secureServer.get("/users/:user_id/gear", readGearFromUserWithID);
 secureServer.put("/users/:user_id/gear/:gear_id", updateGearFromUserWithID);
 secureServer.post("/users/:user_id/gear/:gear_id/availability", createGearAvailability);
 secureServer.get("/users/:user_id/gear/:gear_id/availability", readGearAvailability);
-secureServer.get("/users/:renter_id/reservations", readReservationsFromUserWithID);
+secureServer.get("/users/:user_id/reservations", readReservationsFromUserWithID);
 secureServer.get("/users/:id/newfilename/:filename", generateFileName);
 secureServer.post("/users/:user_id/gear/:gear_id/bookings", createBooking);
 secureServer.get("/users/:user_id/gear/:gear_id/bookings/:booking_id", readBooking);
