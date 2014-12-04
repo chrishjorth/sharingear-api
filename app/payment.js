@@ -371,13 +371,14 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 };
 
 getSGBalance = function(callback) {
-	gatewayGet("wallets/" + sg_user.wallet_id, function(error, data) {
+	gatewayGet("/wallets/" + sg_user.wallet_id, function(error, data) {
+		var parsedData;
 		if(error) {
 			callback("Error getting Sharingear wallet: " + error);
 			return;
 		}
-		console.log(data);
-		callback(null);
+		parsedData = JSON.parse(data);
+		callback(null, parsedData.Balance);
 	});
 };
 
