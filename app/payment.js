@@ -21,6 +21,7 @@ var https = require("https"),
 	payOutSeller,
 
 	getSGBalance,
+	getSGTransactions,
 
 	gatewayGet,
 	gatewayPost,
@@ -382,6 +383,18 @@ getSGBalance = function(callback) {
 	});
 };
 
+getSGTransactions = function(callback) {
+	gatewayGet("/wallets/" + sg_user.wallet_id + "/transactions", function(error, data) {
+		var parsedData;
+		if(error) {
+			callback("Error getting Sharingear transactions: " + error);
+			return;
+		}
+		parsedData = JSON.parse(data);
+		callback(null, parsedData);
+	});
+};
+
 gatewayGet = function(apiPath, callback) {
 	getToken(function(error, token) {
 		var buffer = "",
@@ -624,5 +637,6 @@ module.exports = {
 	chargePreAuthorization: chargePreAuthorization,
 	payOutSeller: payOutSeller,
 
-	getSGBalance: getSGBalance
+	getSGBalance: getSGBalance,
+	getSGTransactions: getSGTransactions
 };
