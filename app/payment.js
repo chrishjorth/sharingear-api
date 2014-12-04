@@ -136,6 +136,7 @@ updateUser = function(mangopay_id, wallet_id, user, callback) {
 			callback(null, mangopay_id, wallet_id);
 		}
 		else {
+			console.log("Create wallet id");
 			createWalletForUser(mangopay_id, function(error, wallet_id) {
 				if(error) {
 					callback("Error creating wallet for updated user: " + error);
