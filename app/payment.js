@@ -113,7 +113,6 @@ updateUser = function(mangopay_id, wallet_id, user, callback) {
 			callback("Payment gateway error: " + response);
 			return;
 		}
-		//console.log("Update response: " + response);
 		responseData = JSON.parse(response);
 		if(responseData.type === "param_error") {
 			callback("Bad parameter in gateway request: " + response);
@@ -136,7 +135,6 @@ updateUser = function(mangopay_id, wallet_id, user, callback) {
 			callback(null, mangopay_id, wallet_id);
 		}
 		else {
-			console.log("Create wallet id");
 			createWalletForUser(mangopay_id, function(error, wallet_id) {
 				if(error) {
 					callback("Error creating wallet for updated user: " + error);
@@ -312,8 +310,6 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 
 	fee = parseInt(price, 10) / 100.0 * sellerMangoPayData.seller_fee;
 
-	console.log("seller wallet id: " + sellerMangoPayData.wallet_id);
-
 	postData = {
 		AuthorId: sg_user.mangopay_id,
 		CreditedUserId: sellerMangoPayData.mangopay_id,
@@ -335,8 +331,6 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 			callback("Error transfering between wallets: " + error);
 			return;
 		}
-		console.log("transfer data:");
-		console.log(data);
 		parsedData = JSON.parse(data);
 		if(parsedData.Status !== "SUCCEEDED") {
 			callback("Error transfering between wallets: " + data);
@@ -362,8 +356,6 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 				callback("Error wiring from wallet: " + error);
 				return;
 			}
-			console.log("wire data:");
-			console.log(data);
 			parsedData = JSON.parse(data);
 			if(parsedData.Status !== "SUCCEEDED" && parsedData.Status !== "CREATED") {
 				callback("Error wiring from wallet: " + data);
