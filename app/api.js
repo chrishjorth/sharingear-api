@@ -30,7 +30,9 @@ var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment,
 	readBooking,
 	updateBooking,
 	createCardObject,
+
 	readSGBalance,
+	readSGTransactions,
 
 	handleError,
 	isAuthorized,
@@ -681,6 +683,32 @@ readSGBalance = function(req, res, next) {
 	}
 };
 
+readSGTransactions = function(req, res, next) {
+	if(req.params.user_id === "1" || req.params.user_id === "2") {
+		isAuthorized(req.params.user_id, function(error, status) {
+			if(error) {
+				handleError(res, next, "Error authorizing user: ", error);
+				return;
+			}
+			if(status === false) {
+				handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+				return;
+			}
+			Payment.getSGTransactions(function(error, transactions) {
+				if(error) {
+					handleError(res, next, "Error retrieving Sharingear transactions: ", error);
+					return;
+				}
+				res.send(transactions);
+				next();
+			});
+		});
+	}
+	else {
+		handleError(res, next, "Error authorizing user: ", "User id is not authorized.");
+	}
+};
+
 /* UTILITIES */
 handleError = function(res, next, message, error) {
 	console.log(message + JSON.stringify(error));
@@ -753,6 +781,7 @@ secureServer.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateBoo
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
 secureServer.get("/users/:user_id/dashboard/balance", readSGBalance);
+secureServer.get("/users/:user_id/dashboard/transactions", readSGTransactions);
 
 module.exports = {
 	server: server,
