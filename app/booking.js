@@ -163,7 +163,6 @@ update = function(bookingData, callback) {
 		return;
 	}
 	
-	console.log("bookingID: " + bookingID);
 	db.query("SELECT bookings.gear_id, bookings.renter_id, bookings.start_time, bookings.end_time, bookings.price, bookings.preauth_id, bookings.booking_status, gear.owner_id FROM bookings, gear WHERE bookings.id=? AND bookings.gear_id=? AND gear.id=bookings.gear_id LIMIT 1", [bookingID, gearID], function(error, rows) {
 		var completeUpdate;
 		if(error) {
