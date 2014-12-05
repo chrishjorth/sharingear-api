@@ -258,11 +258,7 @@ generateFileName = function(req, res, next) {
 };
 
 readGearSearchResults = function(req, res, next) {
-	var latLngArray, lat, lng;
-	latLngArray = req.params.location.split(",");
-	lat = latLngArray[0];
-	lng = latLngArray[1];
-	Gear.search(lat, lng, req.params.gear, function(error, results) {
+	Gear.search(req.params.location, req.params.gear, function(error, results) {
 		if(error) {
 			res.send([]);
 			return;
@@ -621,7 +617,6 @@ createBooking = function(req, res, next) {
 
 readBooking = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
-		var handleBookingResponse;
 		if(error) {
 			handleError(res, next, "Error authorizing user: ", error);
 			return;
