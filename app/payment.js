@@ -33,17 +33,19 @@ var https = require("https"),
 
 //Check if Sharingear user exists, if not create it and store ID in database
 sg_user = null;
-db.query("SELECT mangopay_id, wallet_id FROM sharingear LIMIT 1", [], function(error, rows) {
-	var createSGWallet;
+db.query("SELECT mangopay_id, wallet_id, vat FROM sharingear LIMIT 1", [], function(error, rows) {
+	var createSGWallet, vat;
 	if(error) {
 		console.log("Error selecting Sharingear payment details: " + error);
 		return;
 	}
 	if(rows.length > 0) {
+		vat = rows[0].vat;
 		if(rows[0].mangopay_id !== null && rows[0].mangopay_id !== "" && rows[0].wallet_id !== null && rows[0].wallet_id !== "") {
 			sg_user = {
 				mangopay_id: rows[0].mangopay_id,
-				wallet_id: rows[0].wallet_id
+				wallet_id: rows[0].wallet_id,
+				vat: vat
 			};
 			return;
 		}
@@ -62,7 +64,8 @@ db.query("SELECT mangopay_id, wallet_id FROM sharingear LIMIT 1", [], function(e
 				}
 				sg_user = {
 					mangopay_id: mangopay_id,
-					wallet_id: wallet_id
+					wallet_id: wallet_id,
+					vat: vat
 				};
 			});
 		});
@@ -237,13 +240,32 @@ getCardObject = function(mangopay_id, callback) {
 	});
 };
 
-preAuthorize = function(sellerMangoPayData, cardID, price, returnURL, callback) {
-	var postData = {
-		AuthorId: sellerMangoPayData.mangopay_id,
+preAuthorize = function(sellerMangoPayData, buyerMangoPayData, cardID, price, returnURL, callback) {
+	var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
+
+	price = parseInt(price, 10);
+
+	//View Sharingear transaction model document for explanation
+	sellerFee = price / 100 * parseFloat(sellerMangoPayData.seller_fee);
+	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
+	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * sellerMangoPayData.vat;
+	buyerFee = price / 100 * parseFloat(buyerMangoPayData.buyer_fee);
+	buyerFeeVAT = buyerFee / 100 * sg_user.vat;
+	amount = price + sellerVAT + buyerFee + buyerFeeVAT;
+	
+	console.log("--- PREAUTH:");
+	console.log("price: " + price);
+	console.log("sellerVAT: " + sellerVAT);
+	console.log("buyerFee: " + buyerFee);
+	console.log("buyerFeeVAT: " + buyerFeeVAT);
+	console.log("amount: " + amount);
+
+	postData = {
+		AuthorId: buyerMangoPayData.mangopay_id,
 		CardId: cardID,
 		DebitedFunds: {
 			Currency: "DKK",
-			Amount: parseInt(price, 10) * 100
+			Amount: amount * 100
 		},
 		SecureMode: "FORCE",
 		SecureModeReturnURL: returnURL
@@ -267,21 +289,35 @@ preAuthorize = function(sellerMangoPayData, cardID, price, returnURL, callback) 
 	});
 };
 
-chargePreAuthorization = function(buyerMangoPayData, price, preAuthID, callback) {
-	var postData,
-		fee;
+chargePreAuthorization = function(sellerMangoPayData, buyerMangoPayData, price, preAuthID, callback) {
+	var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
 
-	fee = parseInt(price, 10) / 100.0 * buyerMangoPayData.buyer_fee;
+	price = parseInt(price, 10);
+	
+	//View Sharingear transaction model document for explanation
+	sellerFee = price / 100 * parseFloat(sellerMangoPayData.seller_fee);
+	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
+	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * sellerMangoPayData.vat;
+	buyerFee = price / 100 * parseFloat(buyerMangoPayData.buyer_fee);
+	buyerFeeVAT = buyerFee / 100 * sg_user.vat;
+	amount = price + sellerVAT + buyerFee + buyerFeeVAT;
+	
+	console.log("--- CHARGE:");
+	console.log("price: " + price);
+	console.log("sellerVAT: " + sellerVAT);
+	console.log("buyerFee: " + buyerFee);
+	console.log("buyerFeeVAT: " + buyerFeeVAT);
+	console.log("amount: " + amount);
 
 	postData = {
 		AuthorId: buyerMangoPayData.mangopay_id,
 		DebitedFunds: {
 			Currency: "DKK",
-			Amount: parseInt(price, 10) * 100
+			Amount: amount * 100
 		},
 		Fees: {
 			Currency: "DKK",
-			Amount: fee * 100
+			Amount: (buyerFee + buyerFeeVAT) * 100
 		},
 		CreditedWalletId: sg_user.wallet_id,
 		PreauthorizationId: preAuthID
@@ -304,21 +340,31 @@ chargePreAuthorization = function(buyerMangoPayData, price, preAuthID, callback)
 };
 
 payOutSeller = function(sellerMangoPayData, price, callback) {
-	//Transfer from SG wallet to seller wallet
-	//Payout seller from his wallet
-	var fee, postData;
+	var sellerFee, sellerFeeVAT, sellerVAT, amount, postData;
 
-	fee = parseInt(price, 10) / 100.0 * sellerMangoPayData.seller_fee;
+	price = parseInt(price, 10);
+
+	sellerFee = price / 100 * parseFloat(sellerMangoPayData.seller_fee);
+	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
+	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * sellerMangoPayData.vat;
+	amount = price + sellerVAT;
+
+	console.log("--- PAY OWNER:");
+	console.log("price: " + price);
+	console.log("sellerFee: " + sellerFee);
+	console.log("sellerFeeVAT: " + sellerFeeVAT);
+	console.log("sellerVAT: " + sellerVAT);
+	console.log("amount: " + amount);
 
 	postData = {
 		AuthorId: sg_user.mangopay_id,
 		CreditedUserId: sellerMangoPayData.mangopay_id,
 		DebitedFunds: {
-			Amount: parseInt(price, 10) * 100,
+			Amount: amount * 100,
 			Currency: "DKK"
 		},
 		Fees: {
-			Amount: fee * 100,
+			Amount: (sellerFee + sellerFeeVAT) * 100,
 			Currency: "DKK"
 		},
 		DebitedWalletID: sg_user.wallet_id,
@@ -628,6 +674,7 @@ module.exports = {
 	updateUser: updateUser,
 	registerBankAccountForUser: registerBankAccountForUser,
 	getCardObject: getCardObject,
+
 	preAuthorize: preAuthorize,
 	chargePreAuthorization: chargePreAuthorization,
 	payOutSeller: payOutSeller,

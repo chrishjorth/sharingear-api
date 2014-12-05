@@ -23,7 +23,7 @@ var db = require("./database"),
 	updateGearWithID,
 	readGearWithID,
 	search,
-	getPrice,
+	getPriceAndOwner,
 	getOwner,
 	setStatus,
 	checkForRentals;
@@ -484,177 +484,8 @@ search = function(lat, lng, gear, callback) {
 	});
 };
 
-/*function createGearBulk(ownerID, gearList, callback) {
-	var create, types, typesSQL, subtypes, subtypesSQL, brands, brandsSQL, i, gearItem;
-
-	create = function() {
-		var gearArray = [],
-			sql, i, gear;
-		sql = "INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES ";
-		for(i = 0; i < gearList.length; i++) {
-			gear = gearList[i];
-			if(!gear.type) {
-				callback('Type is missing for gear.');
-				return;
-			}
-			if(!gear.subtype) {
-				gear.subtype = '';
-			}
-			if(!gear.brand) {
-				gear.brand = '';
-			}
-			if(!gear.model) {
-				gear.model = '';
-			}
-			if(!gear.description) {
-				gear.description = '';
-			}
-			if(!gear.images) {
-				gear.images = '';
-			}
-			if(!gear.price_a) {
-				gear.price_a = '';
-			}
-			if(!gear.price_b) {
-				gear.price_b = '';
-			}
-			if(!gear.price_c) {
-				gear.price_c = '';
-			}
-			if(!gear.address) {
-				gear.address = '';
-			}
-			if(!gear.postal_code) {
-				gear.postal_code = '';
-			}
-			if(!gear.city) {
-				gear.city = '';
-			}
-			if(!gear.region) {
-				gear.region = '';
-			}
-			if(!gear.country) {
-				gear.country = '';
-			}
-			if(!gear.latitude) {
-				gear.latitude = '';
-			}
-			else {
-				gear.latitude = parseFloat(gear.latitude) * Math.PI / 180
-			}
-			if(!gear.longitude) {
-				gear.longitude = '';
-			}
-			else {
-				gear.longitude = parseFloat(gear.longitude) * Math.PI / 180
-			}
-			gear.owner_id = ownerID;
-
-			sql += "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)";
-			gearArray.push(gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id);
-			if(i < gearList.length - 1) {
-				sql += ',';
-			}
-		}
-		db.query(sql, gearArray, function(error, result) {
-			if(error) {
-				callback(error);
-				return;
-			}
-			callback(null);
-		});
-	};
-
-	//Check that all types are valid, then the subtypes and then the brands
-	types = [];
-	typesSQL = "CREATE TEMPORARY TABLE IF NOT EXISTS templist (gear_type VARCHAR(45) NOT NULL);";
-	typesSQL += "INSERT INTO templist(gear_type) VALUES";
-
-	subtypes = [];
-	subtypesSQL = "CREATE TEMPORARY TABLE IF NOT EXISTS templist (subtype VARCHAR(45) NOT NULL);";
-	subtypesSQL += "INSERT INTO templist(subtype) VALUES";
-
-	brands = [];
-	brandsSQL = "CREATE TEMPORARY TABLE IF NOT EXISTS templist (brand VARCHAR(45) NOT NULL);";
-	brandsSQL += "INSERT INTO templist(brand) VALUES";
-
-	for(i = 0; i < gearList.length - 1; i++) {
-		gearItem = gearList[i];
-		types.push(gearItem.type);
-		typesSQL += "(?),";
-		if(gearItem.subtype && gearItem.subtype !== '' && gearItem.subtype !== null) {
-			subtypes.push(gearItem.subtype);
-			subtypesSQL += "(?),";
-		}
-		if(gearItem.brand && gearItem.brand !== '' && gearItem.brand !== null) {
-			brands.push(gearItem.brand);
-			brandsSQL += "(?),";
-		}
-	}
-
-	gearItem = gearList[gearList.length - 1];
-	types.push(gearItem.type);
-	typesSQL += "(?);";
-	typesSQL += "SELECT gear_type FROM templist WHERE gear_type NOT IN (SELECT gear_type FROM gear_types);";
-	typesSQL += "DROP TABLE templist;";
-
-	if(gearItem.subtype && gearItem.subtype !== '' && gearItem.subtype !== null) {
-		subtypes.push(gearItem.subtype);
-		subtypesSQL += "(?)";
-	}
-	subtypesSQL += "; SELECT subtype FROM templist WHERE subtype NOT IN (SELECT subtype FROM gear_subtypes);";
-	subtypesSQL += "DROP TABLE templist;";
-
-	if(gearItem.brand && gearItem.brand !== '' && gearItem.brand !== null) {
-		brands.push(gearItem.brand);
-		brandsSQL += "(?)";
-	}
-	brandsSQL += "; SELECT brand FROM templist WHERE brand NOT IN (SELECT brand FROM gear_brands);";
-	brandsSQL += "DROP TABLE templist;";
-
-	db.query(typesSQL, types, function(error, rows) {
-		if(error) {
-			callback(error);
-			return;
-		}
-		if(rows[2].length > 0) { //2 for the third SQL statement
-			callback('Found invalid type in gear list.');
-			return;
-		}
-		if(subtypes.length <= 0) {
-			create();
-			return;
-		}
-		db.query(subtypesSQL, subtypes, function(error, rows) {
-			if(error) {
-				callback(error);
-				return;
-			}
-			if(rows[2].length > 0) { //2 for the third SQL statement
-				callback('Found invalid subtype in gear list.');
-				return;
-			}
-			if(brands.length <= 0) {
-				create();
-				return;
-			}
-			db.query(brandsSQL, brands, function(error, rows) {
-				if(error) {
-					callback(error);
-					return;
-				}
-				if(rows[2].length > 0) { //2 for the third SQL statement
-					callback('Found invalid brand in gear list.');
-					return;
-				}
-				create();
-			});
-		});
-	});
-}*/
-
-getPrice = function(gearID, startTime, endTime, callback) {
-	db.query("SELECT price_a, price_b, price_c FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
+getPriceAndOwner = function(gearID, startTime, endTime, callback) {
+	db.query("SELECT price_a, price_b, price_c, owner_id FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
 		var startMoment, endMoment, weeks, days, hours, price;
 		if(error) {
 			callback("Error retrieving prices for gear: " + error);
@@ -671,17 +502,11 @@ getPrice = function(gearID, startTime, endTime, callback) {
 		days = parseInt(endMoment.diff(startMoment, "days"), 10);
 		endMoment.subtract(days, "days");
 		hours = parseInt(endMoment.diff(startMoment, "hours"), 10);
-		/*console.log('startTime: ' + startTime);
-		console.log('endTime: ' + endTime);
-		console.log('weeks: ' + weeks);
-		console.log('days: ' + days);
-		console.log('hours: ' + hours);
-		console.log('price_a: ' + rows[0].price_a);
-		console.log('price_b: ' + rows[0].price_b);
-		console.log('price_c: ' + rows[0].price_c);*/
 		price = rows[0].price_a * hours + rows[0].price_b * days + rows[0].price_c * weeks;
-		//console.log('total price: ' + price);
-		callback(null, price);
+		callback(null, {
+			price: price,
+			owner_id: rows[0].owner_id
+		});
 	});
 };
 
@@ -761,8 +586,7 @@ module.exports = {
 	updateGearWithID: updateGearWithID,
 	readGearWithID: readGearWithID,
 	search: search,
-	//createGearBulk: createGearBulk,
-	getPrice: getPrice,
+	getPriceAndOwner: getPriceAndOwner,
 	getOwner: getOwner,
 	setStatus: setStatus,
 	checkForRentals: checkForRentals

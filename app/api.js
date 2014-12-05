@@ -25,6 +25,7 @@ var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment,
 	updateGearFromUserWithID,
 	readGearAvailability,
 	createGearAvailability,
+	readRentalsFromUserWithID,
 	readReservationsFromUserWithID,
 	createBooking,
 	readBooking,
@@ -555,14 +556,45 @@ createGearAvailability = function(req, res, next) {
 	});
 };
 
+readRentalsFromUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+    	Booking.readRentalsForUser(req.params.user_id, function (error, rentals) {
+        	if (error) {
+            	handleError(res,next,"Error reading reservations for user: ",error);
+            	return;
+        	}
+        	res.send(rentals);
+        	next();
+    	});
+    });
+};
+
 readReservationsFromUserWithID = function(req, res, next) {
-    Booking.readReservationsForUser(req.params.renter_id, function (error, reservations) {
-        if (error) {
-            handleError(res,next,"Error reading reservations for user: ",error);
-            return;
-        }
-        res.send(reservations);
-        next();
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+    	Booking.readReservationsForUser(req.params.user_id, function (error, reservations) {
+        	if (error) {
+            	handleError(res,next,"Error reading reservations for user: ",error);
+            	return;
+        	}
+        	res.send(reservations);
+        	next();
+    	});
     });
 };
 
@@ -598,20 +630,14 @@ readBooking = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		handleBookingResponse = function(error, booking) {
+		Booking.read(req.params.booking_id, function(error, booking) {
 			if(error) {
 				handleError(res, next, "Error reading booking: ", error);
 				return;
 			}
 			res.send(booking);
 			next();
-		};
-		if(req.params.booking_id === "latest") {
-			Booking.readClosest(req.params.gear_id, handleBookingResponse);
-		}
-		else {
-			Booking.read(req.params.booking_id, handleBookingResponse);
-		}
+		});
 	});
 };
 
@@ -760,7 +786,7 @@ server.get("/", healthCheck);
 secureServer.get("/gearclassification", readGearClassification);
 
 secureServer.post("/gear", createGear);
-secureServer.post("/gearlist", createGearFromList);
+//secureServer.post("/gearlist", createGearFromList);
 secureServer.get("/gear/:id", readGearWithID);
 secureServer.post("/gear/image", addImageToGear);
 secureServer.get("/gear/search/:location/:gear/:daterange", readGearSearchResults);
@@ -773,7 +799,8 @@ secureServer.get("/users/:user_id/gear", readGearFromUserWithID);
 secureServer.put("/users/:user_id/gear/:gear_id", updateGearFromUserWithID);
 secureServer.post("/users/:user_id/gear/:gear_id/availability", createGearAvailability);
 secureServer.get("/users/:user_id/gear/:gear_id/availability", readGearAvailability);
-secureServer.get("/users/:renter_id/reservations", readReservationsFromUserWithID);
+secureServer.get("/users/:user_id/rentals", readRentalsFromUserWithID);
+secureServer.get("/users/:user_id/reservations", readReservationsFromUserWithID);
 secureServer.get("/users/:id/newfilename/:filename", generateFileName);
 secureServer.post("/users/:user_id/gear/:gear_id/bookings", createBooking);
 secureServer.get("/users/:user_id/gear/:gear_id/bookings/:booking_id", readBooking);
