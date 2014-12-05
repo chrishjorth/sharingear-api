@@ -350,7 +350,7 @@ getCardObject = function(userID, callback) {
 };
 
 getMangoPayData = function(userID, callback) {
-	db.query("SELECT id, mangopay_id, wallet_id, bank_id, buyer_fee, seller_fee FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT users.id, users.mangopay_id, users.wallet_id, users.bank_id, users.buyer_fee, users.seller_fee, countries.vat FROM users, countries WHERE id=? AND countries.code=users.country LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;

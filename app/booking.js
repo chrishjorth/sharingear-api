@@ -24,7 +24,8 @@ var db = require("./database"),
 
 	create,
 	read,
-	readClosest,
+	//readClosest,
+	readRentalsForUser,
 	readReservationsForUser,
 	update,
 
@@ -34,12 +35,14 @@ var db = require("./database"),
 
 create = function(renterID, bookingData, callback) {
 	//get gear prices and calculate correct price
-	Gear.getPrice(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error, price) {
-		var booking;
+	Gear.getPriceAndOwner(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error, result) {
+		var booking, price, ownerID;
 		if(error) {
 			callback(error);
 			return;
 		}
+		price = result.price;
+		ownerID = result.owner_id;
 		booking = [
 			bookingData.gear_id,
 			bookingData.start_time,
@@ -47,40 +50,34 @@ create = function(renterID, bookingData, callback) {
 			renterID,
 			price
 		];
-		Availability.removeInterval(bookingData.gear_id, bookingData.start_time, bookingData.end_time, function(error) {	
+		//We have to insert before the preauthorization to get the booking id
+		db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, price) VALUES (?, ?, ?, ?, ?)", booking, function(error, result) {
+			var url, queryIndex;
 			if(error) {
-				callback(error);
+				callback("Error inserting booking: " + error);
 				return;
 			}
-			db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, price) VALUES (?, ?, ?, ?, ?)", booking, function(error, result) {
-				var url, queryIndex;
+			//Assertion: only returnURLs with #route are valid
+			url = bookingData.returnURL.split("#");
+			queryIndex = url[0].indexOf("?");
+			if(queryIndex < 0) {
+				bookingData.returnURL = url[0] + "?booking_id=" + result.insertId + "#" + url[1];
+			}
+			else {
+				bookingData.returnURL = url[0] + "&booking_id=" + result.insertId + "#" + url[1];
+			}
+			preAuthorize(ownerID, renterID, bookingData.cardId, price, bookingData.returnURL, function(error, preAuthData) {
 				if(error) {
-					callback("Error inserting booking: " + error);
+					callback(error);
 					return;
 				}
-				//Assertion: only returnURLs with #route are valid
-				url = bookingData.returnURL.split("#");
-				queryIndex = url[0].indexOf('?');
-				if(queryIndex < 0) {
-					bookingData.returnURL = url[0] + "?booking_id=" + result.insertId + "#" + url[1];
-				}
-				else {
-					bookingData.returnURL = url[0] + "&booking_id=" + result.insertId + "#" + url[1];
-				}
-				
-				preAuthorize(renterID, bookingData.cardId, price, bookingData.returnURL, function(error, preAuthData) {
-					if(error) {
-						callback(error);
-						return;
-					}
-					callback(null, {
-						id: result.insertId,
-						gear_id: bookingData.gear_id,
-						start_time: bookingData.start_time,
-						end_time: bookingData.end_time,
-						price: price,
-						verificationURL: preAuthData.verificationURL
-					});
+				callback(null, {
+					id: result.insertId,
+					gear_id: bookingData.gear_id,
+					start_time: bookingData.start_time,
+					end_time: bookingData.end_time,
+					price: price,
+					verificationURL: preAuthData.verificationURL
 				});
 			});
 		});
@@ -101,7 +98,7 @@ read = function(bookingID, callback) {
 	});
 };
 
-readClosest = function(gearID, callback) {
+/*readClosest = function(gearID, callback) {
 	db.query("SELECT id, gear_id, MIN(start_time) as start_time, end_time, renter_id, price, booking_status FROM bookings WHERE gear_id=? AND booking_status!='ended-denied' AND booking_status!='ended'", [gearID], function(error, rows) {
 		if(error) {
 			callback("Error selecting closest booking for gear " + gearID + ": " + error);
@@ -112,6 +109,27 @@ readClosest = function(gearID, callback) {
 			return;
 		}
 		callback(null, rows[0]);
+	});
+};*/
+
+readRentalsForUser = function(userID, callback) {
+	Gear.checkForRentals(userID, function(error) {
+		if(error) {
+			callback("Error checking gear for rentals: " + error);
+			return;
+		}
+		db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear.type, gear.subtype, gear.brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.price, bookings.booking_status FROM gear, bookings WHERE gear.id=bookings.gear_id AND gear.owner_id=?", [userID], function(error, rows) {
+			if(error) {
+				callback("Error reading user rentals: " + error);
+				return;
+			}
+			if(rows.length <= 0) {
+				callback(null, []);
+			}
+			else {
+				callback(null, rows);
+			}
+		});
 	});
 };
 
@@ -128,9 +146,10 @@ readReservationsForUser = function(renterID, callback){
         	}
         	if(rows.length <= 0) {
             	callback(null, []);
-            	return;
         	}
-        	callback(null, rows);
+        	else {
+        		callback(null, rows);
+        	}
     	});
 	});
 };
@@ -144,7 +163,8 @@ update = function(bookingData, callback) {
 		return;
 	}
 	
-	db.query("SELECT gear_id, renter_id, start_time, end_time, price, preauth_id, booking_status FROM bookings WHERE id=? AND gear_id=? LIMIT 1", [bookingID, gearID], function(error, rows) {
+	console.log("bookingID: " + bookingID);
+	db.query("SELECT bookings.gear_id, bookings.renter_id, bookings.start_time, bookings.end_time, bookings.price, bookings.preauth_id, bookings.booking_status, gear.owner_id FROM bookings, gear WHERE bookings.id=? AND bookings.gear_id=? AND gear.id=bookings.gear_id LIMIT 1", [bookingID, gearID], function(error, rows) {
 		var completeUpdate;
 		if(error) {
 			callback("Error selecting booking interval: " + error);
@@ -183,7 +203,7 @@ update = function(bookingData, callback) {
 			});
 		}
 		else if (status === "accepted") {
-			chargePreAuthorization(rows[0].renter_id, rows[0].price, rows[0].preauth_id, function(error) {
+			chargePreAuthorization(rows[0].owner_id, rows[0].renter_id, rows[0].price, rows[0].preauth_id, function(error) {
 				if(error) {
 					callback(error);
 					return;
@@ -211,23 +231,35 @@ update = function(bookingData, callback) {
 	});
 };
 
-preAuthorize = function(renterID, cardID, price, returnURL, callback) {
-	User.getMangoPayData(renterID, function(error, renterMangoPayData) {
+preAuthorize = function(sellerID, buyerID, cardID, price, returnURL, callback) {
+	User.getMangoPayData(sellerID, function(error, sellerMangoPayData) {
 		if(error) {
-			callback("Error getting MangoPay data for gear renter: " + error);
+			callback("Error getting MangoPay data for gear owner: " + error);
 			return;
 		}
-		Payment.preAuthorize(renterMangoPayData, cardID, price, returnURL, callback);
+		User.getMangoPayData(buyerID, function(error, buyerMangoPayData) {
+			if(error) {
+				callback("Error getting MangoPay data for gear renter: " + error);
+				return;
+			}
+			Payment.preAuthorize(sellerMangoPayData, buyerMangoPayData, cardID, price, returnURL, callback);
+		});
 	});
 };
 
-chargePreAuthorization = function(renterID, price, preAuthId, callback) {
-	User.getMangoPayData(renterID, function(error, renterMangoPayData) {
+chargePreAuthorization = function(sellerID, renterID, price, preAuthId, callback) {
+	User.getMangoPayData(renterID, function(error, sellerMangoPayData) {
 		if(error) {
-			callback("Error getting MangoPay data for gear renter: " + error);
+			callback("Error getting MangoPay data for gear seller: " + error);
 			return;
 		}
-		Payment.chargePreAuthorization(renterMangoPayData, price, preAuthId, callback);
+		User.getMangoPayData(renterID, function(error, renterMangoPayData) {
+			if(error) {
+				callback("Error getting MangoPay data for gear renter: " + error);
+				return;
+			}
+			Payment.chargePreAuthorization(sellerMangoPayData, renterMangoPayData, price, preAuthId, callback);
+		});
 	});
 };
 
@@ -262,7 +294,8 @@ endBooking = function(gearID, price, callback) {
 module.exports = {
 	create: create,
 	read: read,
-	readClosest: readClosest,
+	//readClosest: readClosest,
+	readRentalsForUser: readRentalsForUser,
     readReservationsForUser: readReservationsForUser,
 	update: update
 };
