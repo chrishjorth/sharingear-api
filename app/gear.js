@@ -446,10 +446,10 @@ readGearWithID = function(gearID, callback) {
  * @param lat: Latitude in degrees
  * @param lng: Longitude in degrees
  */
-search = function(lat, lng, gear, callback) {
+search = function(location, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
-	db.search("SELECT id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
-		var sql, i;
+	db.search("SELECT id, type, subtype, brand, model, city, country, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
+		var latLngArray, lat, lng, sql, i;
 		if(error) {
 			console.log("Error searching for match: " + JSON.stringify(error));
 			callback(error);
@@ -459,6 +459,13 @@ search = function(lat, lng, gear, callback) {
 			callback(null, []);
 			return;
 		}
+		if(location === "all") {
+			callback(null, rows);
+			return;
+		}
+		latLngArray = location.split(",");
+		lat = latLngArray[0];
+		lng = latLngArray[1];
 		//Convert to radians
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
