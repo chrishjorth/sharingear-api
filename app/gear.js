@@ -466,15 +466,11 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 		});
 	};
 
-	console.log("Ready to check");
-
 	this.getGearType(gearID, function(error, typeID) {
 		if(error) {
 			console.log("Error retrieving gear type: " + error);
 			return;
 		}
-		console.log("gear type id: " + typeID);
-		console.log("subtype: " + updatedGearData.subtype);
 		Gear.checkSubtype(updatedGearData.subtype, typeID, function(error, subtypeID) {
 			if(error) {
 				callback(error);
@@ -502,8 +498,12 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 };
 
 readGearWithID = function(gearID, callback) {
-	db.query("SELECT id, gear_type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, gear_status, owner_id FROM gear WHERE id=? LIMIT 1", gearID, function(error, rows) {
-		var gear;
+	var sql;
+	sql = "SELECT gear.id, gear.gear_type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id, accessories.accessory";
+	sql += " FROM (SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear.id=5 AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand LIMIT 1) AS gear";
+	sql += " LEFT JOIN (SELECT gear_has_accessories.gear_id, gear_accessories.accessory FROM gear_has_accessories, gear_accessories WHERE gear_has_accessories.accessory_id=gear_accessories.id) AS accessories ON accessories.gear_id=gear.id;";
+	db.query(sql, gearID, function(error, rows) {
+		var gear, gearItem, accessories, i;
 		if(error) {
 			callback(error);
 			return;
@@ -512,34 +512,36 @@ readGearWithID = function(gearID, callback) {
 			callback("No gear found for the id.");
 			return;
 		}
-		gear = rows[0];
-		if(gear.model === null) {
-			gear.model = "";
+		accessories = [];
+		for(i = 0; i < rows.length; i++) {
+			if(rows[i].accessory !== null) {
+				accessories.push(rows[i]);
+			}
 		}
-		if(gear.description === null) {
-			gear.description = "";
-		}
-		if(gear.images === null) {
-			gear.images = "";
-		}
-		if(gear.address === null) {
-			gear.address = "";
-		}
-		if(gear.postal_code === null) {
-			gear.postal_code = "";
-		}
-		if(gear.city === null) {
-			gear.city = "";
-		}
-		if(gear.region === null) {
-			gear.region = "";
-		}
-		if(gear.country === null) {
-			gear.country = "";
-		}
-		gear.latitude = gear.latitude * 180 / Math.PI;
-		gear.longitude = gear.longitude * 180 / Math.PI;
-		callback(null, rows[0]);
+		gearItem = rows[0];
+		gear = {
+			id: gearItem.id,
+			gear_type: gearItem.gear_type,
+			subtype: gearItem.subtype,
+			brand: gearItem.brand,
+			model: gearItem.model,
+			description: gearItem.description,
+			images: gearItem.images,
+			price_a: gearItem.price_a,
+			price_b: gearItem.price_b,
+			price_c: gearItem.price_c,
+			address: gearItem.address,
+			postal_code: gearItem.postal_code,
+			city: gearItem.city,
+			region: gearItem.region,
+			country: gearItem.country,
+			latitude: gearItem.latitude * 180 / Math.PI,
+			longitude: gearItem.longitude * 180 / Math.PI,
+			gear_status: gearItem.gear_status,
+			owner_id: gearItem.owner_id,
+			accessories: accessories
+		};
+		callback(null, gear);
 	});
 };
 
