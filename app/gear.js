@@ -18,6 +18,7 @@ var db = require("./database"),
 	checkAccessories,
 	getAlwaysFlag,
 	setAlwaysFlag,
+	getGearType,
 	createGear,
 	readGearFromUser,
 	addImage,
@@ -122,6 +123,9 @@ checkTypes = function(gearType, subtype, callback) {
 	});
 };
 
+/**
+ * Checks that the type exists and returns the id
+ */
 checkType = function(gearType, callback) {
 	db.query("SELECT id FROM gear_types WHERE gear_type=? LIMIT 1", [gearType], function(error, rows) {
 		if(error) {
@@ -129,54 +133,46 @@ checkType = function(gearType, callback) {
 			return;
 		}
 		if(rows.length <= 0) {
-			callback(null, false);
+			callback(null, null);
 		}
 		else {
-			callback(null, true);
+			callback(null, rows[0].id);
 		}
 	});
 };
 
 /**
- * @return true for valid subtype or empty string. Empty string counts as valid in order to allow undefined subtype.
+ * Checks that the subtype exists and belongs to the passed typeID.
  */
-checkSubtype = function(subtype, callback) {
-	if(subtype === "") {
-		callback(null, true);
-		return;
-	}
-	db.query("SELECT id FROM gear_subtypes WHERE subtype=? LIMIT 1", [subtype], function(error, rows) {
+checkSubtype = function(subtype, typeID, callback) {
+	db.query("SELECT gear_subtypes.id FROM gear_subtypes, gear_types WHERE gear_subtypes.subtype=? AND gear_subtypes.type_id=? LIMIT 1", [subtype, typeID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
 		}
 		if(rows.length <= 0) {
-			callback(null, false);
+			callback(null, null);
 		}
 		else {
-			callback(null, true);
+			callback(null, rows[0].id);
 		}
 	});
 };
 
 /**
- * @return true for valid subtype or empty string. Empty string counts as valid in order to allow undefined brand.
+ * Checks that the brand exists and returns the id.
  */
 checkBrand = function(brand, callback) {
-	if(brand === "") {
-		callback(null, true);
-		return;
-	}
 	db.query("SELECT id FROM gear_brands WHERE name=? LIMIT 1", [brand], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
 		}
 		if(rows.length <= 0) {
-			callback(null, false);
+			callback(null, null);
 		}
 		else {
-			callback(null, true);
+			callback(null, rows[0].id);
 		}
 	});
 };
@@ -200,7 +196,7 @@ checkOwner = function(userID, gearID, callback) {
  * Checks if the accessories are valid for the gear subtype. If not they will be stripped.
  * @param accessories: ["accessory1", "accessory2", ..., "accessoryN"]
  */
-checkAccessories = function(gearID, accessories, callback) {
+checkAccessories = function(/*gearID, accessories, callback*/) {
 	//Get accessories for subtype
 	//db.query("SELECT ");
 };
@@ -226,6 +222,20 @@ setAlwaysFlag = function(gearID, alwaysFlag, callback) {
 			return;
 		}
 		callback(null);
+	});
+};
+
+getGearType = function(gearID, callback) {
+	db.query("SELECT gear_type FROM gear WHERE id=? LIMIT 1;", [gearID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No gear for id.");
+			return;
+		}
+		callback(null, rows[0].gear_type);
 	});
 };
 
@@ -277,35 +287,36 @@ createGear = function(newGear, callback) {
 	};
 
 
-	this.checkType(newGear.gear_type, function(error, correct) {
+	this.checkType(newGear.gear_type, function(error, typeID) {
 		if(error) {
 			callback(error);
 			return;
 		}
-		if(correct === false) {
+		if(typeID === null) {
 			callback("Wrong type.");
 			return;
 		}
-
-		Gear.checkSubtype(newGear.subtype, function(error, correct) {
+		newGear.gear_type = typeID;
+		Gear.checkSubtype(newGear.subtype, typeID, function(error, subtypeID) {
 			if(error) {
 				callback(error);
 				return;
 			}
-			if(correct === false) {
+			if(subtypeID === null) {
 				callback("Wrong subtype.");
 				return;
 			}
-
-			Gear.checkBrand(newGear.brand, function(error, correct) {
+			newGear.subtype = subtypeID;
+			Gear.checkBrand(newGear.brand, function(error, brandID) {
 				if(error) {
 					callback(error);
 					return;
 				}
-				if(correct === false) {
+				if(brandID === null) {
 					callback("Wrong brand.");
 					return;
 				}
+				newGear.brand = brandID;
 				create();
 			});
 		});
@@ -413,28 +424,39 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 		});
 	};
 
-	this.checkSubtype(updatedGearData.subtype, function(error, correct) {
-		if(error) {
-			callback(error);
-			return;
-		}
-		if(correct === false) {
-			callback("Wrong subtype.");
-			return;
-		}
+	console.log("Ready to check");
 
-		Gear.checkBrand(updatedGearData.brand, function(error, correct) {
+	this.getGearType(gearID, function(error, typeID) {
+		if(error) {
+			console.log("Error retrieving gear type: " + error);
+			return;
+		}
+		console.log("gear type id: " + typeID);
+		console.log("subtype: " + updatedGearData.subtype);
+		Gear.checkSubtype(updatedGearData.subtype, typeID, function(error, subtypeID) {
 			if(error) {
 				callback(error);
 				return;
 			}
-			if(correct === false) {
-				callback("Wrong brand.");
+			if(subtypeID === null) {
+				callback("Wrong subtype.");
 				return;
 			}
-			update();
-		});
-	});	
+			updatedGearData.subtype = subtypeID;
+			Gear.checkBrand(updatedGearData.brand, function(error, brandID) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				updatedGearData.brand = brandID;
+				if(brandID === null) {
+					callback("Wrong brand.");
+					return;
+				}
+				update();
+			});
+		});	
+	});
 };
 
 readGearWithID = function(gearID, callback) {
@@ -625,6 +647,7 @@ module.exports = {
 	checkAccessories: checkAccessories,
 	getAlwaysFlag: getAlwaysFlag,
 	setAlwaysFlag: setAlwaysFlag,
+	getGearType: getGearType,
 	createGear: createGear,
 	readGearFromUser: readGearFromUser,
 	addImage: addImage,
