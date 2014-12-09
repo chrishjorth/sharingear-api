@@ -38,7 +38,7 @@ getClassification = function(callback) {
 	var sql;
 	sql = "SELECT gear.gear_type, gear.subtype, accessories.accessory";
 	sql += " FROM (SELECT gear_types.gear_type, gear_types.sorting, gear_subtypes.id AS gear_subtype_id, gear_subtypes.subtype FROM gear_types, gear_subtypes WHERE gear_subtypes.type_id=gear_types.id) AS gear";
-	sql += " LEFT JOIN (SELECT gear_accessories.accessory, has_accessories.gear_subtype_id FROM gear_accessories, has_accessories WHERE has_accessories.gear_accessory_id=gear_accessories.id) AS accessories";
+	sql += " LEFT JOIN (SELECT gear_accessories.accessory, gear_subtype_has_accessories.gear_subtype_id FROM gear_accessories, gear_subtype_has_accessories WHERE gear_subtype_has_accessories.gear_accessory_id=gear_accessories.id) AS accessories";
 	sql += " ON accessories.gear_subtype_id=gear.gear_subtype_id ORDER BY gear.sorting, gear.subtype";
 	db.query(sql, [], function(error, rows) {
 		var currentType = "",
