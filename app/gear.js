@@ -15,6 +15,7 @@ var db = require("./database"),
 	checkSubtype,
 	checkBrand,
 	checkOwner,
+	checkAccessories,
 	getAlwaysFlag,
 	setAlwaysFlag,
 	createGear,
@@ -195,6 +196,15 @@ checkOwner = function(userID, gearID, callback) {
 	});
 };
 
+/**
+ * Checks if the accessories are valid for the gear subtype. If not they will be stripped.
+ * @param accessories: ["accessory1", "accessory2", ..., "accessoryN"]
+ */
+checkAccessories = function(gearID, accessories, callback) {
+	//Get accessories for subtype
+	//db.query("SELECT ");
+};
+
 getAlwaysFlag = function(gearID, callback) {
 	db.query("SELECT always_available FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
 		if(error) {
@@ -238,7 +248,7 @@ createGear = function(newGear, callback) {
 			lng = null;
 		}
 		gear = [
-			newGear.type,
+			newGear.gear_type,
 			newGear.subtype,
 			newGear.brand,
 			newGear.model,
@@ -257,7 +267,7 @@ createGear = function(newGear, callback) {
 			newGear.owner_id
 		];
 
-		db.query("INSERT INTO gear(type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)", gear, function(error, result) {
+		db.query("INSERT INTO gear(gear_type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)", gear, function(error, result) {
 			if(error) {
 				callback(error);
 				return;
@@ -267,7 +277,7 @@ createGear = function(newGear, callback) {
 	};
 
 
-	this.checkType(newGear.type, function(error, correct) {
+	this.checkType(newGear.gear_type, function(error, correct) {
 		if(error) {
 			callback(error);
 			return;
@@ -309,7 +319,7 @@ readGearFromUser = function(userID, callback) {
 			callback("Error checking users gear for rentals: " + error);
 			return;
 		}
-		db.query("SELECT usergear.id, usergear.type, usergear.subtype, usergear.brand, usergear.model, usergear.description, usergear.images, usergear.price_a, usergear.price_b, usergear.price_c, usergear.address, usergear.postal_code, usergear.city, usergear.region, usergear.country, usergear.latitude, usergear.longitude, usergear.gear_status, usergear.owner_id, bookings.booking_status FROM bookings RIGHT JOIN (SELECT gear.id, gear.type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id FROM gear WHERE gear.owner_id=?) as usergear ON bookings.gear_id=usergear.id GROUP BY usergear.id;", [userID], function(error, rows) {
+		db.query("SELECT usergear.id, usergear.gear_type, usergear.subtype, usergear.brand, usergear.model, usergear.description, usergear.images, usergear.price_a, usergear.price_b, usergear.price_c, usergear.address, usergear.postal_code, usergear.city, usergear.region, usergear.country, usergear.latitude, usergear.longitude, usergear.gear_status, usergear.owner_id, bookings.booking_status FROM bookings RIGHT JOIN (SELECT gear.id, gear.gear_type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id FROM gear WHERE gear.owner_id=?) as usergear ON bookings.gear_id=usergear.id GROUP BY usergear.id;", [userID], function(error, rows) {
 			var i;
 			if(error) {
 				callback(error);
@@ -428,7 +438,7 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 };
 
 readGearWithID = function(gearID, callback) {
-	db.query("SELECT id, type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, gear_status, owner_id FROM gear WHERE id=? LIMIT 1", gearID, function(error, rows) {
+	db.query("SELECT id, gear_type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, gear_status, owner_id FROM gear WHERE id=? LIMIT 1", gearID, function(error, rows) {
 		var gear;
 		if(error) {
 			callback(error);
@@ -475,7 +485,7 @@ readGearWithID = function(gearID, callback) {
  */
 search = function(location, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
-	db.search("SELECT id, type, subtype, brand, model, city, country, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
+	db.search("SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
 			console.log("Error searching for match: " + JSON.stringify(error));
@@ -496,7 +506,7 @@ search = function(location, gear, callback) {
 		//Convert to radians
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
-		sql = "SELECT id, type, subtype, brand, model, city, country, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
+		sql = "SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ",";
 		}
@@ -612,6 +622,7 @@ module.exports = {
 	checkSubtype: checkSubtype,
 	checkBrand: checkBrand,
 	checkOwner: checkOwner,
+	checkAccessories: checkAccessories,
 	getAlwaysFlag: getAlwaysFlag,
 	setAlwaysFlag: setAlwaysFlag,
 	createGear: createGear,
