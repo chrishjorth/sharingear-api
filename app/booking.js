@@ -139,7 +139,7 @@ readReservationsForUser = function(renterID, callback){
 			callback("Error checking gear for rentals: " + error);
 			return;
 		}
-		db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear.type, gear.subtype, gear.brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.price, bookings.booking_status FROM bookings INNER JOIN gear ON bookings.gear_id = gear.id WHERE bookings.renter_id=? AND bookings.booking_status!='ended-denied' AND bookings.booking_status!='ended'", [renterID], function(error, rows) {
+		db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear.type, gear.subtype, gear.brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.price, bookings.booking_status FROM bookings INNER JOIN gear ON bookings.gear_id = gear.id WHERE bookings.renter_id=?", [renterID], function(error, rows) {
         	if(error) {
             	callback(error);
             	return;
