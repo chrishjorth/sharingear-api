@@ -138,7 +138,7 @@ createGear = function(req, res, next) {
 			return;
 		}
 		newGear = {
-			type: params.type,
+			gear_type: params.gear_type,
 			subtype: params.subtype,
 			brand: params.brand,
 			model: params.model,
