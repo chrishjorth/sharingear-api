@@ -35,9 +35,21 @@ var db = require("./database"),
  * }
  */
 getClassification = function(callback) {
-	db.query("SELECT gear_types.gear_type, gear_subtypes.subtype FROM gear_types, gear_subtypes WHERE gear_subtypes.type_id=gear_types.id ORDER BY gear_types.sorting", [], function(error, rows) {
-		var currentGear = "",
+	var sql;
+	sql = "SELECT gear.gear_type, gear.subtype, accessories.accessory";
+	sql += " FROM (SELECT gear_types.gear_type, gear_types.sorting, gear_subtypes.id AS gear_subtype_id, gear_subtypes.subtype FROM gear_types, gear_subtypes WHERE gear_subtypes.type_id=gear_types.id) AS gear";
+	sql += " LEFT JOIN (SELECT gear_accessories.accessory, has_accessories.gear_subtype_id FROM gear_accessories, has_accessories WHERE has_accessories.gear_accessory_id=gear_accessories.id) AS accessories";
+	sql += " ON accessories.gear_subtype_id=gear.gear_subtype_id ORDER BY gear.sorting, gear.subtype";
+	db.query(sql, [], function(error, rows) {
+		var currentType = "",
+			currentSubtype = "",
+			accessories = [],
 			gearClassification, classification, i;
+
+		if(error) {
+			callback(error);
+			return;
+		}
 
 		gearClassification = {
 			classification: {},
@@ -45,19 +57,34 @@ getClassification = function(callback) {
 		};
 		classification = gearClassification.classification;
 
-		if(error) {
-			callback(error);
-			return;
-		}
 		//Assertion: the query returns rows sorted
 		for(i = 0; i < rows.length; i++) {
-			if(rows[i].gear_type !== currentGear) {
-				currentGear = rows[i].gear_type;
-				//Add new gear type
-				classification[rows[i].gear_type] = [rows[i].subtype];
+			if(rows[i].subtype === currentSubtype) {
+				if(rows[i].accessory !== null) {
+					accessories.push(rows[i].accessory);
+				}
 			}
 			else {
-				classification[rows[i].gear_type].push(rows[i].subtype);
+				//New subtype
+				currentSubtype = rows[i].subtype;
+				accessories = [];
+				if(rows[i].accessory !== null) {
+					accessories.push(rows[i].accessory);
+				}
+				if(rows[i].gear_type !== currentType) {
+					//Add new gear type
+					currentType = rows[i].gear_type;
+					classification[rows[i].gear_type] = [{
+						subtype:rows[i].subtype,
+						accessories: accessories
+					}];
+				}
+				else {
+					classification[rows[i].gear_type].push({
+						subtype: rows[i].subtype,
+						accessories: accessories
+					});
+				}
 			}
 		}
 
