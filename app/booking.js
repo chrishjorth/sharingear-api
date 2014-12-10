@@ -176,7 +176,20 @@ update = function(bookingData, callback) {
 		};
 
 		if(status === "pending") {
-			completeUpdate(status, bookingData.preauth_id, false);
+			//Check that the preauthorization status is waiting
+			Payment.getPreauthorizationStatus(bookingData.preauth_id, function(error, preauthStatus) {
+				if(error) {
+					callback("Error checking preauthorization status: " + error);
+					return;
+				}
+				console.log("preauthStatus: " + preauthStatus);
+				if(preauthStatus === "WAITING") {
+					completeUpdate(status, bookingData.preauth_id, false);
+				}
+				else {
+					callback("Error preauthorizing payment.");
+				}
+			});
 		}
 		else if(status === "denied") {
 			Availability.removeInterval(rows[0].gear_id, rows[0].start_time, rows[0].end_time, function(error) {

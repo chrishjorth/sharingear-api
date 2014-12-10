@@ -53,14 +53,14 @@ bookingDeniedEmail = {
 bookingOwnerReturnedEmail = {
 	to: null,
 	from: FROM_ADDRESS,
-	subject: "Sharingear - please confirm the end of the gear rental",
+	subject: "Sharingear - please confirm you returned the gear",
 	text: "Hi,\n\nthe owner of the gear you have rented has marked the rental as completed.\n\nPlease go to https://www.sharingear.com to end the booking. Once you have done this you will receive your deposit back on your account.\n\nCheers,\n\n- Sharingear"
 };
 //Defines an email to the owner of gear, sent on the event that the renter has marked the booking successfully ended
 bookingRenterReturnedEmail = {
 	to: null,
 	from: FROM_ADDRESS,
-	subject: "Sharingear - please confirm the end of the gear rental",
+	subject: "Sharingear - please confirm the return of your gear",
 	text: "Hi,\n\na renter of your gear has marked the rental as completed.\n\nPlease go to https://www.sharingear.com to end the booking. Once you have done this you will receive your payment.\n\nCheers,\n\n- Sharingear"
 };
 //Defines an email to the owner of gear, sent on the event that the rental has ended successfully.
@@ -116,6 +116,7 @@ send = function(notificationType, notificationParameters, recipientID) {
 		textTemplate = _.template(emailParams.text);
 		emailParams.text = textTemplate(notificationParameters);
 		email = new SendGrid.Email(emailParams);
+		console.log('SEND TO: ' + recipient.email);
 		SendGrid.send(email, function(error) {
 			if(error) {
 				console.log("Error sending notification email: " + error);

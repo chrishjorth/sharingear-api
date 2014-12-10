@@ -17,11 +17,13 @@ var https = require("https"),
 	createWalletForUser,
 	getCardObject,
 	preAuthorize,
+	getPreauthorizationStatus,
 	chargePreAuthorization,
 	payOutSeller,
 
 	getSGBalance,
 	getSGTransactions,
+	getSGPreauthorization,
 
 	gatewayGet,
 	gatewayPost,
@@ -289,6 +291,18 @@ preAuthorize = function(sellerMangoPayData, buyerMangoPayData, cardID, price, re
 	});
 };
 
+getPreauthorizationStatus = function(preauthID, callback) {
+	gatewayGet("/preauthorizations/" + preauthID, function(error, data) {
+		var parsedData;
+		if(error) {
+			callback("Error getting Sharingear preauthorization: " + error);
+			return;
+		}
+		parsedData = JSON.parse(data);
+		callback(null, parsedData.PaymentStatus);
+	});
+};
+
 chargePreAuthorization = function(sellerMangoPayData, buyerMangoPayData, price, preAuthID, callback) {
 	var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
 
@@ -429,6 +443,18 @@ getSGTransactions = function(callback) {
 		var parsedData;
 		if(error) {
 			callback("Error getting Sharingear transactions: " + error);
+			return;
+		}
+		parsedData = JSON.parse(data);
+		callback(null, parsedData);
+	});
+};
+
+getSGPreauthorization = function(preauthID, callback) {
+	gatewayGet("/preauthorizations/" + preauthID, function(error, data) {
+		var parsedData;
+		if(error) {
+			callback("Error getting Sharingear preauthorization: " + error);
 			return;
 		}
 		parsedData = JSON.parse(data);
@@ -676,9 +702,11 @@ module.exports = {
 	getCardObject: getCardObject,
 
 	preAuthorize: preAuthorize,
+	getPreauthorizationStatus: getPreauthorizationStatus,
 	chargePreAuthorization: chargePreAuthorization,
 	payOutSeller: payOutSeller,
 
 	getSGBalance: getSGBalance,
-	getSGTransactions: getSGTransactions
+	getSGTransactions: getSGTransactions,
+	getSGPreauthorization: getSGPreauthorization
 };
