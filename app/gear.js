@@ -16,6 +16,7 @@ var db = require("./database"),
 	checkBrand,
 	checkOwner,
 	getAccessoryIDs,
+	addAccessories,
 	getAlwaysFlag,
 	setAlwaysFlag,
 	getGearType,
@@ -221,6 +222,25 @@ getAccessoryIDs = function(subtypeID, accessories, callback) {
 	});
 };
 
+addAccessories = function(gearID, accessoryIDs, callback) {
+	var sql, valueArray, i;
+	sql = "INSERT INTO gear_has_accessories(gear_id, accessory_id) VALUES ";
+	valueArray = [];
+	for(i = 0; i < accessoryIDs.length - 1; i++) {
+		sql += "(?, ?), ";
+		valueArray.push(gearID, accessoryIDs[i]);
+	}
+	sql += "(?, ?)";
+	valueArray.push(gearID, accessoryIDs[i]);
+	db.query(sql, valueArray, function(error) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		callback(null);
+	});
+};
+
 getAlwaysFlag = function(gearID, callback) {
 	db.query("SELECT always_available FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
 		if(error) {
@@ -303,7 +323,6 @@ createGear = function(newGear, callback) {
 				return;
 			}
 			Gear.getAccessoryIDs(newGear.subtype, newGear.accessories, function(error, accessoryIDs) {
-				var sql, valueArray, i;
 				if(error) {
 					callback(error);
 					return;
@@ -312,15 +331,7 @@ createGear = function(newGear, callback) {
 					callback(null, result.insertId);
 					return;
 				}
-				sql = "INSERT INTO gear_has_accessories(gear_id, accessory_id) VALUES ";
-				valueArray = [];
-				for(i = 0; i < accessoryIDs.length - 1; i++) {
-					sql += "(?, ?), ";
-					valueArray.push(result.insertId, accessoryIDs[i]);
-				}
-				sql += "(?, ?)";
-				valueArray.push(result.insertId, accessoryIDs[i]);
-				db.query(sql, valueArray, function(error) {
+				Gear.addAccessories(result.insertId, accessoryIDs, function(error) {
 					if(error) {
 						callback(error);
 						return;
@@ -507,7 +518,30 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 				callback("No gear found to update.");
 				return;
 			}
-			callback(null);
+			//Delete accessories and then add them
+			db.query("DELETE FROM gear_has_accessories WHERE gear_id=?;", [gearID], function(error) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				Gear.getAccessoryIDs(updatedGearData.subtype, updatedGearData.accessories, function(error, accessoryIDs) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					if(accessoryIDs.length <= 0) {
+						callback(null, result.insertId);
+						return;
+					}
+					Gear.addAccessories(gearID, accessoryIDs, function(error) {
+						if(error) {
+							console.log("Error adding accessories: " + error);
+							return;
+						}
+						callback(null);
+					});
+				});
+			});
 		});
 	};
 
@@ -734,6 +768,7 @@ module.exports = {
 	checkBrand: checkBrand,
 	checkOwner: checkOwner,
 	getAccessoryIDs: getAccessoryIDs,
+	addAccessories: addAccessories,
 	getAlwaysFlag: getAlwaysFlag,
 	setAlwaysFlag: setAlwaysFlag,
 	getGearType: getGearType,
