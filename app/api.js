@@ -12,7 +12,6 @@ var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment, No
 	healthCheck,
 	readGearClassification,
 	createGear,
-	createGearFromList,
 	readGearWithID,
 	addImageToGear,
 	generateFileName,
@@ -127,10 +126,7 @@ readGearClassification = function(req, res, next) {
 };
 
 createGear = function(req, res, next) {
-	var params = req.params,
-		newGear;
-
-	isAuthorized(params.owner_id, function(error, status) {
+	isAuthorized(req.params.owner_id, function(error, status) {
 		if(error) {
 			handleError(res, next, "Error authorizing user: ", error);
 			return;
@@ -139,55 +135,12 @@ createGear = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		newGear = {
-			gear_type: params.gear_type,
-			subtype: params.subtype,
-			brand: params.brand,
-			model: params.model,
-			description: params.description,
-			images: params.images,
-			price_a: params.price_a,
-			price_b: params.price_b,
-			price_c: params.price_c,
-			address: params.address,
-			postal_code: params.postalcode,
-			city: params.city,
-			region: params.region,
-			country: params.country,
-			latitude: params.latitude,
-			longitude: params.longitude,
-			owner_id: params.owner_id
-		};
-
-		Gear.createGear(newGear, function(error, gearID) {
+		Gear.createGear(req.params, function(error, gearID) {
 			if(error) {
 				handleError(res, next, "Error creating new gear: ", error);
 				return;
 			}
 			res.send({id: gearID});
-			next();
-		});
-	});
-};
-
-createGearFromList = function(req, res, next) {
-	isAuthorized(req.params.owner_id, function(error, status) {
-		var gearList;
-		if(error) {
-			handleError(res, next, "Error authorizing user: ", error);
-			return;
-		}
-		if(status === false) {
-			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-			return;
-		}
-		gearList = JSON.parse(req.params.gear_list);
-		Gear.createGearBulk(req.params.owner_id, gearList, function(error) {
-			if(error) {
-				handleError(res, next, "Error creating new gear from list: ", error);
-				return;
-			}
-			res.send({});
 			next();
 		});
 	});
@@ -828,7 +781,6 @@ server.get("/", healthCheck);
 secureServer.get("/gearclassification", readGearClassification);
 
 secureServer.post("/gear", createGear);
-//secureServer.post("/gearlist", createGearFromList);
 secureServer.get("/gear/:id", readGearWithID);
 secureServer.post("/gear/image", addImageToGear);
 secureServer.get("/gear/search/:location/:gear/:daterange", readGearSearchResults);

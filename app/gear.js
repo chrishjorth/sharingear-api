@@ -515,7 +515,7 @@ readGearWithID = function(gearID, callback) {
 		accessories = [];
 		for(i = 0; i < rows.length; i++) {
 			if(rows[i].accessory !== null) {
-				accessories.push(rows[i]);
+				accessories.push(rows[i].accessory);
 			}
 		}
 		gearItem = rows[0];
