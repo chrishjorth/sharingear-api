@@ -214,16 +214,25 @@ getAccessoryIDs = function(subtypeID, accessories, callback) {
 	valueArray.push(accessories[i], subtypeID);
 	sql += ") AND gear_subtype_has_accessories.gear_subtype_id=? AND gear_subtype_has_accessories.gear_accessory_id=gear_accessories.id;";
 	db.query(sql, valueArray, function(error, rows) {
+		var accessoryIDs;
 		if(error) {
 			callback("Error getting accessory IDs: " + error);
 			return;
 		}
-		callback(null, rows);
+		accessoryIDs = [];
+		for(i = 0; i < rows.length; i++) {
+			accessoryIDs.push(rows[i].id);
+		}
+		callback(null, accessoryIDs);
 	});
 };
 
 addAccessories = function(gearID, accessoryIDs, callback) {
 	var sql, valueArray, i;
+	if(accessoryIDs.length <= 0) {
+		callback(null);
+		return;
+	}
 	sql = "INSERT INTO gear_has_accessories(gear_id, accessory_id) VALUES ";
 	valueArray = [];
 	for(i = 0; i < accessoryIDs.length - 1; i++) {
@@ -527,16 +536,14 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 					callback(error);
 					return;
 				}
-				if(!updatedGearData.accessories || updatedGearData.accessories === null) {
-					updatedGearData.accessories = [];
-				}
+				updatedGearData.accessories = JSON.parse(updatedGearData.accessories);
 				Gear.getAccessoryIDs(updatedGearData.subtype, updatedGearData.accessories, function(error, accessoryIDs) {
 					if(error) {
 						callback(error);
 						return;
 					}
 					if(accessoryIDs.length <= 0) {
-						callback(null, result.insertId);
+						callback(null, gearID);
 						return;
 					}
 					Gear.addAccessories(gearID, accessoryIDs, function(error) {
@@ -544,7 +551,7 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 							console.log("Error adding accessories: " + error);
 							return;
 						}
-						callback(null);
+						callback(null, updatedGearData);
 					});
 				});
 			});

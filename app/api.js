@@ -384,7 +384,6 @@ readGearFromUserWithID = function(req, res, next) {
  */
 updateGearFromUserWithID = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
-		var updatedGearData;
 		if(error) {
 			handleError(res, next, "Error authorizing user: ", error);
 			return;
@@ -393,25 +392,7 @@ updateGearFromUserWithID = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		updatedGearData = {
-			subtype: req.params.subtype,
-			brand: req.params.brand,
-			model: req.params.model,
-			description: req.params.description,
-			images: req.params.images,
-			price_a: req.params.price_a,
-			price_b: req.params.price_b,
-			price_c: req.params.price_c,
-			address: req.params.address,
-			postal_code: req.params.postal_code,
-			city: req.params.city,
-			region: req.params.region,
-			country: req.params.country,
-			latitude: req.params.latitude,
-			longitude: req.params.longitude
-		};
-
-		Gear.updateGearWithID(req.params.gear_id, updatedGearData, function(error) {
+		Gear.updateGearWithID(req.params.gear_id, req.params, function(error, updatedGearData) {
 			if(error) {
 				handleError(res, next, "Error updating gear: ", error);
 				return;
