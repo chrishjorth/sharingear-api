@@ -15,7 +15,7 @@ var db = require("./database"),
 	checkSubtype,
 	checkBrand,
 	checkOwner,
-	checkAccessories,
+	getAccessoryIDs,
 	getAlwaysFlag,
 	setAlwaysFlag,
 	getGearType,
@@ -195,10 +195,30 @@ checkOwner = function(userID, gearID, callback) {
 /**
  * Checks if the accessories are valid for the gear subtype. If not they will be stripped.
  * @param accessories: ["accessory1", "accessory2", ..., "accessoryN"]
+ * @return array of accessory IDs for the valid passed accessories
  */
-checkAccessories = function(/*gearID, accessories, callback*/) {
-	//Get accessories for subtype
-	//db.query("SELECT ");
+getAccessoryIDs = function(subtypeID, accessories, callback) {
+	var sql, valueArray, i;
+	sql = "SELECT gear_accessories.id FROM gear_accessories, gear_subtype_has_accessories WHERE gear_accessories.accessory IN (";
+	valueArray = [];
+	if(accessories.length <= 0) {
+		callback(null, valueArray);
+		return;
+	}
+	for(i = 0; i < accessories.length - 1; i++) {
+		sql += "?, ";
+		valueArray.push(accessories[i]);
+	}
+	sql += "?";
+	valueArray.push(accessories[i], subtypeID);
+	sql += ") AND gear_subtype_has_accessories.gear_subtype_id=? AND gear_subtype_has_accessories.gear_accessory_id=gear_accessories.id;";
+	db.query(sql, valueArray, function(error, rows) {
+		if(error) {
+			callback("Error getting accessory IDs: " + error);
+			return;
+		}
+		callback(null, rows);
+	});
 };
 
 getAlwaysFlag = function(gearID, callback) {
@@ -282,7 +302,32 @@ createGear = function(newGear, callback) {
 				callback(error);
 				return;
 			}
-			callback(null, result.insertId);
+			Gear.getAccessoryIDs(newGear.subtype, newGear.accessories, function(error, accessoryIDs) {
+				var sql, valueArray, i;
+				if(error) {
+					callback(error);
+					return;
+				}
+				if(accessoryIDs.length <= 0) {
+					callback(null, result.insertId);
+					return;
+				}
+				sql = "INSERT INTO gear_has_accessories(gear_id, accessory_id) VALUES ";
+				valueArray = [];
+				for(i = 0; i < accessoryIDs.length - 1; i++) {
+					sql += "(?, ?), ";
+					valueArray.push(result.insertId, accessoryIDs[i]);
+				}
+				sql += "(?, ?)";
+				valueArray.push(result.insertId, accessoryIDs[i]);
+				db.query(sql, valueArray, function(error) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					callback(null, result.insertId);
+				});
+			});
 		});
 	};
 
@@ -688,7 +733,7 @@ module.exports = {
 	checkSubtype: checkSubtype,
 	checkBrand: checkBrand,
 	checkOwner: checkOwner,
-	checkAccessories: checkAccessories,
+	getAccessoryIDs: getAccessoryIDs,
 	getAlwaysFlag: getAlwaysFlag,
 	setAlwaysFlag: setAlwaysFlag,
 	getGearType: getGearType,
