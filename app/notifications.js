@@ -116,7 +116,6 @@ send = function(notificationType, notificationParameters, recipientID) {
 		textTemplate = _.template(emailParams.text);
 		emailParams.text = textTemplate(notificationParameters);
 		email = new SendGrid.Email(emailParams);
-		console.log('SEND TO: ' + recipient.email);
 		SendGrid.send(email, function(error) {
 			if(error) {
 				console.log("Error sending notification email: " + error);

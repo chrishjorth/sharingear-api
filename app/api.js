@@ -654,7 +654,6 @@ updateBooking = function(req, res, next) {
 				return;
 			}
 			if(req.params.booking_status === "pending") {
-				console.log("Notify owner that a booking is pending");
 				Notifications.send(Notifications.BOOKING_PENDING_OWNER, {}, bookingData.owner_id);
 			}
 			if(req.params.booking_status === "accepted") {
