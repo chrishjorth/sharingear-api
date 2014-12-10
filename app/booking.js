@@ -170,6 +170,7 @@ update = function(bookingData, callback) {
 					callback("Error updating booking status: " + error);
 					return;
 				}
+				rows[0].booking_status = status;
 				callback(null, rows[0]);
 			});
 		};
