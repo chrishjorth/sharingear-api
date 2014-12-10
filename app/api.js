@@ -12,7 +12,6 @@ var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment, No
 	healthCheck,
 	readGearClassification,
 	createGear,
-	createGearFromList,
 	readGearWithID,
 	addImageToGear,
 	generateFileName,
@@ -127,10 +126,7 @@ readGearClassification = function(req, res, next) {
 };
 
 createGear = function(req, res, next) {
-	var params = req.params,
-		newGear;
-
-	isAuthorized(params.owner_id, function(error, status) {
+	isAuthorized(req.params.owner_id, function(error, status) {
 		if(error) {
 			handleError(res, next, "Error authorizing user: ", error);
 			return;
@@ -139,55 +135,12 @@ createGear = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		newGear = {
-			gear_type: params.gear_type,
-			subtype: params.subtype,
-			brand: params.brand,
-			model: params.model,
-			description: params.description,
-			images: params.images,
-			price_a: params.price_a,
-			price_b: params.price_b,
-			price_c: params.price_c,
-			address: params.address,
-			postal_code: params.postalcode,
-			city: params.city,
-			region: params.region,
-			country: params.country,
-			latitude: params.latitude,
-			longitude: params.longitude,
-			owner_id: params.owner_id
-		};
-
-		Gear.createGear(newGear, function(error, gearID) {
+		Gear.createGear(req.params, function(error, gearID) {
 			if(error) {
 				handleError(res, next, "Error creating new gear: ", error);
 				return;
 			}
 			res.send({id: gearID});
-			next();
-		});
-	});
-};
-
-createGearFromList = function(req, res, next) {
-	isAuthorized(req.params.owner_id, function(error, status) {
-		var gearList;
-		if(error) {
-			handleError(res, next, "Error authorizing user: ", error);
-			return;
-		}
-		if(status === false) {
-			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-			return;
-		}
-		gearList = JSON.parse(req.params.gear_list);
-		Gear.createGearBulk(req.params.owner_id, gearList, function(error) {
-			if(error) {
-				handleError(res, next, "Error creating new gear from list: ", error);
-				return;
-			}
-			res.send({});
 			next();
 		});
 	});
@@ -431,7 +384,6 @@ readGearFromUserWithID = function(req, res, next) {
  */
 updateGearFromUserWithID = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
-		var updatedGearData;
 		if(error) {
 			handleError(res, next, "Error authorizing user: ", error);
 			return;
@@ -440,25 +392,7 @@ updateGearFromUserWithID = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		updatedGearData = {
-			subtype: req.params.subtype,
-			brand: req.params.brand,
-			model: req.params.model,
-			description: req.params.description,
-			images: req.params.images,
-			price_a: req.params.price_a,
-			price_b: req.params.price_b,
-			price_c: req.params.price_c,
-			address: req.params.address,
-			postal_code: req.params.postal_code,
-			city: req.params.city,
-			region: req.params.region,
-			country: req.params.country,
-			latitude: req.params.latitude,
-			longitude: req.params.longitude
-		};
-
-		Gear.updateGearWithID(req.params.gear_id, updatedGearData, function(error) {
+		Gear.updateGearWithID(req.params.gear_id, req.params, function(error, updatedGearData) {
 			if(error) {
 				handleError(res, next, "Error updating gear: ", error);
 				return;
@@ -654,7 +588,6 @@ updateBooking = function(req, res, next) {
 				return;
 			}
 			if(req.params.booking_status === "pending") {
-				console.log("Notify owner that a booking is pending");
 				Notifications.send(Notifications.BOOKING_PENDING_OWNER, {}, bookingData.owner_id);
 			}
 			if(req.params.booking_status === "accepted") {
@@ -829,7 +762,6 @@ server.get("/", healthCheck);
 secureServer.get("/gearclassification", readGearClassification);
 
 secureServer.post("/gear", createGear);
-//secureServer.post("/gearlist", createGearFromList);
 secureServer.get("/gear/:id", readGearWithID);
 secureServer.post("/gear/image", addImageToGear);
 secureServer.get("/gear/search/:location/:gear/:daterange", readGearSearchResults);

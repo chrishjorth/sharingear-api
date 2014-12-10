@@ -15,7 +15,8 @@ var db = require("./database"),
 	checkSubtype,
 	checkBrand,
 	checkOwner,
-	checkAccessories,
+	getAccessoryIDs,
+	addAccessories,
 	getAlwaysFlag,
 	setAlwaysFlag,
 	getGearType,
@@ -195,10 +196,58 @@ checkOwner = function(userID, gearID, callback) {
 /**
  * Checks if the accessories are valid for the gear subtype. If not they will be stripped.
  * @param accessories: ["accessory1", "accessory2", ..., "accessoryN"]
+ * @return array of accessory IDs for the valid passed accessories
  */
-checkAccessories = function(/*gearID, accessories, callback*/) {
-	//Get accessories for subtype
-	//db.query("SELECT ");
+getAccessoryIDs = function(subtypeID, accessories, callback) {
+	var sql, valueArray, i;
+	sql = "SELECT gear_accessories.id FROM gear_accessories, gear_subtype_has_accessories WHERE gear_accessories.accessory IN (";
+	valueArray = [];
+	if(accessories.length <= 0) {
+		callback(null, valueArray);
+		return;
+	}
+	for(i = 0; i < accessories.length - 1; i++) {
+		sql += "?, ";
+		valueArray.push(accessories[i]);
+	}
+	sql += "?";
+	valueArray.push(accessories[i], subtypeID);
+	sql += ") AND gear_subtype_has_accessories.gear_subtype_id=? AND gear_subtype_has_accessories.gear_accessory_id=gear_accessories.id;";
+	db.query(sql, valueArray, function(error, rows) {
+		var accessoryIDs;
+		if(error) {
+			callback("Error getting accessory IDs: " + error);
+			return;
+		}
+		accessoryIDs = [];
+		for(i = 0; i < rows.length; i++) {
+			accessoryIDs.push(rows[i].id);
+		}
+		callback(null, accessoryIDs);
+	});
+};
+
+addAccessories = function(gearID, accessoryIDs, callback) {
+	var sql, valueArray, i;
+	if(accessoryIDs.length <= 0) {
+		callback(null);
+		return;
+	}
+	sql = "INSERT INTO gear_has_accessories(gear_id, accessory_id) VALUES ";
+	valueArray = [];
+	for(i = 0; i < accessoryIDs.length - 1; i++) {
+		sql += "(?, ?), ";
+		valueArray.push(gearID, accessoryIDs[i]);
+	}
+	sql += "(?, ?)";
+	valueArray.push(gearID, accessoryIDs[i]);
+	db.query(sql, valueArray, function(error) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		callback(null);
+	});
 };
 
 getAlwaysFlag = function(gearID, callback) {
@@ -282,7 +331,26 @@ createGear = function(newGear, callback) {
 				callback(error);
 				return;
 			}
-			callback(null, result.insertId);
+			if(!newGear.accessories || newGear.accessories === null) {
+				newGear.accessories = [];
+			}
+			Gear.getAccessoryIDs(newGear.subtype, newGear.accessories, function(error, accessoryIDs) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				if(accessoryIDs.length <= 0) {
+					callback(null, result.insertId);
+					return;
+				}
+				Gear.addAccessories(result.insertId, accessoryIDs, function(error) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					callback(null, result.insertId);
+				});
+			});
 		});
 	};
 
@@ -462,7 +530,31 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 				callback("No gear found to update.");
 				return;
 			}
-			callback(null);
+			//Delete accessories and then add them
+			db.query("DELETE FROM gear_has_accessories WHERE gear_id=?;", [gearID], function(error) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				updatedGearData.accessories = JSON.parse(updatedGearData.accessories);
+				Gear.getAccessoryIDs(updatedGearData.subtype, updatedGearData.accessories, function(error, accessoryIDs) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					if(accessoryIDs.length <= 0) {
+						callback(null, gearID);
+						return;
+					}
+					Gear.addAccessories(gearID, accessoryIDs, function(error) {
+						if(error) {
+							console.log("Error adding accessories: " + error);
+							return;
+						}
+						callback(null, updatedGearData);
+					});
+				});
+			});
 		});
 	};
 
@@ -515,7 +607,7 @@ readGearWithID = function(gearID, callback) {
 		accessories = [];
 		for(i = 0; i < rows.length; i++) {
 			if(rows[i].accessory !== null) {
-				accessories.push(rows[i]);
+				accessories.push(rows[i].accessory);
 			}
 		}
 		gearItem = rows[0];
@@ -688,7 +780,8 @@ module.exports = {
 	checkSubtype: checkSubtype,
 	checkBrand: checkBrand,
 	checkOwner: checkOwner,
-	checkAccessories: checkAccessories,
+	getAccessoryIDs: getAccessoryIDs,
+	addAccessories: addAccessories,
 	getAlwaysFlag: getAlwaysFlag,
 	setAlwaysFlag: setAlwaysFlag,
 	getGearType: getGearType,
