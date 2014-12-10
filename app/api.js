@@ -5,7 +5,7 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment,
+var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment, Notifications,
 
 	readFileSuccess,
 
@@ -34,6 +34,7 @@ var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment,
 
 	readSGBalance,
 	readSGTransactions,
+	readSGPreauthorization,
 
 	handleError,
 	isAuthorized,
@@ -54,6 +55,7 @@ Gear = require("./gear");
 Availability = require("./availability");
 Booking = require("./booking");
 Payment = require("./payment");
+Notifications = require("./notifications");
 
 process.on("uncaughtException", function(error) {
 	console.log("Uncaught exception: " + error.stack);
@@ -646,10 +648,30 @@ updateBooking = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		Booking.update(req.params, function(error) {
+		Booking.update(req.params, function(error, bookingData) {
 			if(error) {
 				handleError(res, next, "Error updating booking: ", error);
 				return;
+			}
+			if(req.params.booking_status === "pending") {
+				console.log("Notify owner that a booking is pending");
+				Notifications.send(Notifications.BOOKING_PENDING_OWNER, {}, bookingData.owner_id);
+			}
+			if(req.params.booking_status === "accepted") {
+				Notifications.send(Notifications.BOOKING_ACCEPTED, {}, bookingData.renter_id);
+			}
+			if(req.params.booking_status === "denied") {
+				Notifications.send(Notifications.BOOKING_DENIED, {}, bookingData.renter_id);
+			}
+			if(req.params.booking_status === "owner-returned") {
+				Notifications.send(Notifications.BOOKING_OWNER_RETURNED, {}, bookingData.renter_id);
+			}
+			if(req.params.booking_status === "renter-returned") {
+				Notifications.send(Notifications.BOOKING_RENTER_RETURNED, {}, bookingData.owner_id);
+			}
+			if(req.params.booking_status === "ended") {
+				Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, bookingData.owner_id);
+				Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, bookingData.renter_id);
 			}
 			res.send({});
 			next();
@@ -721,6 +743,32 @@ readSGTransactions = function(req, res, next) {
 					return;
 				}
 				res.send(transactions);
+				next();
+			});
+		});
+	}
+	else {
+		handleError(res, next, "Error authorizing user: ", "User id is not authorized.");
+	}
+};
+
+readSGPreauthorization = function(req, res, next) {
+	if(req.params.user_id === "3" || req.params.user_id === "2") {
+		isAuthorized(req.params.user_id, function(error, status) {
+			if(error) {
+				handleError(res, next, "Error authorizing user: ", error);
+				return;
+			}
+			if(status === false) {
+				handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+				return;
+			}
+			Payment.getSGPreauthorization(req.params.preauth_id, function(error, preauthorization) {
+				if(error) {
+					handleError(res, next, "Error retrieving Sharingear preauthorization: ", error);
+					return;
+				}
+				res.send(preauthorization);
 				next();
 			});
 		});
@@ -804,6 +852,7 @@ secureServer.get("/users/:user_id/cardobject", createCardObject);
 
 secureServer.get("/users/:user_id/dashboard/balance", readSGBalance);
 secureServer.get("/users/:user_id/dashboard/transactions", readSGTransactions);
+secureServer.get("/users/:user_id/dashboard/payments/preauthorization/:preauth_id", readSGPreauthorization);
 
 module.exports = {
 	server: server,

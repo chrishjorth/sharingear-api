@@ -24,7 +24,6 @@ var db = require("./database"),
 
 	create,
 	read,
-	//readClosest,
 	readRentalsForUser,
 	readReservationsForUser,
 	update,
@@ -97,20 +96,6 @@ read = function(bookingID, callback) {
 		callback(null, rows[0]);
 	});
 };
-
-/*readClosest = function(gearID, callback) {
-	db.query("SELECT id, gear_id, MIN(start_time) as start_time, end_time, renter_id, price, booking_status FROM bookings WHERE gear_id=? AND booking_status!='ended-denied' AND booking_status!='ended'", [gearID], function(error, rows) {
-		if(error) {
-			callback("Error selecting closest booking for gear " + gearID + ": " + error);
-			return;
-		}
-		if(rows.length <= 0) {
-			callback("No bookings for gear with id " + gearID + ".");
-			return;
-		}
-		callback(null, rows[0]);
-	});
-};*/
 
 readRentalsForUser = function(userID, callback) {
 	Gear.checkForRentals(userID, function(error) {
@@ -185,12 +170,26 @@ update = function(bookingData, callback) {
 					callback("Error updating booking status: " + error);
 					return;
 				}
+				rows[0].booking_status = status;
 				callback(null, rows[0]);
 			});
 		};
 
 		if(status === "pending") {
-			completeUpdate(status, bookingData.preauth_id, false);
+			//Check that the preauthorization status is waiting
+			Payment.getPreauthorizationStatus(bookingData.preauth_id, function(error, preauthStatus) {
+				if(error) {
+					callback("Error checking preauthorization status: " + error);
+					return;
+				}
+				console.log("preauthStatus: " + preauthStatus);
+				if(preauthStatus === "WAITING") {
+					completeUpdate(status, bookingData.preauth_id, false);
+				}
+				else {
+					callback("Error preauthorizing payment.");
+				}
+			});
 		}
 		else if(status === "denied") {
 			Availability.removeInterval(rows[0].gear_id, rows[0].start_time, rows[0].end_time, function(error) {
@@ -293,7 +292,6 @@ endBooking = function(gearID, price, callback) {
 module.exports = {
 	create: create,
 	read: read,
-	//readClosest: readClosest,
 	readRentalsForUser: readRentalsForUser,
     readReservationsForUser: readReservationsForUser,
 	update: update
