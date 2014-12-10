@@ -322,6 +322,9 @@ createGear = function(newGear, callback) {
 				callback(error);
 				return;
 			}
+			if(!newGear.accessories || newGear.accessories === null) {
+				newGear.accessories = [];
+			}
 			Gear.getAccessoryIDs(newGear.subtype, newGear.accessories, function(error, accessoryIDs) {
 				if(error) {
 					callback(error);
@@ -523,6 +526,9 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 				if(error) {
 					callback(error);
 					return;
+				}
+				if(!updatedGearData.accessories || updatedGearData.accessories === null) {
+					updatedGearData.accessories = [];
 				}
 				Gear.getAccessoryIDs(updatedGearData.subtype, updatedGearData.accessories, function(error, accessoryIDs) {
 					if(error) {
