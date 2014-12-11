@@ -201,7 +201,7 @@ update = function(bookingData, callback) {
 			});
 		}
 		else if (status === "accepted") {
-			chargePreAuthorization(rows[0].owner_id, rows[0].renter_id, rows[0].price, rows[0].preauth_id, function(error) {
+			chargePreAuthorization(rows[0].owner_id, rows[0].renter_id, rows[0].gear_id, rows[0].price, rows[0].preauth_id, function(error) {
 				if(error) {
 					callback(error);
 					return;
@@ -245,7 +245,7 @@ preAuthorize = function(sellerID, buyerID, cardID, price, returnURL, callback) {
 	});
 };
 
-chargePreAuthorization = function(sellerID, renterID, price, preAuthId, callback) {
+chargePreAuthorization = function(sellerID, renterID, gearID, price, preAuthId, callback) {
 	User.getMangoPayData(renterID, function(error, sellerMangoPayData) {
 		if(error) {
 			callback("Error getting MangoPay data for gear seller: " + error);
@@ -256,7 +256,7 @@ chargePreAuthorization = function(sellerID, renterID, price, preAuthId, callback
 				callback("Error getting MangoPay data for gear renter: " + error);
 				return;
 			}
-			Payment.chargePreAuthorization(sellerMangoPayData, renterMangoPayData, price, preAuthId, callback);
+			Payment.chargePreAuthorization(sellerMangoPayData, renterMangoPayData, gearID, price, preAuthId, callback);
 		});
 	});
 };
@@ -272,7 +272,7 @@ endBooking = function(gearID, price, callback) {
 				callback("Error getting MangoPay data for gear owner: " + error);
 				return;
 			}
-			Payment.payOutSeller(ownerMangoPayData, price, function(error) {
+			Payment.payOutSeller(ownerMangoPayData, gearID, price, function(error) {
 				if(error) {
 					callback(error);
 					return;

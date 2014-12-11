@@ -8,8 +8,12 @@
 
 var https = require("https"),
 	Moment = require("moment"),
+	SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
 	db = require("./database"),
 	Config = require("./config"),
+	User = require("./user"),
+	Gear = require("./gear"),
+	FROM_ADDRESS = "service@sharingear.com",
 	sg_user,
 	
 	updateUser,
@@ -20,6 +24,9 @@ var https = require("https"),
 	getPreauthorizationStatus,
 	chargePreAuthorization,
 	payOutSeller,
+
+	sendReceipt,
+	sendInvoice,
 
 	getSGBalance,
 	getSGTransactions,
@@ -303,7 +310,7 @@ getPreauthorizationStatus = function(preauthID, callback) {
 	});
 };
 
-chargePreAuthorization = function(sellerMangoPayData, buyerMangoPayData, price, preAuthID, callback) {
+chargePreAuthorization = function(sellerMangoPayData, buyerMangoPayData, gearID, price, preAuthID, callback) {
 	var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
 
 	price = parseInt(price, 10);
@@ -337,7 +344,7 @@ chargePreAuthorization = function(sellerMangoPayData, buyerMangoPayData, price, 
 		PreauthorizationId: preAuthID
 	};
 	gatewayPost("/payins/PreAuthorized/direct", postData, function(error, data) {
-		var parsedData;
+		var parsedData, receiptParameters;
 		if(error) {
 			callback("Error charging preauthorized booking: " + error);
 			return;
@@ -350,10 +357,23 @@ chargePreAuthorization = function(sellerMangoPayData, buyerMangoPayData, price, 
 			return;
 		}
 		callback(null);
+		receiptParameters = {
+			price: price,
+			fee: buyerFee,
+			vat: buyerFeeVAT,
+			feeVat: sellerVAT,
+			currency: "DKK"
+		};
+		sendReceipt(buyerMangoPayData.id, gearID, receiptParameters, function(error) {
+			if(error) {
+				console.log("Error sending receipt: " + error);
+				return;
+			}
+		});
 	});
 };
 
-payOutSeller = function(sellerMangoPayData, price, callback) {
+payOutSeller = function(sellerMangoPayData, gearID, price, callback) {
 	var sellerFee, sellerFeeVAT, sellerVAT, amount, postData;
 
 	price = parseInt(price, 10);
@@ -411,7 +431,7 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 			BankWireRef: "Sharingear rental"
 		};
 		gatewayPost("/payouts/bankwire", postData, function(error, data) {
-			var parsedData;
+			var parsedData, receiptParameters;
 			if(error) {
 				callback("Error wiring from wallet: " + error);
 				return;
@@ -422,6 +442,99 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 				return;
 			}
 			callback(null);
+			receiptParameters = {
+				price: price,
+				fee: sellerFee,
+				vat: sellerFeeVAT,
+				feeVat: sellerVAT,
+				currency: "DKK"
+			};
+			sendInvoice(sellerMangoPayData.id, gearID, receiptParameters, function(error) {
+				if(error) {
+					console.log("Error sending receipt: " + error);
+					return;
+				}
+			});
+		});
+	});
+};
+
+sendReceipt = function(receiverID, bookedGearID, parameters, callback) {
+	User.readUser(receiverID, function(error, receiver) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		Gear.readGearWithID(bookedGearID, function(error, bookedGear) {
+			var emailParameters, text, email;
+			if(error) {
+				callback(error);
+				return;
+			}
+			text = "Sharingear BOOKING RECEIPT:\n\n";
+			text += "Item\t\t\t\tPrice\n--------------------";
+			text += bookedGear.brand + " " + bookedGear.model + " " + bookedGear.subtype + "\t\t" + parameters.price + " " + parameters.currency + "\n";
+			text += "Sharingear service fee\t\t" + parameters.fee + " " + parameters.currency + "\n";
+			text += "Total ex. VAT:\t\t" + (parameters.price + parameters.fee) + " " + parameters.currency + "\n";
+			text += "VAT:\t\t" + parameters.vat + " " + parameters.currency + "\n";
+			text += "Sharingear service fee VAT:\t\t" + parameters.feeVat + " " + parameters.currency + "\n";
+			text += "Total:\t\t" + (parameters.price + parameters.fee + parameters.vat + parameters.feeVat) + " " + parameters.currency + "\n\n\n";
+			text += "Sharingear, Landemærket 8, 1. 1119, København K, Denmark, DK35845186, www.sharingear.com";
+			emailParameters = {
+				to: receiver.email,
+				from: FROM_ADDRESS,
+				subject: "Sharingear - receipt",
+				text: text
+			};
+			email = new SendGrid.Email(emailParameters);
+			SendGrid.send(email, function(error) {
+				if(error) {
+					callback(error);
+					return;
+				}
+			});
+		});
+	});
+};
+
+sendInvoice = function(receiverID, bookedGearID, parameters, callback) {
+	User.readUser(receiverID, function(error, receiver) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		Gear.readGearWithID(bookedGearID, function(error, bookedGear) {
+			var emailParameters, text, email;
+			if(error) {
+				callback(error);
+				return;
+			}
+			text = "Sharingear PAYOUT RECEIPT\n\n";
+			text += "Item\t\t\t\tPrice\n--------------------";
+			text += bookedGear.brand + " " + bookedGear.model + " " + bookedGear.subtype + "\t\t" + parameters.price + " " + parameters.currency + "\n";
+			text += "Sharingear service fee\t\t" + (-1 * parameters.fee) + " " + parameters.currency + "\n";
+			text += "Total ex. VAT:\t\t" + (parameters.price - parameters.fee) + " " + parameters.currency + "\n";
+			text += "VAT:\t\t" + parameters.vat + " " + parameters.currency + "\n";
+			text += "Sharingear service fee VAT:\t\t" + parameters.feeVat + " " + parameters.currency + "\n";
+			text += "Total:\t\t" + (parameters.price - parameters.fee - parameters.feeVat + parameters.vat) + " " + parameters.currency + "\n\n";
+			text += "PAID TO:\n";
+			text += receiver.name + " " + receiver.surname + "\n";
+			text += receiver.address + ", " + receiver.postal_code + " " + receiver.city + ", " + receiver.country + "\n";
+			text += (new Moment()).format("DD/MM/YYYY HH:mm") + "\n\n\n";
+			text += "Sharingear, Landemærket 8, 1. 1119, København K, Denmark, DK35845186, www.sharingear.com";
+			emailParameters = {
+				to: receiver.email,
+				from: FROM_ADDRESS,
+				subject: "Sharingear - receipt",
+				text: text
+			};
+			email = new SendGrid.Email(emailParameters);
+			SendGrid.send(email, function(error) {
+				if(error) {
+					callback(error);
+					return;
+				}
+			});
 		});
 	});
 };
@@ -705,6 +818,9 @@ module.exports = {
 	getPreauthorizationStatus: getPreauthorizationStatus,
 	chargePreAuthorization: chargePreAuthorization,
 	payOutSeller: payOutSeller,
+
+	sendReceipt: sendReceipt,
+	sendInvoice: sendInvoice,
 
 	getSGBalance: getSGBalance,
 	getSGTransactions: getSGTransactions,
