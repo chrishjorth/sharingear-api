@@ -39,15 +39,15 @@ var db = require("./database"),
  */
 getClassification = function(callback) {
 	var sql;
-	sql = "SELECT gear.gear_type, gear.subtype, accessories.accessory";
-	sql += " FROM (SELECT gear_types.gear_type, gear_types.sorting, gear_subtypes.id AS gear_subtype_id, gear_subtypes.subtype FROM gear_types, gear_subtypes WHERE gear_subtypes.type_id=gear_types.id) AS gear";
+	sql = "SELECT gear.gear_type, gear.subtype, gear.price_a_suggestion, gear.price_b_suggestion, gear.price_c_suggestion, accessories.accessory";
+	sql += " FROM (SELECT gear_types.gear_type, gear_types.sorting, gear_subtypes.id AS gear_subtype_id, gear_subtypes.subtype, gear_subtypes.price_a_suggestion, gear_subtypes.price_b_suggestion, gear_subtypes.price_c_suggestion FROM gear_types, gear_subtypes WHERE gear_subtypes.type_id=gear_types.id) AS gear";
 	sql += " LEFT JOIN (SELECT gear_accessories.accessory, gear_subtype_has_accessories.gear_subtype_id FROM gear_accessories, gear_subtype_has_accessories WHERE gear_subtype_has_accessories.gear_accessory_id=gear_accessories.id) AS accessories";
 	sql += " ON accessories.gear_subtype_id=gear.gear_subtype_id ORDER BY gear.sorting, gear.subtype";
 	db.query(sql, [], function(error, rows) {
 		var currentType = "",
 			currentSubtype = "",
 			accessories = [],
-			gearClassification, classification, i;
+			subtype, gearClassification, classification, i;
 
 		if(error) {
 			callback(error);
@@ -74,19 +74,20 @@ getClassification = function(callback) {
 				if(rows[i].accessory !== null) {
 					accessories.push(rows[i].accessory);
 				}
+				subtype = {
+					subtype:rows[i].subtype,
+					accessories: accessories,
+					price_a_suggestion: rows[i].price_a_suggestion,
+					price_b_suggestion: rows[i].price_b_suggestion,
+					price_c_suggestion: rows[i].price_c_suggestion
+				};
 				if(rows[i].gear_type !== currentType) {
 					//Add new gear type
 					currentType = rows[i].gear_type;
-					classification[rows[i].gear_type] = [{
-						subtype:rows[i].subtype,
-						accessories: accessories
-					}];
+					classification[rows[i].gear_type] = [subtype];
 				}
 				else {
-					classification[rows[i].gear_type].push({
-						subtype: rows[i].subtype,
-						accessories: accessories
-					});
+					classification[rows[i].gear_type].push(subtype);
 				}
 			}
 		}
