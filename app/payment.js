@@ -483,7 +483,7 @@ sendReceipt = function(receiverID, bookedGearID, parameters, callback) {
 			emailParameters = {
 				to: receiver.email,
 				from: FROM_ADDRESS,
-				subject: "Sharingear - receipt",
+				subject: "Sharingear - payment receipt",
 				text: text
 			};
 			email = new SendGrid.Email(emailParameters);
@@ -525,7 +525,7 @@ sendInvoice = function(receiverID, bookedGearID, parameters, callback) {
 			emailParameters = {
 				to: receiver.email,
 				from: FROM_ADDRESS,
-				subject: "Sharingear - receipt",
+				subject: "Sharingear - payout receipt",
 				text: text
 			};
 			email = new SendGrid.Email(emailParameters);
