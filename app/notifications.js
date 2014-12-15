@@ -33,35 +33,35 @@ bookingPendingOwnerEmail = {
 	to: null,
 	from: FROM_ADDRESS,
 	subject: "Sharingear - new booking",
-	text: "Hi,\n\nyour gear has been booked!\n\nGo to https://www.sharingear.com to confirm or deny this booking.\n\nHave a good one,\n\n- Sharingear"
+	text: "Hi,\n\nyour gear has been booked!\n\nGo to http://www.sharingear.com to confirm or deny this booking.\n\nHave a good one,\n\n- Sharingear"
 };
 //Defines an email to the renter of gear, sent on the event that the owner accepted the booking
 bookingAcceptedEmail = {
 	to: null,
 	from: FROM_ADDRESS,
 	subject: "Sharingear - your booking got accepted",
-	text: "Hi,\n\nyour booking has been accepted!\n\nCheck it out on https://www.sharingear.com.\n\nHope you enjoy it,\n\n- Sharingear"
+	text: "Hi,\n\nyour booking has been accepted!\n\nCheck it out on http://www.sharingear.com.\n\nHope you enjoy it,\n\n- Sharingear"
 };
 //Defines an email to the renter of gear, sent on the event that the owner denied the booking
 bookingDeniedEmail = {
 	to: null,
 	from: FROM_ADDRESS,
 	subject: "Sharingear - your booking got denied",
-	text: "Hi,\n\nunfortunately your booking got denied by the owner of the gear.\n\nSearch for other gear https://www.sharingear.com.\n\nHope you have more luck next time,\n\n- Sharingear"
+	text: "Hi,\n\nunfortunately your booking got denied by the owner of the gear.\n\nSearch for other gear http://www.sharingear.com.\n\nHope you have more luck next time,\n\n- Sharingear"
 };
 //Defines an email to the renter of gear, sent on the event that the owner has marked the booking successfully ended
 bookingOwnerReturnedEmail = {
 	to: null,
 	from: FROM_ADDRESS,
 	subject: "Sharingear - please confirm you returned the gear",
-	text: "Hi,\n\nthe owner of the gear you have rented has marked the rental as completed.\n\nPlease go to https://www.sharingear.com to end the booking. Once you have done this you will receive your deposit back on your account.\n\nCheers,\n\n- Sharingear"
+	text: "Hi,\n\nthe owner of the gear you have rented has marked the rental as completed.\n\nPlease go to http://www.sharingear.com to end the booking. Once you have done this you will receive your deposit back on your account.\n\nCheers,\n\n- Sharingear"
 };
 //Defines an email to the owner of gear, sent on the event that the renter has marked the booking successfully ended
 bookingRenterReturnedEmail = {
 	to: null,
 	from: FROM_ADDRESS,
 	subject: "Sharingear - please confirm the return of your gear",
-	text: "Hi,\n\na renter of your gear has marked the rental as completed.\n\nPlease go to https://www.sharingear.com to end the booking. Once you have done this you will receive your payment.\n\nCheers,\n\n- Sharingear"
+	text: "Hi,\n\na renter of your gear has marked the rental as completed.\n\nPlease go to http://www.sharingear.com to end the booking. Once you have done this you will receive your payment.\n\nCheers,\n\n- Sharingear"
 };
 //Defines an email to the owner of gear, sent on the event that the rental has ended successfully.
 bookingEndedOwnerEmail = {
