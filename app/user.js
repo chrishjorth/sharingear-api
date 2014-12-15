@@ -21,7 +21,7 @@ var db = require("./database"),
 	updateBankDetails,
 	//createWallet,
 	getCardObject,
-	getMangoPayData,
+	getUserWithMangoPayData,
 	hasClosedBetaAccess,
 
 	checkLocales;
@@ -292,7 +292,6 @@ updateBankDetails = function(userID, bankDetails, callback) {
 					callback("Error setting bank_id: " + error);
 					return;
 				}
-				console.log('Updated DB');
 				callback(null);
 			});
 		});
@@ -349,8 +348,8 @@ getCardObject = function(userID, callback) {
 	});
 };
 
-getMangoPayData = function(userID, callback) {
-	db.query("SELECT users.id, users.mangopay_id, users.wallet_id, users.bank_id, users.buyer_fee, users.seller_fee, countries.vat FROM users, countries WHERE id=? AND countries.code=users.country LIMIT 1", [userID], function(error, rows) {
+getUserWithMangoPayData = function(userID, callback) {
+	db.query("SELECT users.id, users.email, users.name, users.surname, users.birthdate, users.address, users.postal_code, users.city, users.region, users.country, users.nationality, users.phone, users.image_url, users.bio, users.mangopay_id, users.wallet_id, users.bank_id, users.buyer_fee, users.seller_fee, countries.vat FROM users, countries WHERE id=? AND countries.code=users.country LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -408,6 +407,6 @@ module.exports = {
 	updateBankDetails: updateBankDetails,
 	//createWallet: createWallet, deprecated
 	getCardObject: getCardObject,
-	getMangoPayData: getMangoPayData,
+	getUserWithMangoPayData: getUserWithMangoPayData,
 	hasClosedBetaAccess: hasClosedBetaAccess
 };

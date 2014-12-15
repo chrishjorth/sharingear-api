@@ -8,8 +8,11 @@
 
 var https = require("https"),
 	Moment = require("moment"),
+	SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
 	db = require("./database"),
 	Config = require("./config"),
+	Gear = require("./gear"),
+	FROM_ADDRESS = "service@sharingear.com",
 	sg_user,
 	
 	updateUser,
@@ -20,6 +23,9 @@ var https = require("https"),
 	getPreauthorizationStatus,
 	chargePreAuthorization,
 	payOutSeller,
+
+	sendReceipt,
+	sendInvoice,
 
 	getSGBalance,
 	getSGTransactions,
@@ -303,16 +309,16 @@ getPreauthorizationStatus = function(preauthID, callback) {
 	});
 };
 
-chargePreAuthorization = function(sellerMangoPayData, buyerMangoPayData, price, preAuthID, callback) {
+chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callback) {
 	var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
 
 	price = parseInt(price, 10);
 	
 	//View Sharingear transaction model document for explanation
-	sellerFee = price / 100 * parseFloat(sellerMangoPayData.seller_fee);
+	sellerFee = price / 100 * parseFloat(seller.seller_fee);
 	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
-	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * sellerMangoPayData.vat;
-	buyerFee = price / 100 * parseFloat(buyerMangoPayData.buyer_fee);
+	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
+	buyerFee = price / 100 * parseFloat(buyer.buyer_fee);
 	buyerFeeVAT = buyerFee / 100 * sg_user.vat;
 	amount = price + sellerVAT + buyerFee + buyerFeeVAT;
 	
@@ -324,7 +330,7 @@ chargePreAuthorization = function(sellerMangoPayData, buyerMangoPayData, price, 
 	console.log("amount: " + amount);
 
 	postData = {
-		AuthorId: buyerMangoPayData.mangopay_id,
+		AuthorId: buyer.mangopay_id,
 		DebitedFunds: {
 			Currency: "DKK",
 			Amount: amount * 100
@@ -337,7 +343,7 @@ chargePreAuthorization = function(sellerMangoPayData, buyerMangoPayData, price, 
 		PreauthorizationId: preAuthID
 	};
 	gatewayPost("/payins/PreAuthorized/direct", postData, function(error, data) {
-		var parsedData;
+		var parsedData, receiptParameters;
 		if(error) {
 			callback("Error charging preauthorized booking: " + error);
 			return;
@@ -350,17 +356,30 @@ chargePreAuthorization = function(sellerMangoPayData, buyerMangoPayData, price, 
 			return;
 		}
 		callback(null);
+		receiptParameters = {
+			price: price,
+			fee: buyerFee,
+			vat: buyerFeeVAT,
+			feeVat: sellerVAT,
+			currency: "DKK"
+		};
+		sendReceipt(buyer, gearID, receiptParameters, function(error) {
+			if(error) {
+				console.log("Error sending receipt: " + error);
+				return;
+			}
+		});
 	});
 };
 
-payOutSeller = function(sellerMangoPayData, price, callback) {
+payOutSeller = function(seller, gearID, price, callback) {
 	var sellerFee, sellerFeeVAT, sellerVAT, amount, postData;
 
 	price = parseInt(price, 10);
 
-	sellerFee = price / 100 * parseFloat(sellerMangoPayData.seller_fee);
+	sellerFee = price / 100 * parseFloat(seller.seller_fee);
 	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
-	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * sellerMangoPayData.vat;
+	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
 	amount = price + sellerVAT;
 
 	console.log("--- PAY OWNER:");
@@ -372,7 +391,7 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 
 	postData = {
 		AuthorId: sg_user.mangopay_id,
-		CreditedUserId: sellerMangoPayData.mangopay_id,
+		CreditedUserId: seller.mangopay_id,
 		DebitedFunds: {
 			Amount: amount * 100,
 			Currency: "DKK"
@@ -382,7 +401,7 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 			Currency: "DKK"
 		},
 		DebitedWalletID: sg_user.wallet_id,
-		CreditedWalletID: sellerMangoPayData.wallet_id
+		CreditedWalletID: seller.wallet_id
 	};
 
 	gatewayPost("/transfers", postData, function(error, data) {
@@ -397,7 +416,7 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 			return;
 		}
 		postData = {
-			AuthorId: sellerMangoPayData.mangopay_id,
+			AuthorId: seller.mangopay_id,
 			DebitedFunds: {
 				Amount: parsedData.CreditedFunds.Amount,
 				Currency: "DKK"
@@ -406,12 +425,12 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 				Amount: 0,
 				Currency: "DKK"
 			},
-			DebitedWalletID: sellerMangoPayData.wallet_id,
-			BankAccountId: sellerMangoPayData.bank_id,
+			DebitedWalletID: seller.wallet_id,
+			BankAccountId: seller.bank_id,
 			BankWireRef: "Sharingear rental"
 		};
 		gatewayPost("/payouts/bankwire", postData, function(error, data) {
-			var parsedData;
+			var parsedData, receiptParameters;
 			if(error) {
 				callback("Error wiring from wallet: " + error);
 				return;
@@ -419,6 +438,89 @@ payOutSeller = function(sellerMangoPayData, price, callback) {
 			parsedData = JSON.parse(data);
 			if(parsedData.Status !== "SUCCEEDED" && parsedData.Status !== "CREATED") {
 				callback("Error wiring from wallet: " + data);
+				return;
+			}
+			callback(null);
+			receiptParameters = {
+				price: price,
+				fee: sellerFee,
+				vat: sellerFeeVAT,
+				feeVat: sellerVAT,
+				currency: "DKK"
+			};
+			sendInvoice(seller, gearID, receiptParameters, function(error) {
+				if(error) {
+					console.log("Error sending receipt: " + error);
+					return;
+				}
+			});
+		});
+	});
+};
+
+sendReceipt = function(receiver, bookedGearID, parameters, callback) {
+	Gear.readGearWithID(bookedGearID, function(error, bookedGear) {
+		var emailParameters, text, email;
+		if(error) {
+			callback(error);
+			return;
+		}
+		text = "Sharingear BOOKING RECEIPT:\n\n";
+		text += "Item\t\t\t\tPrice\n--------------------\n";
+		text += bookedGear.brand + " " + bookedGear.model + " " + bookedGear.subtype + "\t\t" + parameters.price + " " + parameters.currency + "\n";
+		text += "Sharingear service fee\t\t" + parameters.fee + " " + parameters.currency + "\n";
+		text += "Total ex. VAT:\t\t" + (parameters.price + parameters.fee) + " " + parameters.currency + "\n";
+		text += "VAT:\t\t" + parameters.vat + " " + parameters.currency + "\n";
+		text += "Sharingear service fee VAT:\t\t" + parameters.feeVat + " " + parameters.currency + "\n";
+		text += "Total:\t\t" + (parameters.price + parameters.fee + parameters.vat + parameters.feeVat) + " " + parameters.currency + "\n\n\n";
+		text += "Sharingear, Landemærket 8, 1. 1119, København K, Denmark, DK35845186, www.sharingear.com";
+		emailParameters = {
+			to: receiver.email,
+			from: FROM_ADDRESS,
+			subject: "Sharingear - payment receipt",
+			text: text
+		};
+		email = new SendGrid.Email(emailParameters);
+		SendGrid.send(email, function(error) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			callback(null);
+		});
+	});
+};
+
+sendInvoice = function(receiver, bookedGearID, parameters, callback) {
+	Gear.readGearWithID(bookedGearID, function(error, bookedGear) {
+		var emailParameters, text, email;
+		if(error) {
+			callback(error);
+			return;
+		}
+		text = "Sharingear PAYOUT RECEIPT\n\n";
+		text += "Item\t\t\t\tPrice\n--------------------";
+		text += bookedGear.brand + " " + bookedGear.model + " " + bookedGear.subtype + "\t\t" + parameters.price + " " + parameters.currency + "\n";
+		text += "Sharingear service fee\t\t" + (-1 * parameters.fee) + " " + parameters.currency + "\n";
+		text += "Total ex. VAT:\t\t" + (parameters.price - parameters.fee) + " " + parameters.currency + "\n";
+		text += "VAT:\t\t" + parameters.vat + " " + parameters.currency + "\n";
+		text += "Sharingear service fee VAT:\t\t" + parameters.feeVat + " " + parameters.currency + "\n";
+		text += "Total:\t\t" + (parameters.price - parameters.fee - parameters.feeVat + parameters.vat) + " " + parameters.currency + "\n\n";
+		text += "PAID TO:\n";
+		text += receiver.name + " " + receiver.surname + "\n";
+		text += receiver.address + ", " + receiver.postal_code + " " + receiver.city + ", " + receiver.country + "\n";
+		text += (new Moment()).format("DD/MM/YYYY HH:mm") + "\n\n\n";
+		text += "Sharingear, Landemærket 8, 1. 1119, København K, Denmark, DK35845186, www.sharingear.com";
+		emailParameters = {
+			to: receiver.email,
+			from: FROM_ADDRESS,
+			subject: "Sharingear - payout receipt",
+			text: text
+		};
+		email = new SendGrid.Email(emailParameters);
+		SendGrid.send(email, function(error) {
+			if(error) {
+				callback(error);
 				return;
 			}
 			callback(null);
@@ -705,6 +807,9 @@ module.exports = {
 	getPreauthorizationStatus: getPreauthorizationStatus,
 	chargePreAuthorization: chargePreAuthorization,
 	payOutSeller: payOutSeller,
+
+	sendReceipt: sendReceipt,
+	sendInvoice: sendInvoice,
 
 	getSGBalance: getSGBalance,
 	getSGTransactions: getSGTransactions,

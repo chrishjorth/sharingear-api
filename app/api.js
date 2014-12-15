@@ -56,10 +56,6 @@ Booking = require("./booking");
 Payment = require("./payment");
 Notifications = require("./notifications");
 
-process.on("uncaughtException", function(error) {
-	console.log("Uncaught exception: " + error.stack);
-});
-
 readFileSuccess = true;
 try {
 	key = fs.readFileSync("/home/chrishjorth/keys/server.key");
@@ -92,6 +88,11 @@ else {
 	});
 }
 
+secureServer.on("uncaughtException", function(req, res, route, error) {
+	console.log(error.stack);
+	res.send(error);
+});
+
 //Tunnelblick uses 1337 apparently
 secureServer.listen(1338, function() {
 	console.log("%s listening at %s", secureServer.name, secureServer.url);
@@ -106,6 +107,7 @@ server = restify.createServer({
 });
 
 server.listen(1339);
+
 
 //ROUTE HANDLERS
 
