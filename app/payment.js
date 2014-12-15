@@ -444,8 +444,8 @@ payOutSeller = function(seller, gearID, price, callback) {
 			receiptParameters = {
 				price: price,
 				fee: sellerFee,
-				vat: sellerFeeVAT,
-				feeVat: sellerVAT,
+				vat: sellerVAT,
+				feeVat: sellerFeeVAT,
 				currency: "DKK"
 			};
 			sendInvoice(seller, gearID, receiptParameters, function(error) {
