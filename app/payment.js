@@ -305,6 +305,8 @@ getPreauthorizationStatus = function(preauthID, callback) {
 			return;
 		}
 		parsedData = JSON.parse(data);
+		console.log('PREAUTH STATUS:');
+		console.log(data);
 		callback(null, parsedData.PaymentStatus);
 	});
 };

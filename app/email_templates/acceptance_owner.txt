@@ -1,0 +1,15 @@
+Hi {{name}},\n\n
+You just accepted a rental request.\n\n
+You just accepted a rental request, now renter needs to confirm the rental by completing the payment.\n
+We will send you a confirmation email as soon as the booking period is over in order for you to receive your payment.\n\n
+{{gear_type}}\n
+{{brand}} {{model}} {{subtype}}\n
+{{price}} {{currency}}\n
+{{city}}\n\n
+Pick Up Location: {{street}}, {{postal_code}} {{city}}, {{country}}\n
+Pick Up Date: {{pickup_date}} {{pickup_time}}\n\n
+Drop Off Date: {{dropoff_date}} {{dropoff_time}}\n\n
+See your Dashboard to view this booking: http://www.sharingear.com\n\n
+Best Regards,\n
+- Sharingear Team\n\n
+Sent from Sharingear (VAT: DK35845186), Landemærket 8, 1119 Copenhagen K, Denmark.\n
