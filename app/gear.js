@@ -26,7 +26,7 @@ var db = require("./database"),
 	updateGearWithID,
 	readGearWithID,
 	search,
-	getPriceAndOwner,
+	getPrice,
 	getOwner,
 	setStatus,
 	checkForRentals;
@@ -595,7 +595,7 @@ readGearWithID = function(gearID, callback) {
 	sql = "SELECT gear.id, gear.gear_type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id, accessories.accessory";
 	sql += " FROM (SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear.id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand LIMIT 1) AS gear";
 	sql += " LEFT JOIN (SELECT gear_has_accessories.gear_id, gear_accessories.accessory FROM gear_has_accessories, gear_accessories WHERE gear_has_accessories.accessory_id=gear_accessories.id) AS accessories ON accessories.gear_id=gear.id;";
-	db.query(sql, gearID, function(error, rows) {
+	db.query(sql, [gearID], function(error, rows) {
 		var gear, gearItem, accessories, i;
 		if(error) {
 			callback(error);
@@ -687,30 +687,17 @@ search = function(location, gear, callback) {
 	});
 };
 
-getPriceAndOwner = function(gearID, startTime, endTime, callback) {
-	db.query("SELECT price_a, price_b, price_c, owner_id FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
-		var startMoment, endMoment, weeks, days, hours, price;
-		if(error) {
-			callback("Error retrieving prices for gear: " + error);
-			return;
-		}
-		if(rows.length <= 0) {
-			callback("No gear with id " + gearID + ".");
-			return;
-		}
-		startMoment = new Moment(startTime, "YYYY-MM-DD HH:mm:ss");
-		endMoment = new Moment(endTime, "YYYY-MM-DD HH:mm:ss");
-		weeks = parseInt(endMoment.diff(startMoment, "weeks"), 10);
-		endMoment.subtract(weeks, "weeks");
-		days = parseInt(endMoment.diff(startMoment, "days"), 10);
-		endMoment.subtract(days, "days");
-		hours = parseInt(endMoment.diff(startMoment, "hours"), 10);
-		price = rows[0].price_a * hours + rows[0].price_b * days + rows[0].price_c * weeks;
-		callback(null, {
-			price: price,
-			owner_id: rows[0].owner_id
-		});
-	});
+getPrice = function(priceA, priceB, priceC, startTime, endTime) {
+	var startMoment, endMoment, weeks, days, hours, price;
+	startMoment = new Moment(startTime, "YYYY-MM-DD HH:mm:ss");
+	endMoment = new Moment(endTime, "YYYY-MM-DD HH:mm:ss");
+	weeks = parseInt(endMoment.diff(startMoment, "weeks"), 10);
+	endMoment.subtract(weeks, "weeks");
+	days = parseInt(endMoment.diff(startMoment, "days"), 10);
+	endMoment.subtract(days, "days");
+	hours = parseInt(endMoment.diff(startMoment, "hours"), 10);
+	price = priceA * hours + priceB * days + priceC * weeks;
+	return price;
 };
 
 getOwner = function(gearID, callback) {
@@ -792,7 +779,7 @@ module.exports = {
 	updateGearWithID: updateGearWithID,
 	readGearWithID: readGearWithID,
 	search: search,
-	getPriceAndOwner: getPriceAndOwner,
+	getPrice: getPrice,
 	getOwner: getOwner,
 	setStatus: setStatus,
 	checkForRentals: checkForRentals

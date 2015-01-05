@@ -584,29 +584,10 @@ updateBooking = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		Booking.update(req.params, function(error, bookingData) {
+		Booking.update(req.params, function(error) {
 			if(error) {
 				handleError(res, next, "Error updating booking: ", error);
 				return;
-			}
-			if(req.params.booking_status === "pending") {
-				Notifications.send(Notifications.BOOKING_PENDING_OWNER, {}, bookingData.owner_id);
-			}
-			if(req.params.booking_status === "accepted") {
-				Notifications.send(Notifications.BOOKING_ACCEPTED, {}, bookingData.renter_id);
-			}
-			if(req.params.booking_status === "denied") {
-				Notifications.send(Notifications.BOOKING_DENIED, {}, bookingData.renter_id);
-			}
-			if(req.params.booking_status === "owner-returned") {
-				Notifications.send(Notifications.BOOKING_OWNER_RETURNED, {}, bookingData.renter_id);
-			}
-			if(req.params.booking_status === "renter-returned") {
-				Notifications.send(Notifications.BOOKING_RENTER_RETURNED, {}, bookingData.owner_id);
-			}
-			if(req.params.booking_status === "ended") {
-				Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, bookingData.owner_id);
-				Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, bookingData.renter_id);
 			}
 			res.send({});
 			next();

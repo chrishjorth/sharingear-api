@@ -1,11 +1,11 @@
 <div style="background-color: rgb(246, 246, 246);line-height: 25px;width: 100%;margin: 0;padding: 0;padding-top: 20px;font-family: Lato, Latin, Helvetica Neue, Arial, sans-serif;font-size: 14px">
 	<div style="background-color: white;padding:20px;width: 50%;min-width: 550px;border: 1px solid rgb(240, 240, 240);margin: 0 auto;">
 		<div style="border-bottom: 1px solid rgb(221,221,221);min-height: 35px;margin-bottom: 30px;padding-bottom: 10px;margin-left: -10px;margin-right: -10px;padding-right: 10px;padding-left: 10px">
-			<img src="logotop@2x.png" alt="Sharingear logo" style="width:183px;float:left"/>
+			<img src="https://dev.sharingear.com/images/email_templates/logotop@2x.png" alt="Sharingear logo" style="width:183px;float:left"/>
 			<div style="float: right;color: rgb(59, 173, 249)"><h3 style="margin: 0">YOUR RECEIPT</h3></div>
 		</div>
 		<p>Hi {{name}},<br>
-			<span style="font-size: 16px;font-weight: bold">The transaction has been successful.</span>
+			<span style="font-size: 16px;font-weight: bold">Success! You have received your payment. We hereby provide you a detailed receipt for your transaction.</span>
 		</p>
 		<div style="border: 1px solid rgb(221,221,221);border-radius: 5px;padding: 10px">
 			<div style="width: 100%;height: 60px;text-align: center;background-color: rgb(243, 243, 243);color: rgb(75, 180, 249)">
@@ -59,8 +59,9 @@
 					</table>
 				</div>
 				<div style="padding:10px;width: 35%;float: right">
-					<h2 style="color: rgb(75, 180, 249);margin-top: 0px">Payment date:</h2>
+					<h2 style="color: rgb(75, 180, 249);margin-top: 0px">Payed to:</h2>
 					<div style="font-size: 16px;font-weight: bold">
+						<p>{{name}} {{surname}}<br> {{street}},<br> {{postal_code}} {{city}},<br> {{country}}</p>
 						<p>{{payment_date}} {{payment_time}}</p>
 					</div>
 				</div>
@@ -72,6 +73,6 @@
 	</div>
 	<div style="text-align: center;line-height: 25px;color: rgb(155,155,155)">
 		<p>Sent from Sharingear (VAT: DK35845186), Landemærket 8, 1119 Copenhagen K, Denmark.
-			<br>© 2015 Sharingear</p>
+			<br>&copy; 2015 Sharingear</p>
 	</div>
 </div>

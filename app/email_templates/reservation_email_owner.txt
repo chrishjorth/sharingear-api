@@ -1,0 +1,14 @@
+Hi {{name}},\n\n
+Congrats! Someone is requesting to book your gear! Below are details for your rental.\n
+Whether you accept or decline remember, the quicker you respond the better.\n\n
+{{gear_type}}\n
+{{brand}} {{model}} {{subtype}}\n
+{{price}} {{currency}}\n
+{{city}}\n\n
+Pick Up Location: {{street}}, {{postal_code}} {{city}}, {{country}}\n
+Pick Up Date: {{pickup_date}} {{pickup_time}}\n\n
+Drop Off Date: {{dropoff_date}} {{dropoff_time}}\n\n
+See your Dashboard to accept or deny this booking: http://www.sharingear.com\n\n
+Best Regards,\n
+- Sharingear Team\n\n
+Sent from Sharingear (VAT: DK35845186), Landemærket 8, 1119 Copenhagen K, Denmark.\n
