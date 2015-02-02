@@ -27,7 +27,7 @@ var db = require("./database"),
 	checkLocales;
 
 getUserFromFacebookID = function(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, wallet_id, bank_id FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, wallet_id, bank_id, buyer_fee, seller_fee FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		var user;
 		if(error) {
 			callback(error);
@@ -54,7 +54,9 @@ getUserFromFacebookID = function(fbid, callback) {
 			image_url: rows[0].image_url,
 			bio: rows[0].bio,
 			hasWallet: (rows[0].wallet_id !== null),
-			hasBank: (rows[0].bank_id !== null)
+			hasBank: (rows[0].bank_id !== null),
+			buyer_fee: rows[0].buyer_fee,
+			seller_fee: rows[0].seller_fee
 		};
 		callback(null, user);
 	});
@@ -167,7 +169,7 @@ readPublicUser = function(userID, callback) {
 };
 
 readUser = function(userID, callback) {
-	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, wallet_id, bank_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, wallet_id, bank_id, buyer_fee, seller_fee FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var user;
 		if(error) {
 			callback(error);
@@ -193,7 +195,9 @@ readUser = function(userID, callback) {
 			image_url: rows[0].image_url,
 			bio: rows[0].bio,
 			hasWallet: (rows[0].wallet_id !== null),
-			hasBank: (rows[0].bank_id !== null)
+			hasBank: (rows[0].bank_id !== null),
+			buyer_fee: rows[0].buyer_fee,
+			seller_fee: rows[0].seller_fee
 		};
 		callback(null, user);
 	});

@@ -656,6 +656,10 @@ search = function(location, gear, callback) {
 			return;
 		}
 		if(location === "all") {
+			for(i = 0; i < rows.length; i++) {
+				rows[i].latitude = rows[i].latitude * 180 / Math.PI;
+				rows[i].longitude = rows[i].longitude * 180 / Math.PI;
+			}
 			callback(null, rows);
 			return;
 		}

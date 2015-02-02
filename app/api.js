@@ -253,29 +253,10 @@ createUserSession = function(req, res, next) {
 
 		//Get user for facebook id, if not exists create user
 		User.getUserFromFacebookID(req.params.fbid, function(error, user) {
-			var hasClosedBetaAccess;
 			if(error) {
 				handleError(res, next, "Error retrieving user by Facebook ID: ", error);
 				return;
 			}
-
-			hasClosedBetaAccess = function(user) {
-				//Remove this check once we are done with closed beta
-				User.hasClosedBetaAccess(user, function(error, result) {
-					if(error) {
-						handleError(res, next, "Error checking closed beta access: ", error);
-						return;
-					}
-					if(result === false) {
-						res.send({
-							id: null
-						});
-						next();
-						return;
-					}
-					createSession(user, longToken);
-				});
-			};
 
 			if(user === null) {
 				//Create user
@@ -290,13 +271,13 @@ createUserSession = function(req, res, next) {
 							handleError(res, next, "Error creating user: ", error);
 							return;
 						}
-						hasClosedBetaAccess(user);
+						createSession(user, longToken);
 					});
 				});
 
 			}
 			else {
-				hasClosedBetaAccess(user);
+				createSession(user, longToken);
 			}
 		});
 	});
