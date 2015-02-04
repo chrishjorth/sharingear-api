@@ -1,5 +1,5 @@
 Hi {{name}},\n\n
-{{username}} has finished renting your gear, and wants you to end the booking period!\n\n
+{{username_renter}} has finished renting your gear, and wants you to end the booking period!\n\n
 Upon confirmation you are able to be payed for your rented gear.\n\n
 Get Payment: {{dashboard_link}}\n\n
 Best Regards,\n
