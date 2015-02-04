@@ -244,7 +244,7 @@ updateToPending = function(booking, preAuthID, callback) {
 						pickup_time: startTime.format("HH:mm"),
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
-						dashboard_link: Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
 					}, owner.id);
 
 					Notifications.send(Notifications.BOOKING_PENDING_RENTER, {
@@ -264,7 +264,7 @@ updateToPending = function(booking, preAuthID, callback) {
 						pickup_time: startTime.format("HH:mm"),
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
-						dashboard_link: Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
 					}, renter.id);
 				});
 			});
@@ -337,7 +337,7 @@ updateToAccepted = function(booking, callback) {
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
 						username_owner: owner.name,
-						dashboard_link: Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
 					}, renter.id);
 
 					Notifications.send(Notifications.BOOKING_ACCEPTED_OWNER, {
@@ -357,7 +357,7 @@ updateToAccepted = function(booking, callback) {
 						pickup_time: startTime.format("HH:mm"),
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
-						dashboard_link: Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
 					}, owner.id);
 				});
 			});
