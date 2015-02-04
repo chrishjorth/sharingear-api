@@ -412,7 +412,8 @@ updateToRenterReturned = function(booking, callback) {
 				}
 				Notifications.send(Notifications.BOOKING_RENTER_RETURNED, {
 					name: renter.name,
-					username_owner: owner.name + " " + owner.surname
+					username_owner: owner.name + " " + owner.surname,
+					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
 				}, renter.id);
 			});
 		});
@@ -456,7 +457,8 @@ updateToOwnerReturned = function(booking, callback) {
 				}
 				Notifications.send(Notifications.BOOKING_OWNER_RETURNED, {
 					name: owner.name,
-					username_renter: renter.name + " " + renter.surname
+					username_renter: renter.name + " " + renter.surname,
+					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
 				}, owner.id);
 			});
 		});
