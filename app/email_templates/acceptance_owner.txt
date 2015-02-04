@@ -9,7 +9,7 @@ We will send you a confirmation email as soon as the booking period is over in o
 Pick Up Location: {{street}}, {{postal_code}} {{city}}, {{country}}\n
 Pick Up Date: {{pickup_date}} {{pickup_time}}\n\n
 Drop Off Date: {{dropoff_date}} {{dropoff_time}}\n\n
-See your Dashboard to view this booking: http://www.sharingear.com\n\n
+See your Dashboard to view this booking: {{dashboard_link}}\n\n
 Best Regards,\n
 - Sharingear Team\n\n
 Sent from Sharingear (VAT: DK35845186), Landemærket 8, 1119 Copenhagen K, Denmark.\n

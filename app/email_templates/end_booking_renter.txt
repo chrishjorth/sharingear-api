@@ -2,7 +2,7 @@ Hi {{name}},\n\n
 Collect Your Deposit!\n\n
 You have now finished renting the gear from {{username}}.\n
 In order to receive your deposit back you have to end the booking.\n\n
-End Booking: http://www.sharingear.com\n\n
+End Booking: {{dashboard_link}}\n\n
 Best Regards,\n
 - Sharingear Team\n\n
 Sent from Sharingear (VAT: DK35845186), Landemærket 8, 1119 Copenhagen K, Denmark.\n
