@@ -102,7 +102,7 @@ create = function(renterID, bookingData, callback) {
 };
 
 read = function(bookingID, callback) {
-	db.query("SELECT id, gear_id, start_time, end_time, renter_id, owner_id, price, currency, payment_timestamp, payin_time, payout_time, booking_status, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country FROM bookings WHERE id=?", [bookingID], function(error, rows) {
+	db.query("SELECT id, gear_id, start_time, end_time, renter_id, owner_id, price, currency, payment_timestamp, payin_time, payout_time, preauth_id, booking_status, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country FROM bookings WHERE id=?", [bookingID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -164,13 +164,11 @@ update = function(bookingData, callback) {
 		callback("Unacceptable booking status.");
 		return;
 	}
-
 	this.read(bookingID, function(error, booking) {
 		if(error) {
 			callback("Error selecting booking interval: " + error);
 			return;
 		}
-
 		switch(status) {
 			case "pending":
 				updateToPending(booking, bookingData.preauth_id, callback);
@@ -203,7 +201,6 @@ updateToPending = function(booking, preAuthID, callback) {
 			callback("Error checking preauthorization status: " + error);
 			return;
 		}
-		console.log("preauthStatus: " + preauthStatus);
 		if(preauthStatus !== "WAITING") {
 			callback("Error preauthorizing payment.");
 			return;
@@ -309,59 +306,58 @@ updateToAccepted = function(booking, callback) {
 			callback(null, booking);
 
 			User.readUser(booking.renter_id, function(error, renter) {
-				var startTime, endTime;
 				if(error) {
-					console.log("Error sending notification to renter on booking update to accepted.");
+					console.log("Error sending notifications on booking update to accepted. Unable to get renter data.");
 					return;
 				}
-				startTime = new Moment(booking.start_time, "YYYY-MM-DD HH:mm:ss");
-				endTime = new Moment(booking.end_time, "YYYY-MM-DD HH:mm:ss");
-				Notifications.send(Notifications.BOOKING_ACCEPTED_RENTER, {
-					name: renter.name,
-					image_url: renter.image_url,
-					gear_type: booking.gear_type,
-					brand: booking.gear_brand,
-					model: booking.gear_model,
-					subtype: booking.gear_subtype,
-					price: booking.price,
-					currency: booking.currency,
-					street: booking.pickup_street,
-					postal_code: booking.pickup_postal_code,
-					city: booking.pickup_city,
-					country: booking.pickup_country,
-					pickup_date: startTime.format("DD/MM/YYYY"),
-					pickup_time: startTime.format("HH:mm"),
-					dropoff_date: endTime.format("DD/MM/YYYY"),
-					dropoff_time: endTime.format("HH:mm")
-				}, renter.id);
-			});
+				User.readUser(booking.owner_id, function(error, owner) {
+					var startTime, endTime;
+					if(error) {
+						console.log("Error sending notifications on booking update to accepted. Unable to get owner data.");
+						return;
+					}
+					startTime = new Moment(booking.start_time, "YYYY-MM-DD HH:mm:ss");
+					endTime = new Moment(booking.end_time, "YYYY-MM-DD HH:mm:ss");
+					
+					Notifications.send(Notifications.BOOKING_ACCEPTED_RENTER, {
+						name: renter.name,
+						image_url: renter.image_url,
+						gear_type: booking.gear_type,
+						brand: booking.gear_brand,
+						model: booking.gear_model,
+						subtype: booking.gear_subtype,
+						price: booking.price,
+						currency: booking.currency,
+						street: booking.pickup_street,
+						postal_code: booking.pickup_postal_code,
+						city: booking.pickup_city,
+						country: booking.pickup_country,
+						pickup_date: startTime.format("DD/MM/YYYY"),
+						pickup_time: startTime.format("HH:mm"),
+						dropoff_date: endTime.format("DD/MM/YYYY"),
+						dropoff_time: endTime.format("HH:mm"),
+						username_owner: owner.name
+					}, renter.id);
 
-			User.readUser(booking.owner_id, function(error, owner) {
-				var startTime, endTime;
-				if(error) {
-					console.log("Error sending notification to owner on booking update to accepted.");
-					return;
-				}
-				startTime = new Moment(booking.start_time, "YYYY-MM-DD HH:mm:ss");
-				endTime = new Moment(booking.end_time, "YYYY-MM-DD HH:mm:ss");
-				Notifications.send(Notifications.BOOKING_ACCEPTED_OWNER, {
-					name: owner.name,
-					image_url: owner.image_url,
-					gear_type: booking.gear_type,
-					brand: booking.gear_brand,
-					model: booking.gear_model,
-					subtype: booking.gear_subtype,
-					price: booking.price,
-					currency: booking.currency,
-					street: booking.pickup_street,
-					postal_code: booking.pickup_postal_code,
-					city: booking.pickup_city,
-					country: booking.pickup_country,
-					pickup_date: startTime.format("DD/MM/YYYY"),
-					pickup_time: startTime.format("HH:mm"),
-					dropoff_date: endTime.format("DD/MM/YYYY"),
-					dropoff_time: endTime.format("HH:mm")
-				}, owner.id);
+					Notifications.send(Notifications.BOOKING_ACCEPTED_OWNER, {
+						name: owner.name,
+						image_url: owner.image_url,
+						gear_type: booking.gear_type,
+						brand: booking.gear_brand,
+						model: booking.gear_model,
+						subtype: booking.gear_subtype,
+						price: booking.price,
+						currency: booking.currency,
+						street: booking.pickup_street,
+						postal_code: booking.pickup_postal_code,
+						city: booking.pickup_city,
+						country: booking.pickup_country,
+						pickup_date: startTime.format("DD/MM/YYYY"),
+						pickup_time: startTime.format("HH:mm"),
+						dropoff_date: endTime.format("DD/MM/YYYY"),
+						dropoff_time: endTime.format("HH:mm")
+					}, owner.id);
+				});
 			});
 		});
 	});
@@ -515,8 +511,8 @@ endBooking = function(booking, callback) {
 				}
 				callback(null);
 
-				Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, bookingData.owner_id);
-				Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, bookingData.renter_id);
+				Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, booking.owner_id);
+				Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, booking.renter_id);
 			});
 		});
 	});
