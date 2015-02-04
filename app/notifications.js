@@ -155,8 +155,10 @@ send = function(notificationType, notificationParameters, recipientID) {
 		emailParams.to = recipient.email;
 		textTemplate = _.template(emailParams.text);
 		emailParams.text = textTemplate(notificationParameters);
-		htmlTemplate = _.template(emailParams.html);
-		emailParams.html = htmlTemplate(notificationParameters);
+		if(emailParams.html) {
+			htmlTemplate = _.template(emailParams.html);
+			emailParams.html = htmlTemplate(notificationParameters);
+		}
 		email = new SendGrid.Email(emailParams);
 		SendGrid.send(email, function(error) {
 			if(error) {
