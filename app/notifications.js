@@ -72,7 +72,7 @@ bookingDeniedEmail = {
 	to: null,
 	from: FROM_ADDRESS,
 	subject: "Sharingear - your booking got denied",
-	text: "Hi,\n\nunfortunately your booking got denied by the owner of the gear.\n\nSearch for other gear http://www.sharingear.com.\n\nHope you have more luck next time,\n\n- Sharingear"
+	text: "Hi,\n\nunfortunately your booking got denied by the owner of the gear.\n\nSearch for other gear https://www.sharingear.com.\n\nHope you have more luck next time,\n\n- Sharingear"
 };
 bookingOwnerReturnedEmailSubject = "End booking and get paid - step 3 of 3";
 bookingOwnerReturnedEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/end_booking_owner.txt", "utf8"));
@@ -155,8 +155,10 @@ send = function(notificationType, notificationParameters, recipientID) {
 		emailParams.to = recipient.email;
 		textTemplate = _.template(emailParams.text);
 		emailParams.text = textTemplate(notificationParameters);
-		htmlTemplate = _.template(emailParams.html);
-		emailParams.html = htmlTemplate(notificationParameters);
+		if(emailParams.html) {
+			htmlTemplate = _.template(emailParams.html);
+			emailParams.html = htmlTemplate(notificationParameters);
+		}
 		email = new SendGrid.Email(emailParams);
 		SendGrid.send(email, function(error) {
 			if(error) {

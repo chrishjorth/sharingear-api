@@ -23,6 +23,7 @@ var Moment = require("moment"),
 	User = require("./user"),
 	Payment = require("./payment"),
 	Notifications = require("./notifications"),
+	Config = require("./config"),
 
 	create,
 	read,
@@ -214,59 +215,58 @@ updateToPending = function(booking, preAuthID, callback) {
 			callback(null, booking);
 
 			User.readUser(booking.owner_id, function(error, owner) {
-				var startTime, endTime;
 				if(error) {
-					console.log("Error sending notification to owner on booking update to pending.");
+					console.log("Error sending notification on booking update to pending. Unable to get owner data.");
 					return;
 				}
-				startTime = new Moment(booking.start_time, "YYYY-MM-DD HH:mm:ss");
-				endTime = new Moment(booking.end_time, "YYYY-MM-DD HH:mm:ss");
-				Notifications.send(Notifications.BOOKING_PENDING_OWNER, {
-					name: owner.name,
-					image_url: owner.image_url,
-					gear_type: booking.gear_type,
-					brand: booking.gear_brand,
-					model: booking.gear_model,
-					subtype: booking.gear_subtype,
-					price: booking.price,
-					currency: booking.currency,
-					street: booking.pickup_street,
-					postal_code: booking.pickup_postal_code,
-					city: booking.pickup_city,
-					country: booking.pickup_country,
-					pickup_date: startTime.format("DD/MM/YYYY"),
-					pickup_time: startTime.format("HH:mm"),
-					dropoff_date: endTime.format("DD/MM/YYYY"),
-					dropoff_time: endTime.format("HH:mm")
-				}, owner.id);
-			});
+				User.readUser(booking.renter_id, function(error, renter) {
+					var startTime, endTime;
+					if(error) {
+						console.log("Error sending notification on booking update to pending. Unable to get renter data.");
+						return;
+					}
+					startTime = new Moment(booking.start_time, "YYYY-MM-DD HH:mm:ss");
+					endTime = new Moment(booking.end_time, "YYYY-MM-DD HH:mm:ss");
+					Notifications.send(Notifications.BOOKING_PENDING_OWNER, {
+						name: owner.name,
+						image_url: renter.image_url,
+						gear_type: booking.gear_type,
+						brand: booking.gear_brand,
+						model: booking.gear_model,
+						subtype: booking.gear_subtype,
+						price: booking.price,
+						currency: booking.currency,
+						street: booking.pickup_street,
+						postal_code: booking.pickup_postal_code,
+						city: booking.pickup_city,
+						country: booking.pickup_country,
+						pickup_date: startTime.format("DD/MM/YYYY"),
+						pickup_time: startTime.format("HH:mm"),
+						dropoff_date: endTime.format("DD/MM/YYYY"),
+						dropoff_time: endTime.format("HH:mm"),
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
+					}, owner.id);
 
-			User.readUser(booking.renter_id, function(error, renter) {
-				var startTime, endTime;
-				if(error) {
-					console.log("Error sending notification to renter on booking update to pending.");
-					return;
-				}
-				startTime = new Moment(booking.start_time, "YYYY-MM-DD HH:mm:ss");
-				endTime = new Moment(booking.end_time, "YYYY-MM-DD HH:mm:ss");
-				Notifications.send(Notifications.BOOKING_PENDING_OWNER, {
-					name: renter.name,
-					image_url: renter.image_url,
-					gear_type: booking.gear_type,
-					brand: booking.gear_brand,
-					model: booking.gear_model,
-					subtype: booking.gear_subtype,
-					price: booking.price,
-					currency: booking.currency,
-					street: booking.pickup_street,
-					postal_code: booking.pickup_postal_code,
-					city: booking.pickup_city,
-					country: booking.pickup_country,
-					pickup_date: startTime.format("DD/MM/YYYY"),
-					pickup_time: startTime.format("HH:mm"),
-					dropoff_date: endTime.format("DD/MM/YYYY"),
-					dropoff_time: endTime.format("HH:mm")
-				}, renter.id);
+					Notifications.send(Notifications.BOOKING_PENDING_RENTER, {
+						name: renter.name,
+						image_url: owner.image_url,
+						gear_type: booking.gear_type,
+						brand: booking.gear_brand,
+						model: booking.gear_model,
+						subtype: booking.gear_subtype,
+						price: booking.price,
+						currency: booking.currency,
+						street: booking.pickup_street,
+						postal_code: booking.pickup_postal_code,
+						city: booking.pickup_city,
+						country: booking.pickup_country,
+						pickup_date: startTime.format("DD/MM/YYYY"),
+						pickup_time: startTime.format("HH:mm"),
+						dropoff_date: endTime.format("DD/MM/YYYY"),
+						dropoff_time: endTime.format("HH:mm"),
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
+					}, renter.id);
+				});
 			});
 		});
 	});
@@ -321,6 +321,27 @@ updateToAccepted = function(booking, callback) {
 					
 					Notifications.send(Notifications.BOOKING_ACCEPTED_RENTER, {
 						name: renter.name,
+						image_url: owner.image_url,
+						gear_type: booking.gear_type,
+						brand: booking.gear_brand,
+						model: booking.gear_model,
+						subtype: booking.gear_subtype,
+						price: booking.price,
+						currency: booking.currency,
+						street: booking.pickup_street,
+						postal_code: booking.pickup_postal_code,
+						city: booking.pickup_city,
+						country: booking.pickup_country,
+						pickup_date: startTime.format("DD/MM/YYYY"),
+						pickup_time: startTime.format("HH:mm"),
+						dropoff_date: endTime.format("DD/MM/YYYY"),
+						dropoff_time: endTime.format("HH:mm"),
+						username_owner: owner.name,
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
+					}, renter.id);
+
+					Notifications.send(Notifications.BOOKING_ACCEPTED_OWNER, {
+						name: owner.name,
 						image_url: renter.image_url,
 						gear_type: booking.gear_type,
 						brand: booking.gear_brand,
@@ -336,26 +357,7 @@ updateToAccepted = function(booking, callback) {
 						pickup_time: startTime.format("HH:mm"),
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
-						username_owner: owner.name
-					}, renter.id);
-
-					Notifications.send(Notifications.BOOKING_ACCEPTED_OWNER, {
-						name: owner.name,
-						image_url: owner.image_url,
-						gear_type: booking.gear_type,
-						brand: booking.gear_brand,
-						model: booking.gear_model,
-						subtype: booking.gear_subtype,
-						price: booking.price,
-						currency: booking.currency,
-						street: booking.pickup_street,
-						postal_code: booking.pickup_postal_code,
-						city: booking.pickup_city,
-						country: booking.pickup_country,
-						pickup_date: startTime.format("DD/MM/YYYY"),
-						pickup_time: startTime.format("HH:mm"),
-						dropoff_date: endTime.format("DD/MM/YYYY"),
-						dropoff_time: endTime.format("HH:mm")
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
 					}, owner.id);
 				});
 			});
@@ -410,7 +412,8 @@ updateToRenterReturned = function(booking, callback) {
 				}
 				Notifications.send(Notifications.BOOKING_RENTER_RETURNED, {
 					name: renter.name,
-					username: owner.name + " " + owner.surname
+					username_owner: owner.name + " " + owner.surname,
+					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
 				}, renter.id);
 			});
 		});
@@ -454,7 +457,8 @@ updateToOwnerReturned = function(booking, callback) {
 				}
 				Notifications.send(Notifications.BOOKING_OWNER_RETURNED, {
 					name: owner.name,
-					username: renter.name + " " + renter.surname
+					username_renter: renter.name + " " + renter.surname,
+					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
 				}, owner.id);
 			});
 		});
