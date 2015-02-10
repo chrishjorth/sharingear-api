@@ -42,7 +42,7 @@ var db = require("./database"),
 };*/
 
 loadLocalization = function(callback) {
-    db.query("SELECT code, name, vat, currency, EU FROM countries", [], function(error, rows) {
+    db.query("SELECT code, name, vat, currency, EU FROM countries ORDER BY name", [], function(error, rows) {
         if(error) {
             callback("Error retrieving localization data: " + error);
             return;
