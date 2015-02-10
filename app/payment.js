@@ -249,12 +249,13 @@ getCardObject = function(mangopay_id, callback) {
 };
 
 preAuthorize = function(sellerMangoPayData, buyerMangoPayData, cardID, price, returnURL, callback) {
-	var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
+	//var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
+	var buyerFee, amount, postData;
 
 	price = parseInt(price, 10);
 
 	//View Sharingear transaction model document for explanation
-	sellerFee = price / 100 * parseFloat(sellerMangoPayData.seller_fee);
+	/*sellerFee = price / 100 * parseFloat(sellerMangoPayData.seller_fee);
 	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
 	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * sellerMangoPayData.vat;
 	buyerFee = price / 100 * parseFloat(buyerMangoPayData.buyer_fee);
@@ -266,6 +267,14 @@ preAuthorize = function(sellerMangoPayData, buyerMangoPayData, cardID, price, re
 	console.log("sellerVAT: " + sellerVAT);
 	console.log("buyerFee: " + buyerFee);
 	console.log("buyerFeeVAT: " + buyerFeeVAT);
+	console.log("amount: " + amount);*/
+
+	buyerFee = price / 100 * parseFloat(buyerMangoPayData.buyer_fee);
+	amount = price + buyerFee;
+
+	console.log("--- PREAUTH:");
+	console.log("price: " + price);
+	console.log("buyerFee: " + buyerFee);
 	console.log("amount: " + amount);
 
 	postData = {
@@ -305,19 +314,20 @@ getPreauthorizationStatus = function(preauthID, callback) {
 			return;
 		}
 		parsedData = JSON.parse(data);
-		console.log('PREAUTH STATUS:');
+		console.log("PREAUTH STATUS:");
 		console.log(data);
 		callback(null, parsedData.PaymentStatus);
 	});
 };
 
 chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callback) {
-	var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
+	//var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
+	var buyerFee, amount, postData;
 
 	price = parseInt(price, 10);
 	
 	//View Sharingear transaction model document for explanation
-	sellerFee = price / 100 * parseFloat(seller.seller_fee);
+	/*sellerFee = price / 100 * parseFloat(seller.seller_fee);
 	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
 	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
 	buyerFee = price / 100 * parseFloat(buyer.buyer_fee);
@@ -329,6 +339,14 @@ chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callb
 	console.log("sellerVAT: " + sellerVAT);
 	console.log("buyerFee: " + buyerFee);
 	console.log("buyerFeeVAT: " + buyerFeeVAT);
+	console.log("amount: " + amount);*/
+
+	buyerFee = price / 100 * parseFloat(buyer.buyer_fee);
+	amount = price + buyerFee;
+
+	console.log("--- CHARGE:");
+	console.log("price: " + price);
+	console.log("buyerFee: " + buyerFee);
 	console.log("amount: " + amount);
 
 	postData = {
@@ -339,7 +357,7 @@ chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callb
 		},
 		Fees: {
 			Currency: "DKK",
-			Amount: (buyerFee + buyerFeeVAT) * 100
+			Amount: buyerFee * 100
 		},
 		CreditedWalletId: sg_user.wallet_id,
 		PreauthorizationId: preAuthID
@@ -357,12 +375,15 @@ chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callb
 			callback("Charging preauthorized booking failed.");
 			return;
 		}
+		console.log('charged successfully');
 		callback(null);
 		receiptParameters = {
 			price: price,
 			fee: buyerFee,
-			vat: buyerFeeVAT,
-			feeVat: sellerVAT,
+			//vat: buyerFeeVAT,
+			vat: "",
+			//feeVat: sellerVAT,
+			feeVat: "",
 			currency: "DKK"
 		};
 		sendReceipt(buyer, gearID, receiptParameters, function(error) {
@@ -375,11 +396,12 @@ chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callb
 };
 
 payOutSeller = function(seller, gearID, price, callback) {
-	var sellerFee, sellerFeeVAT, sellerVAT, amount, postData;
+	//var sellerFee, sellerFeeVAT, sellerVAT, amount, postData;
+	var sellerFee, amount, postData;
 
 	price = parseInt(price, 10);
 
-	sellerFee = price / 100 * parseFloat(seller.seller_fee);
+	/*sellerFee = price / 100 * parseFloat(seller.seller_fee);
 	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
 	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
 	amount = price + sellerVAT;
@@ -389,6 +411,14 @@ payOutSeller = function(seller, gearID, price, callback) {
 	console.log("sellerFee: " + sellerFee);
 	console.log("sellerFeeVAT: " + sellerFeeVAT);
 	console.log("sellerVAT: " + sellerVAT);
+	console.log("amount: " + amount);*/
+
+	sellerFee = price / 100 * parseFloat(seller.seller_fee);
+	amount = price;
+
+	console.log("--- PAY OWNER:");
+	console.log("price: " + price);
+	console.log("sellerFee: " + sellerFee);
 	console.log("amount: " + amount);
 
 	postData = {
@@ -399,7 +429,7 @@ payOutSeller = function(seller, gearID, price, callback) {
 			Currency: "DKK"
 		},
 		Fees: {
-			Amount: (sellerFee + sellerFeeVAT) * 100,
+			Amount: sellerFee * 100,
 			Currency: "DKK"
 		},
 		DebitedWalletID: sg_user.wallet_id,
@@ -442,12 +472,15 @@ payOutSeller = function(seller, gearID, price, callback) {
 				callback("Error wiring from wallet: " + data);
 				return;
 			}
+			console.log('payout successful');
 			callback(null);
 			receiptParameters = {
 				price: price,
 				fee: sellerFee,
-				vat: sellerVAT,
-				feeVat: sellerFeeVAT,
+				//vat: sellerVAT,
+				vat: "",
+				//feeVat: sellerFeeVAT,
+				feeVat: "",
 				currency: "DKK"
 			};
 			sendInvoice(seller, gearID, receiptParameters, function(error) {

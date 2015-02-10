@@ -65,8 +65,8 @@ create = function(renterID, bookingData, callback) {
 			gear.brand,
 			gear.address,
 			gear.postal_code,
-			gear.pickup_city,
-			gear.pickup_country
+			gear.city,
+			gear.country
 		];
 		//We have to insert before the preauthorization to get the booking id
 		db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, owner_id, price, currency, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", booking, function(error, result) {
@@ -170,6 +170,7 @@ update = function(bookingData, callback) {
 			callback("Error selecting booking interval: " + error);
 			return;
 		}
+		console.log('Update to status: ' + status);
 		switch(status) {
 			case "pending":
 				updateToPending(booking, bookingData.preauth_id, callback);
@@ -298,6 +299,7 @@ updateToAccepted = function(booking, callback) {
 			callback(error);
 			return;
 		}
+		console.log('preauth charged');
 		db.query("UPDATE bookings SET booking_status='accepted', payment_timestamp=NOW() WHERE id=? LIMIT 1", [booking.id], function(error) {
 			if(error) {
 				callback(error);
