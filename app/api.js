@@ -5,11 +5,12 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment, Notifications,
+var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment, Notifications, Localization,
 
 	readFileSuccess,
 
 	healthCheck,
+	readLocalizationData,
 	readGearClassification,
 	createGear,
 	readGearWithID,
@@ -55,6 +56,7 @@ Availability = require("./availability");
 Booking = require("./booking");
 Payment = require("./payment");
 Notifications = require("./notifications");
+Localization = require("./localization");
 
 readFileSuccess = true;
 try {
@@ -108,11 +110,18 @@ server = restify.createServer({
 
 server.listen(1339);
 
+Localization.loadLocalization();
+
 
 //ROUTE HANDLERS
 
 healthCheck = function (req, res, next) {
 	res.send({});
+	next();
+};
+
+readLocalizationData = function(req, res, next) {
+	res.send(Localization.getLocalizationData());
 	next();
 };
 
@@ -723,6 +732,7 @@ isAuthorized = function(userID, callback) {
 //ROUTES
 server.get("/", healthCheck);
 
+secureServer.get("/localization", readLocalizationData);
 secureServer.get("/gearclassification", readGearClassification);
 
 secureServer.post("/gear", createGear);

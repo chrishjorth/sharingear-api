@@ -6,11 +6,14 @@
 /*jslint node: true */
 "use strict";
 
-var alpha2Countries,
-    getCountryNameFromAlpha2,
+var db = require("./database"),
+    localizationData = [],
+
+    loadLocalization,
+    getLocalizationData,
     isCountrySupported;
 
-alpha2Countries = {
+/*alpha2Countries = {
     "AD": "andorra",
     "AT": "austria",
     "BE": "belgium",
@@ -36,16 +39,33 @@ alpha2Countries = {
     "SE": "sweden",
     "GB": "united kingdom",
     "US": "united states",
+};*/
+
+loadLocalization = function(callback) {
+    db.query("SELECT code, name, vat, currency, EU FROM countries ORDER BY name", [], function(error, rows) {
+        if(error) {
+            callback("Error retrieving localization data: " + error);
+            return;
+        }
+        localizationData = rows;
+    });
 };
 
-getCountryNameFromAlpha2 = function(countryCode) {
-    return alpha2Countries[countryCode];
+getLocalizationData = function() {
+    return localizationData.slice();
+
 };
 
 isCountrySupported = function(countryCode) {
-    var key;
+    /*var key;
     for(key in alpha2Countries) {
         if(key === countryCode.toUpperCase()) {
+            return true;
+        }
+    }*/
+    var i;
+    for(i = 0; i < localizationData.length; i++) {
+        if(localizationData[i].code === countryCode) {
             return true;
         }
     }
@@ -53,6 +73,7 @@ isCountrySupported = function(countryCode) {
 };
 
 module.exports = {
-    getCountryNameFromAlpha2: getCountryNameFromAlpha2,
+    getLocalizationData: getLocalizationData,
+    loadLocalization: loadLocalization,
     isCountrySupported: isCountrySupported
 };
