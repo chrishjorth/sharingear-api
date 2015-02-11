@@ -11,7 +11,8 @@ var db = require("./database"),
 
     loadLocalization,
     getLocalizationData,
-    isCountrySupported;
+    isCountrySupported,
+    getCurrency;
 
 /*alpha2Countries = {
     "AD": "andorra",
@@ -72,8 +73,23 @@ isCountrySupported = function(countryCode) {
     return false;
 };
 
+getCurrency = function(countryCode) {
+    var defaultCurrency = "EUR",
+        i;
+    if(!countryCode || countryCode === null) {
+        return defaultCurrency;
+    }
+    for(i = 0; i < localizationData.length; i++) {
+        if(localizationData[i].code === countryCode) {
+            return localizationData[i].currency;
+        }
+    }
+    return defaultCurrency;
+};
+
 module.exports = {
     getLocalizationData: getLocalizationData,
     loadLocalization: loadLocalization,
-    isCountrySupported: isCountrySupported
+    isCountrySupported: isCountrySupported,
+    getCurrency: getCurrency
 };
