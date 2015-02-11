@@ -24,8 +24,10 @@ var Moment = require("moment"),
 	Payment = require("./payment"),
 	Notifications = require("./notifications"),
 	Config = require("./config"),
+	Localization = require("./localization"),
 
 	create,
+	_insertBooking,
 	read,
 	readRentalsForUser,
 	readReservationsForUser,
@@ -45,65 +47,126 @@ var Moment = require("moment"),
 create = function(renterID, bookingData, callback) {
 	//We store gear data as static in the booking, so that future changes of the gear does not affect this booking
 	Gear.readGearWithID(bookingData.gear_id, function(error, gear) {
-		var booking, price;
 		if(error) {
 			callback(error);
 			return;
 		}
-		price = Gear.getPrice(gear.price_a, gear.price_b, gear.price_c, bookingData.start_time, bookingData.end_time);
-		booking = [
-			bookingData.gear_id,
-			bookingData.start_time,
-			bookingData.end_time,
-			renterID,
-			gear.owner_id,
-			price,
-			"DKK",
-			gear.gear_type,
-			gear.subtype,
-			gear.model,
-			gear.brand,
-			gear.address,
-			gear.postal_code,
-			gear.city,
-			gear.country
-		];
-		//We have to insert before the preauthorization to get the booking id
-		db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, owner_id, price, currency, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", booking, function(error, result) {
-			var url, queryIndex;
+		User.readUser(renterID, function(error, renterData) {
 			if(error) {
-				callback("Error inserting booking: " + error);
+				callback(error);
 				return;
 			}
-			//Assertion: only returnURLs with #route are valid
-			url = bookingData.returnURL.split("#");
-			queryIndex = url[0].indexOf("?");
-			if(queryIndex < 0) {
-				bookingData.returnURL = url[0] + "?booking_id=" + result.insertId + "#" + url[1];
-			}
-			else {
-				bookingData.returnURL = url[0] + "&booking_id=" + result.insertId + "#" + url[1];
-			}
-			preAuthorize(gear.owner_id, renterID, bookingData.cardId, price, bookingData.returnURL, function(error, preAuthData) {
+			User.readUser(gear.owner_id, function(error, ownerData) {
+				var renter_currency;
 				if(error) {
 					callback(error);
 					return;
 				}
-				callback(null, {
-					id: result.insertId,
-					gear_id: bookingData.gear_id,
-					start_time: bookingData.start_time,
-					end_time: bookingData.end_time,
-					price: price,
-					verificationURL: preAuthData.verificationURL
+				renter_currency = Localization.getCurrency(renterData.country);
+				Localization.convertPrices([gear.price_a, gear.price_b, gear.price_c], "EUR", renter_currency, function(error, convertedPrices) {
+					var renter_price, owner_currency;
+					if(error) {
+						callback(error);
+						return;
+					}
+					renter_price = Gear.getPrice(Math.ceil(convertedPrices[0]), Math.ceil(convertedPrices[1]), Math.ceil(convertedPrices[2]), bookingData.start_time, bookingData.end_time);
+					owner_currency = Localization.getCurrency(ownerData.country);
+					Localization.convertPrices([gear.price_a, gear.price_b, gear.price_c], "EUR", owner_currency, function(error, convertedPrices) {
+						var owner_price;
+						if(error) {
+							callback(error);
+							return;
+						}
+						owner_price = Gear.getPrice(Math.ceil(convertedPrices[0]), Math.ceil(convertedPrices[1]), Math.ceil(convertedPrices[2]), bookingData.start_time, bookingData.end_time);
+						bookingData = {
+							gear_id: gear.id,
+							start_time: bookingData.start_time,
+							end_time: bookingData.end_time,
+							renter_id: renterData.id,
+							owner_id: gear.owner_id,
+							renter_price: renter_price,
+							renter_currency: renter_currency,
+							owner_price: owner_price,
+							owner_currency: owner_currency,
+							cardId: bookingData.cardId,
+							gear_type: gear.gear_type,
+							gear_subtype: gear.subtype,
+							gear_model: gear.model,
+							gear_brand: gear.brand,
+							pickup_street: gear.address,
+							pickup_postal_code: gear.postal_code,
+							pickup_city: gear.city,
+							pickup_country: gear.country,
+							returnURL: bookingData.returnURL
+						};
+						_insertBooking(bookingData, callback);
+					});
 				});
 			});
 		});
 	});
 };
 
+_insertBooking = function(bookingData, callback) {
+	var booking;
+	booking = [
+		bookingData.gear_id,
+		bookingData.start_time,
+		bookingData.end_time,
+		bookingData.renter_id,
+		bookingData.owner_id,
+		bookingData.renter_price,
+		bookingData.renter_currency,
+		bookingData.owner_price,
+		bookingData.owner_currency,
+		bookingData.gear_type,
+		bookingData.gear_subtype,
+		bookingData.gear_model,
+		bookingData.gear_brand,
+		bookingData.pickup_street,
+		bookingData.pickup_postal_code,
+		bookingData.pickup_city,
+		bookingData.pickup_country
+	];
+
+	//We have to insert before the preauthorization to get the booking id
+	db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", booking, function(error, result) {
+		var url, queryIndex;
+		if(error) {
+			callback("Error inserting booking: " + error);
+			return;
+		}
+		//Assertion: only returnURLs with #route are valid
+		url = bookingData.returnURL.split("#");
+		queryIndex = url[0].indexOf("?");
+		if(queryIndex < 0) {
+			bookingData.returnURL = url[0] + "?booking_id=" + result.insertId + "#" + url[1];
+		}
+		else {
+			bookingData.returnURL = url[0] + "&booking_id=" + result.insertId + "#" + url[1];
+		}
+		preAuthorize(bookingData, function(error, preAuthData) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			callback(null, {
+				id: result.insertId,
+				gear_id: bookingData.gear_id,
+				start_time: bookingData.start_time,
+				end_time: bookingData.end_time,
+				renter_price: bookingData.renter_price,
+				renter_currency: bookingData.renter_currency,
+				owner_price: bookingData.owner_price,
+				owner_currency: bookingData.owner_currency,
+				verificationURL: preAuthData.verificationURL
+			});
+		});
+	});
+};
+
 read = function(bookingID, callback) {
-	db.query("SELECT id, gear_id, start_time, end_time, renter_id, owner_id, price, currency, payment_timestamp, payin_time, payout_time, preauth_id, booking_status, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country FROM bookings WHERE id=?", [bookingID], function(error, rows) {
+	db.query("SELECT id, gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, payment_timestamp, payin_time, payout_time, preauth_id, booking_status, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country FROM bookings WHERE id=?", [bookingID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -122,7 +185,7 @@ readRentalsForUser = function(userID, callback) {
 			callback("Error checking gear for rentals: " + error);
 			return;
 		}
-		db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.price, bookings.booking_status FROM gear, bookings, gear_types, gear_subtypes, gear_brands WHERE gear.id=bookings.gear_id AND gear.owner_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [userID], function(error, rows) {
+		db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.renter_price, bookings.renter_currency, bookings.owner_price, bookings.owner_currency, bookings.booking_status FROM gear, bookings, gear_types, gear_subtypes, gear_brands WHERE gear.id=bookings.gear_id AND gear.owner_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [userID], function(error, rows) {
 			if(error) {
 				callback("Error reading user rentals: " + error);
 				return;
@@ -143,7 +206,7 @@ readReservationsForUser = function(renterID, callback){
 			callback("Error checking gear for rentals: " + error);
 			return;
 		}
-		db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.price, bookings.booking_status FROM gear, bookings, gear_types, gear_subtypes, gear_brands WHERE bookings.gear_id = gear.id AND bookings.renter_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [renterID], function(error, rows) {
+		db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.renter_price, bookings.renter_currency, bookings.owner_price, bookings.owner_currency, bookings.booking_status FROM gear, bookings, gear_types, gear_subtypes, gear_brands WHERE bookings.gear_id = gear.id AND bookings.renter_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [renterID], function(error, rows) {
         	if(error) {
             	callback(error);
             	return;
@@ -170,10 +233,11 @@ update = function(bookingData, callback) {
 			callback("Error selecting booking interval: " + error);
 			return;
 		}
-		console.log('Update to status: ' + status);
+		booking.preauth_id = bookingData.preauth_id;
+		console.log("Update to status: " + status);
 		switch(status) {
 			case "pending":
-				updateToPending(booking, bookingData.preauth_id, callback);
+				updateToPending(booking, callback);
 				break;
 			case "denied":
 				updateToDenied(booking, callback);
@@ -196,9 +260,10 @@ update = function(bookingData, callback) {
 	});
 };
 
-updateToPending = function(booking, preAuthID, callback) {
+updateToPending = function(booking, callback) {
+	console.log(JSON.stringify(booking));
 	//Check that the preauthorization status is waiting
-	Payment.getPreauthorizationStatus(preAuthID, function(error, preauthStatus) {
+	Payment.getPreauthorizationStatus(booking.preauth_id, function(error, preauthStatus) {
 		if(error) {
 			callback("Error checking preauthorization status: " + error);
 			return;
@@ -207,7 +272,7 @@ updateToPending = function(booking, preAuthID, callback) {
 			callback("Error preauthorizing payment.");
 			return;
 		}
-		db.query("UPDATE bookings SET booking_status='pending', preauth_id=? WHERE id=? LIMIT 1", [preAuthID, booking.id], function(error) {
+		db.query("UPDATE bookings SET booking_status='pending', preauth_id=? WHERE id=? LIMIT 1", [booking.preauth_id, booking.id], function(error) {
 			if(error) {
 				callback("Error updating booking status: " + error);
 				return;
@@ -235,8 +300,8 @@ updateToPending = function(booking, preAuthID, callback) {
 						brand: booking.gear_brand,
 						model: booking.gear_model,
 						subtype: booking.gear_subtype,
-						price: booking.price,
-						currency: booking.currency,
+						price: booking.owner_price,
+						currency: booking.owner_currency,
 						street: booking.pickup_street,
 						postal_code: booking.pickup_postal_code,
 						city: booking.pickup_city,
@@ -255,8 +320,8 @@ updateToPending = function(booking, preAuthID, callback) {
 						brand: booking.gear_brand,
 						model: booking.gear_model,
 						subtype: booking.gear_subtype,
-						price: booking.price,
-						currency: booking.currency,
+						price: booking.renter_price,
+						currency: booking.renter_currency,
 						street: booking.pickup_street,
 						postal_code: booking.pickup_postal_code,
 						city: booking.pickup_city,
@@ -294,12 +359,12 @@ updateToDenied = function(booking, callback) {
 };
 
 updateToAccepted = function(booking, callback) {
-	chargePreAuthorization(booking.owner_id, booking.renter_id, booking.gear_id, booking.price, booking.preauth_id, function(error) {
+	chargePreAuthorization(booking, function(error) {
 		if(error) {
 			callback(error);
 			return;
 		}
-		console.log('preauth charged');
+		console.log("preauth charged");
 		db.query("UPDATE bookings SET booking_status='accepted', payment_timestamp=NOW() WHERE id=? LIMIT 1", [booking.id], function(error) {
 			if(error) {
 				callback(error);
@@ -328,8 +393,8 @@ updateToAccepted = function(booking, callback) {
 						brand: booking.gear_brand,
 						model: booking.gear_model,
 						subtype: booking.gear_subtype,
-						price: booking.price,
-						currency: booking.currency,
+						price: booking.renter_price,
+						currency: booking.renter_currency,
 						street: booking.pickup_street,
 						postal_code: booking.pickup_postal_code,
 						city: booking.pickup_city,
@@ -349,8 +414,8 @@ updateToAccepted = function(booking, callback) {
 						brand: booking.gear_brand,
 						model: booking.gear_model,
 						subtype: booking.gear_subtype,
-						price: booking.price,
-						currency: booking.currency,
+						price: booking.owner_price,
+						currency: booking.owner_currency,
 						street: booking.pickup_street,
 						postal_code: booking.pickup_postal_code,
 						city: booking.pickup_city,
@@ -467,58 +532,58 @@ updateToOwnerReturned = function(booking, callback) {
 	}
 };
 
-preAuthorize = function(sellerID, buyerID, cardID, price, returnURL, callback) {
-	User.getUserWithMangoPayData(sellerID, function(error, seller) {
+preAuthorize = function(bookingData, callback) {
+	User.getUserWithMangoPayData(bookingData.owner_id, function(error, seller) {
 		if(error) {
 			callback("Error getting MangoPay data for gear owner: " + error);
 			return;
 		}
-		User.getUserWithMangoPayData(buyerID, function(error, buyer) {
+		User.getUserWithMangoPayData(bookingData.renter_id, function(error, buyer) {
 			if(error) {
 				callback("Error getting MangoPay data for gear renter: " + error);
 				return;
 			}
-			Payment.preAuthorize(seller, buyer, cardID, price, returnURL, callback);
+			Payment.preAuthorize(seller, buyer, bookingData, callback);
 		});
 	});
 };
 
-chargePreAuthorization = function(sellerID, renterID, gearID, price, preAuthId, callback) {
-	User.getUserWithMangoPayData(renterID, function(error, seller) {
+chargePreAuthorization = function(bookingData, callback) {
+	User.getUserWithMangoPayData(bookingData.owner_id, function(error, seller) {
 		if(error) {
 			callback("Error getting MangoPay data for gear seller: " + error);
 			return;
 		}
-		User.getUserWithMangoPayData(renterID, function(error, renter) {
+		User.getUserWithMangoPayData(bookingData.renter_id, function(error, renter) {
 			if(error) {
 				callback("Error getting MangoPay data for gear renter: " + error);
 				return;
 			}
-			Payment.chargePreAuthorization(seller, renter, gearID, price, preAuthId, callback);
+			Payment.chargePreAuthorization(seller, renter, bookingData, callback);
 		});
 	});
 };
 
-endBooking = function(booking, callback) {
-	User.getUserWithMangoPayData(booking.owner_id, function(error, owner) {
+endBooking = function(bookingData, callback) {
+	User.getUserWithMangoPayData(bookingData.owner_id, function(error, owner) {
 		if(error) {
 			callback("Error getting MangoPay data for gear owner: " + error);
 			return;
 		}
-		Payment.payOutSeller(owner, booking.gear_id, booking.price, function(error) {
+		Payment.payOutSeller(owner, bookingData, function(error) {
 			if(error) {
 				callback(error);
 				return;
 			}
-			Gear.setStatus(booking.gear_id, null, function(error) {
+			Gear.setStatus(bookingData.gear_id, null, function(error) {
 				if(error) {
 					callback(error);
 					return;
 				}
 				callback(null);
 
-				Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, booking.owner_id);
-				Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, booking.renter_id);
+				Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, bookingData.owner_id);
+				Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, bookingData.renter_id);
 			});
 		});
 	});
