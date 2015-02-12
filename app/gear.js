@@ -692,15 +692,15 @@ search = function(location, gear, callback) {
 };
 
 getPrice = function(priceA, priceB, priceC, startTime, endTime) {
-	var startMoment, endMoment, weeks, days, hours, price;
+	var startMoment, endMoment, months, weeks, days, price;
 	startMoment = new Moment(startTime, "YYYY-MM-DD HH:mm:ss");
 	endMoment = new Moment(endTime, "YYYY-MM-DD HH:mm:ss");
+	months = parseInt(endMoment.diff(startMoment, "months"), 10);
+	endMoment.subtract(months, "months");
 	weeks = parseInt(endMoment.diff(startMoment, "weeks"), 10);
 	endMoment.subtract(weeks, "weeks");
 	days = parseInt(endMoment.diff(startMoment, "days"), 10);
-	endMoment.subtract(days, "days");
-	hours = parseInt(endMoment.diff(startMoment, "hours"), 10);
-	price = priceA * hours + priceB * days + priceC * weeks;
+	price = priceA * days + priceB * weeks + priceC * months;
 	return price;
 };
 

@@ -19,7 +19,6 @@ var db = require("./database"),
 	readUser,
 	update,
 	updateBankDetails,
-	//createWallet,
 	getCardObject,
 	getUserWithMangoPayData,
 	hasClosedBetaAccess,
@@ -58,6 +57,7 @@ getUserFromFacebookID = function(fbid, callback) {
 			buyer_fee: rows[0].buyer_fee,
 			seller_fee: rows[0].seller_fee
 		};
+		user.currency = Localization.getCurrency(user.country);
 		callback(null, user);
 	});
 };
@@ -199,6 +199,7 @@ readUser = function(userID, callback) {
 			buyer_fee: rows[0].buyer_fee,
 			seller_fee: rows[0].seller_fee
 		};
+		user.currency = Localization.getCurrency(user.country);
 		callback(null, user);
 	});
 };
@@ -302,36 +303,6 @@ updateBankDetails = function(userID, bankDetails, callback) {
 	});
 };
 
-/*createWallet = function(userID, callback) {
-	db.query("SELECT id, mangopay_id, name, surname, address, wallet_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
-		if(error) {
-			callback(error);
-			return;
-		}
-		if(rows.length <= 0) {
-			callback("No user with id " + userID + ".");
-			return;
-		}
-		if(rows[0].wallet_id !== null) {
-			callback(null);
-			return;
-		}
-		Payment.createWalletForUser(rows[0].mangopay_id, function(error, wallet_id) {
-			if(error) {
-				callback("Error creating wallet for user: " + error);
-				return;
-			}
-			db.query("UPDATE users SET wallet_id=? WHERE id=? LIMIT 1", [wallet_id, rows[0].id], function(error) {
-				if(error) {
-					callback("Error setting wallet_id: " + error);
-					return;
-				}
-				callback(null);				
-			});
-		});
-	});
-};*/
-
 getCardObject = function(userID, callback) {
 	db.query("SELECT mangopay_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
@@ -409,7 +380,6 @@ module.exports = {
 	readUser: readUser,
 	update: update,
 	updateBankDetails: updateBankDetails,
-	//createWallet: createWallet, deprecated
 	getCardObject: getCardObject,
 	getUserWithMangoPayData: getUserWithMangoPayData,
 	hasClosedBetaAccess: hasClosedBetaAccess

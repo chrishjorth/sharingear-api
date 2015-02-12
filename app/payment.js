@@ -248,11 +248,11 @@ getCardObject = function(mangopay_id, callback) {
 	});
 };
 
-preAuthorize = function(sellerMangoPayData, buyerMangoPayData, cardID, price, returnURL, callback) {
+preAuthorize = function(sellerMangoPayData, buyerMangoPayData, bookingData, callback) {
 	//var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
-	var buyerFee, amount, postData;
+	var price, buyerFee, amount, postData;
 
-	price = parseInt(price, 10);
+	price = parseInt(bookingData.renter_price, 10);
 
 	//View Sharingear transaction model document for explanation
 	/*sellerFee = price / 100 * parseFloat(sellerMangoPayData.seller_fee);
@@ -279,13 +279,13 @@ preAuthorize = function(sellerMangoPayData, buyerMangoPayData, cardID, price, re
 
 	postData = {
 		AuthorId: buyerMangoPayData.mangopay_id,
-		CardId: cardID,
+		CardId: bookingData.cardId,
 		DebitedFunds: {
-			Currency: "DKK",
+			Currency: bookingData.renter_currency,
 			Amount: amount * 100
 		},
 		SecureMode: "FORCE",
-		SecureModeReturnURL: returnURL
+		SecureModeReturnURL: bookingData.returnURL
 	};
 	gatewayPost("/preauthorizations/card/direct", postData, function(error, data) {
 		var parsedData;
@@ -320,11 +320,11 @@ getPreauthorizationStatus = function(preauthID, callback) {
 	});
 };
 
-chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callback) {
+chargePreAuthorization = function(seller, buyer, bookingData, callback) {
 	//var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
-	var buyerFee, amount, postData;
+	var price, buyerFee, amount, postData;
 
-	price = parseInt(price, 10);
+	price = parseInt(bookingData.renter_price, 10);
 	
 	//View Sharingear transaction model document for explanation
 	/*sellerFee = price / 100 * parseFloat(seller.seller_fee);
@@ -352,15 +352,15 @@ chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callb
 	postData = {
 		AuthorId: buyer.mangopay_id,
 		DebitedFunds: {
-			Currency: "DKK",
+			Currency: bookingData.renter_currency,
 			Amount: amount * 100
 		},
 		Fees: {
-			Currency: "DKK",
+			Currency: bookingData.renter_currency,
 			Amount: buyerFee * 100
 		},
 		CreditedWalletId: sg_user.wallet_id,
-		PreauthorizationId: preAuthID
+		PreauthorizationId: bookingData.preauth_id
 	};
 	gatewayPost("/payins/PreAuthorized/direct", postData, function(error, data) {
 		var parsedData, receiptParameters;
@@ -375,7 +375,7 @@ chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callb
 			callback("Charging preauthorized booking failed.");
 			return;
 		}
-		console.log('charged successfully');
+		console.log("charged successfully");
 		callback(null);
 		receiptParameters = {
 			price: price,
@@ -384,9 +384,9 @@ chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callb
 			vat: "",
 			//feeVat: sellerVAT,
 			feeVat: "",
-			currency: "DKK"
+			currency: bookingData.renter_currency
 		};
-		sendReceipt(buyer, gearID, receiptParameters, function(error) {
+		sendReceipt(buyer, bookingData.gear_id, receiptParameters, function(error) {
 			if(error) {
 				console.log("Error sending receipt: " + error);
 				return;
@@ -395,11 +395,11 @@ chargePreAuthorization = function(seller, buyer, gearID, price, preAuthID, callb
 	});
 };
 
-payOutSeller = function(seller, gearID, price, callback) {
+payOutSeller = function(seller, bookingData, callback) {
 	//var sellerFee, sellerFeeVAT, sellerVAT, amount, postData;
-	var sellerFee, amount, postData;
+	var price, sellerFee, amount, postData;
 
-	price = parseInt(price, 10);
+	price = parseInt(bookingData.owner_price, 10);
 
 	/*sellerFee = price / 100 * parseFloat(seller.seller_fee);
 	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
@@ -426,11 +426,11 @@ payOutSeller = function(seller, gearID, price, callback) {
 		CreditedUserId: seller.mangopay_id,
 		DebitedFunds: {
 			Amount: amount * 100,
-			Currency: "DKK"
+			Currency: bookingData.owner_currency
 		},
 		Fees: {
 			Amount: sellerFee * 100,
-			Currency: "DKK"
+			Currency: bookingData.owner_currency
 		},
 		DebitedWalletID: sg_user.wallet_id,
 		CreditedWalletID: seller.wallet_id
@@ -451,11 +451,11 @@ payOutSeller = function(seller, gearID, price, callback) {
 			AuthorId: seller.mangopay_id,
 			DebitedFunds: {
 				Amount: parsedData.CreditedFunds.Amount,
-				Currency: "DKK"
+				Currency: bookingData.owner_currency
 			},
 			Fees: {
 				Amount: 0,
-				Currency: "DKK"
+				Currency: bookingData.owner_currency
 			},
 			DebitedWalletID: seller.wallet_id,
 			BankAccountId: seller.bank_id,
@@ -472,7 +472,7 @@ payOutSeller = function(seller, gearID, price, callback) {
 				callback("Error wiring from wallet: " + data);
 				return;
 			}
-			console.log('payout successful');
+			console.log("payout successful");
 			callback(null);
 			receiptParameters = {
 				price: price,
@@ -481,9 +481,9 @@ payOutSeller = function(seller, gearID, price, callback) {
 				vat: "",
 				//feeVat: sellerFeeVAT,
 				feeVat: "",
-				currency: "DKK"
+				currency: bookingData.owner_currency
 			};
-			sendInvoice(seller, gearID, receiptParameters, function(error) {
+			sendInvoice(seller, bookingData.gear_id, receiptParameters, function(error) {
 				if(error) {
 					console.log("Error sending receipt: " + error);
 					return;
@@ -799,7 +799,11 @@ createSharingearUser = function(callback) {
 		LegalRepresentativeEmail: "mircea@sharingear.com",
 		LegalRepresentativeBirthday: parseInt((new Moment("1980-06-03", "YYYY-MM-DD")).format("X"), 10), //MangoPay requires a unix timestamp
 		LegalRepresentativeNationality: "DK",
-		LegalRepresentativeCountryOfResidence: "DK"
+		LegalRepresentativeCountryOfResidence: "DK"/*,
+		Statute: "",
+		ProofOfRegistration: "",
+		ShareholderDeclaration: "",
+		*/
 	};
 	gatewayPost("/users/legal", postData, function(error, data) {
 		var parsedData;
