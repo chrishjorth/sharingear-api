@@ -799,7 +799,11 @@ createSharingearUser = function(callback) {
 		LegalRepresentativeEmail: "mircea@sharingear.com",
 		LegalRepresentativeBirthday: parseInt((new Moment("1980-06-03", "YYYY-MM-DD")).format("X"), 10), //MangoPay requires a unix timestamp
 		LegalRepresentativeNationality: "DK",
-		LegalRepresentativeCountryOfResidence: "DK"
+		LegalRepresentativeCountryOfResidence: "DK"/*,
+		Statute: "",
+		ProofOfRegistration: "",
+		ShareholderDeclaration: "",
+		*/
 	};
 	gatewayPost("/users/legal", postData, function(error, data) {
 		var parsedData;
