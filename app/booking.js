@@ -477,11 +477,11 @@ updateToRenterReturned = function(booking, callback) {
 					console.log("Error getting renter for notification to renter on booking update to renter-returned: " + error);
 					return;
 				}
-				Notifications.send(Notifications.BOOKING_RENTER_RETURNED, {
-					name: renter.name,
-					username_owner: owner.name + " " + owner.surname,
-					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
-				}, renter.id);
+				Notifications.send(Notifications.BOOKING_OWNER_RETURNED, {
+					name: owner.name,
+					username_renter: renter.name + " " + renter.surname,
+					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
+				}, owner.id);
 			});
 		});
 	}
@@ -522,11 +522,11 @@ updateToOwnerReturned = function(booking, callback) {
 					console.log("Error getting owner for notification to owner on booking update to owner-returned: " + error);
 					return;
 				}
-				Notifications.send(Notifications.BOOKING_OWNER_RETURNED, {
-					name: owner.name,
-					username_renter: renter.name + " " + renter.surname,
-					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
-				}, owner.id);
+				Notifications.send(Notifications.BOOKING_RENTER_RETURNED, {
+					name: renter.name,
+					username_owner: owner.name + " " + owner.surname,
+					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
+				}, renter.id);
 			});
 		});
 	}
