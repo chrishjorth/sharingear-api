@@ -24,6 +24,7 @@ sharingearPool = mysql.createPool({
 	supportBigNumbers: true, //Required for working with Facebook IDs stored as bigint.
 	multipleStatements: true, //Required for Minus operation from dynamic data set, which requires temp table
 	dateStrings: true,
+	acquireTimeout: 20000, //Default is 10000, we try with double to avoid occasional PROTOCOL_SEQUENCE_TIMEOUT errors
 	//connectTimeout: 60000, //Outcomment when not debugging with node inspector
 	ssl: {
 		ca: Config.MYSQL_CA,
