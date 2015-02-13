@@ -227,6 +227,7 @@ readGearSearchResults = function(req, res, next) {
 	Gear.search(req.params.location, req.params.gear, function(error, results) {
 		if(error) {
 			res.send([]);
+			next();
 			return;
 		}
 		res.send(results);
@@ -247,7 +248,6 @@ createUserSession = function(req, res, next) {
 				handleError(res, next, "Error setting Access Token: ", error);
 				return;
 			}
-
 			res.send(user);
 			next();
 		});
@@ -283,7 +283,6 @@ createUserSession = function(req, res, next) {
 						createSession(user, longToken);
 					});
 				});
-
 			}
 			else {
 				createSession(user, longToken);
