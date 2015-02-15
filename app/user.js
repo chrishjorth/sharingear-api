@@ -21,12 +21,12 @@ var db = require("./database"),
 	updateBankDetails,
 	getCardObject,
 	getUserWithMangoPayData,
-	hasClosedBetaAccess,
+	//hasClosedBetaAccess,
 
 	checkLocales;
 
 getUserFromFacebookID = function(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, wallet_id, bank_id, buyer_fee, seller_fee FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, wallet_id, bank_id, buyer_fee, seller_fee FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		var user;
 		if(error) {
 			callback(error);
@@ -48,6 +48,7 @@ getUserFromFacebookID = function(fbid, callback) {
 			city: rows[0].city,
 			region: rows[0].region,
 			country: rows[0].country,
+			time_zone: rows[0].time_zone,
 			nationality: rows[0].nationality,
 			phone: rows[0].phone,
 			image_url: rows[0].image_url,
@@ -169,7 +170,7 @@ readPublicUser = function(userID, callback) {
 };
 
 readUser = function(userID, callback) {
-	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, wallet_id, bank_id, buyer_fee, seller_fee FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, wallet_id, bank_id, buyer_fee, seller_fee FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var user;
 		if(error) {
 			callback(error);
@@ -190,6 +191,7 @@ readUser = function(userID, callback) {
 			city: rows[0].city,
 			region: rows[0].region,
 			country: rows[0].country,
+			time_zone: rows[0].time_zone,
 			nationality: rows[0].nationality,
 			phone: rows[0].phone,
 			image_url: rows[0].image_url,
@@ -205,7 +207,7 @@ readUser = function(userID, callback) {
 };
 
 update = function(userID, updatedInfo, callback) {
-	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, nationality, phone, image_url, bio, wallet_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, wallet_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var userInfo, updateUser;
 		if(error) {
 			callback(error);
@@ -226,6 +228,7 @@ update = function(userID, updatedInfo, callback) {
 			city: (updatedInfo.city ? updatedInfo.city : rows[0].city),
 			region: (updatedInfo.region ? updatedInfo.region : rows[0].region),
 			country: (updatedInfo.country ? updatedInfo.country : rows[0].country),
+			time_zone: (updatedInfo.time_zone ? updatedInfo.time_zone : rows[0].time_zone),
 			nationality: (updatedInfo.nationality ? updatedInfo.nationality : rows[0].nationality),
 			phone: (updatedInfo.phone ? updatedInfo.phone : rows[0].phone),
 			image_url: (updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
@@ -242,8 +245,8 @@ update = function(userID, updatedInfo, callback) {
 
 		updateUser = function(mangopay_id, wallet_id) {
 			var userInfoArray;
-			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, wallet_id, userInfo.id];
-			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, nationality=?, phone=?, image_url=?, bio=?, wallet_id=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
+			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.time_zone, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, wallet_id, userInfo.id];
+			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, time_zone=?, nationality=?, phone=?, image_url=?, bio=?, wallet_id=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
 				if(error) {
 					callback(error);
 					return;
@@ -337,7 +340,7 @@ getUserWithMangoPayData = function(userID, callback) {
 	});
 };
 
-hasClosedBetaAccess = function(user, callback) {
+/*hasClosedBetaAccess = function(user, callback) {
 	
 	db.query("SELECT id FROM closedbeta WHERE fbid=? OR email=? LIMIT 1", [user.fbid, user.email], function(error, rows) {
 		if(error) {
@@ -350,7 +353,7 @@ hasClosedBetaAccess = function(user, callback) {
 		}
 		callback(null, true);
 	});
-};
+};*/
 
 checkLocales = function(user) {
 	if(user.country !== null) {
@@ -382,5 +385,5 @@ module.exports = {
 	updateBankDetails: updateBankDetails,
 	getCardObject: getCardObject,
 	getUserWithMangoPayData: getUserWithMangoPayData,
-	hasClosedBetaAccess: hasClosedBetaAccess
+	//hasClosedBetaAccess: hasClosedBetaAccess
 };
