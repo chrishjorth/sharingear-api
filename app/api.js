@@ -731,6 +731,19 @@ isAuthorized = function(userID, callback) {
 //ROUTES
 server.get("/", healthCheck);
 
+//405 debug
+server.on("MethodNotAllowed", function(req, res) {
+	console.log("---- Method not allowed in standard server");
+	console.log(JSON.stringify(req));
+	return res.send(new restify.MethodNotAllowedError());
+});
+
+secureServer.on("MethodNotAllowed", function(req, res) {
+	console.log("---- Method not allowed in secure server");
+	console.log(JSON.stringify(req));
+	return res.send(new restify.MethodNotAllowedError());
+});
+
 secureServer.get("/localization", readLocalizationData);
 secureServer.get("/gearclassification", readGearClassification);
 
