@@ -642,7 +642,7 @@ gatewayPost = function(apiPath, data, callback) {
 		var buffer = "",
 			options, postData, request, utf8overLoad;
 		if(error) {
-			callback(error);
+			callback("Error getting token: " + error);
 			return;
 		}
 

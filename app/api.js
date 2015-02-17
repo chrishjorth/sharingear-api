@@ -5,7 +5,7 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment, Notifications, Localization,
+var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Payment, Notifications, Localization,
 
 	readFileSuccess,
 
@@ -27,9 +27,9 @@ var Config, restify, fs, fb, Sec, User, Gear, Availability, Booking, Payment, No
 	createGearAvailability,
 	readRentalsFromUserWithID,
 	readReservationsFromUserWithID,
-	createBooking,
-	readBooking,
-	updateBooking,
+	createGearBooking,
+	readGearBooking,
+	updateGearBooking,
 	createCardObject,
 
 	readSGBalance,
@@ -52,8 +52,8 @@ fb = require("./facebook");
 Sec = require("./sec");
 User = require("./user");
 Gear = require("./gear");
-Availability = require("./availability");
-Booking = require("./booking");
+GearAvailability = require("./gear_availability");
+GearBooking = require("./gear_booking");
 Payment = require("./payment");
 Notifications = require("./notifications");
 Localization = require("./localization");
@@ -404,7 +404,7 @@ readGearAvailability = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		Availability.get(req.params.gear_id, function(error, availabilityArray) {
+		GearAvailability.get(req.params.gear_id, function(error, availabilityArray) {
 			if(error) {
 				handleError(res, next, "Error getting gear availability: ", error);
 				return;
@@ -453,7 +453,7 @@ createGearAvailability = function(req, res, next) {
 					return;
 				}
 				setAvailability = function() {
-					Availability.set(req.params.gear_id, availability, function(error) {
+					GearAvailability.set(req.params.gear_id, availability, function(error) {
 						if(error) {
 							handleError(res, next, "Error setting gear availability: ", error);
 							return;
@@ -489,7 +489,7 @@ readRentalsFromUserWithID = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-    	Booking.readRentalsForUser(req.params.user_id, function (error, rentals) {
+    	GearBooking.readRentalsForUser(req.params.user_id, function (error, rentals) {
         	if (error) {
             	handleError(res,next,"Error reading reservations for user: ",error);
             	return;
@@ -510,7 +510,7 @@ readReservationsFromUserWithID = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-    	Booking.readReservationsForUser(req.params.user_id, function (error, reservations) {
+    	GearBooking.readReservationsForUser(req.params.user_id, function (error, reservations) {
         	if (error) {
             	handleError(res,next,"Error reading reservations for user: ",error);
             	return;
@@ -521,7 +521,7 @@ readReservationsFromUserWithID = function(req, res, next) {
     });
 };
 
-createBooking = function(req, res, next) {
+createGearBooking = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
 			handleError(res, next, "Error authorizing user: ", error);
@@ -531,7 +531,7 @@ createBooking = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		Booking.create(req.params.user_id, req.params, function(error, booking) {
+		GearBooking.create(req.params.user_id, req.params, function(error, booking) {
 			if(error) {
 				handleError(res, next, "Error creating booking: ", error);
 				return;
@@ -542,7 +542,7 @@ createBooking = function(req, res, next) {
 	});
 };
 
-readBooking = function(req, res, next) {
+readGearBooking = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
 			handleError(res, next, "Error authorizing user: ", error);
@@ -552,7 +552,7 @@ readBooking = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		Booking.read(req.params.booking_id, function(error, booking) {
+		GearBooking.read(req.params.booking_id, function(error, booking) {
 			if(error) {
 				handleError(res, next, "Error reading booking: ", error);
 				return;
@@ -563,7 +563,7 @@ readBooking = function(req, res, next) {
 	});
 };
 
-updateBooking = function(req, res, next) {
+updateGearBooking = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
 			handleError(res, next, "Error authorizing user: ", error);
@@ -573,7 +573,7 @@ updateBooking = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		Booking.update(req.params, function(error) {
+		GearBooking.update(req.params, function(error) {
 			if(error) {
 				handleError(res, next, "Error updating booking: ", error);
 				return;
@@ -763,9 +763,9 @@ secureServer.get("/users/:user_id/gear/:gear_id/availability", readGearAvailabil
 secureServer.get("/users/:user_id/rentals", readRentalsFromUserWithID);
 secureServer.get("/users/:user_id/reservations", readReservationsFromUserWithID);
 secureServer.get("/users/:id/newfilename/:filename", generateFileName);
-secureServer.post("/users/:user_id/gear/:gear_id/bookings", createBooking);
-secureServer.get("/users/:user_id/gear/:gear_id/bookings/:booking_id", readBooking);
-secureServer.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateBooking);
+secureServer.post("/users/:user_id/gear/:gear_id/bookings", createGearBooking);
+secureServer.get("/users/:user_id/gear/:gear_id/bookings/:booking_id", readGearBooking);
+secureServer.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateGearBooking);
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
 secureServer.get("/users/:user_id/dashboard/balance", readSGBalance);

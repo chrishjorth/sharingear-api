@@ -130,7 +130,7 @@ _insertBooking = function(bookingData, callback) {
 	];
 
 	//We have to insert before the preauthorization to get the booking id
-	db.query("INSERT INTO bookings(gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", booking, function(error, result) {
+	db.query("INSERT INTO gear_bookings(gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", booking, function(error, result) {
 		var url, queryIndex;
 		if(error) {
 			callback("Error inserting booking: " + error);
@@ -166,7 +166,7 @@ _insertBooking = function(bookingData, callback) {
 };
 
 read = function(bookingID, callback) {
-	db.query("SELECT id, gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, payment_timestamp, payin_time, payout_time, preauth_id, booking_status, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country FROM bookings WHERE id=?", [bookingID], function(error, rows) {
+	db.query("SELECT id, gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, payment_timestamp, payin_time, payout_time, preauth_id, booking_status, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country FROM gear_bookings WHERE id=?", [bookingID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -185,7 +185,7 @@ readRentalsForUser = function(userID, callback) {
 			callback("Error checking gear for rentals: " + error);
 			return;
 		}
-		db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.renter_price, bookings.renter_currency, bookings.owner_price, bookings.owner_currency, bookings.booking_status FROM gear, bookings, gear_types, gear_subtypes, gear_brands WHERE gear.id=bookings.gear_id AND gear.owner_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [userID], function(error, rows) {
+		db.query("SELECT gear_bookings.id AS booking_id, gear_bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, gear_bookings.start_time, gear_bookings.end_time, gear_bookings.renter_price, gear_bookings.renter_currency, gear_bookings.owner_price, gear_bookings.owner_currency, gear_bookings.booking_status FROM gear, gear_bookings, gear_types, gear_subtypes, gear_brands WHERE gear.id=gear_bookings.gear_id AND gear.owner_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [userID], function(error, rows) {
 			if(error) {
 				callback("Error reading user rentals: " + error);
 				return;
@@ -206,7 +206,7 @@ readReservationsForUser = function(renterID, callback){
 			callback("Error checking gear for rentals: " + error);
 			return;
 		}
-		db.query("SELECT bookings.id AS booking_id, bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, bookings.start_time, bookings.end_time, bookings.renter_price, bookings.renter_currency, bookings.owner_price, bookings.owner_currency, bookings.booking_status FROM gear, bookings, gear_types, gear_subtypes, gear_brands WHERE bookings.gear_id = gear.id AND bookings.renter_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [renterID], function(error, rows) {
+		db.query("SELECT gear_bookings.id AS booking_id, gear_bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, gear_bookings.start_time, gear_bookings.end_time, gear_bookings.renter_price, gear_bookings.renter_currency, gear_bookings.owner_price, gear_bookings.owner_currency, gear_bookings.booking_status FROM gear, gear_bookings, gear_types, gear_subtypes, gear_brands WHERE gear_bookings.gear_id = gear.id AND gear_bookings.renter_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [renterID], function(error, rows) {
         	if(error) {
             	callback(error);
             	return;
@@ -272,7 +272,7 @@ updateToPending = function(booking, callback) {
 			callback("Error preauthorizing payment.");
 			return;
 		}
-		db.query("UPDATE bookings SET booking_status='pending', preauth_id=? WHERE id=? LIMIT 1", [booking.preauth_id, booking.id], function(error) {
+		db.query("UPDATE gear_bookings SET booking_status='pending', preauth_id=? WHERE id=? LIMIT 1", [booking.preauth_id, booking.id], function(error) {
 			if(error) {
 				callback("Error updating booking status: " + error);
 				return;
@@ -339,7 +339,7 @@ updateToPending = function(booking, callback) {
 };
 
 updateToDenied = function(booking, callback) {
-	db.query("UPDATE bookings SET booking_status='denied' WHERE id=? LIMIT 1", [booking.id], function(error) {
+	db.query("UPDATE gear_bookings SET booking_status='denied' WHERE id=? LIMIT 1", [booking.id], function(error) {
 		if(error) {
 			callback("Error updating booking status: " + error);
 			return;
@@ -365,7 +365,7 @@ updateToAccepted = function(booking, callback) {
 			return;
 		}
 		console.log("preauth charged");
-		db.query("UPDATE bookings SET booking_status='accepted', payment_timestamp=NOW() WHERE id=? LIMIT 1", [booking.id], function(error) {
+		db.query("UPDATE gear_bookings SET booking_status='accepted', payment_timestamp=NOW() WHERE id=? LIMIT 1", [booking.id], function(error) {
 			if(error) {
 				callback(error);
 				return;
@@ -433,7 +433,7 @@ updateToAccepted = function(booking, callback) {
 };
 
 updateToEndedDenied = function(booking, callback) {
-	db.query("UPDATE bookings SET booking_status='ended-denied' WHERE id=? LIMIT 1", [booking.id], function(error) {
+	db.query("UPDATE gear_bookings SET booking_status='ended-denied' WHERE id=? LIMIT 1", [booking.id], function(error) {
 		if(error) {
 			callback("Error updating booking status: " + error);
 			return;
@@ -446,7 +446,7 @@ updateToRenterReturned = function(booking, callback) {
 	var completeUpdate;
 
 	completeUpdate = function(status) {
-		db.query("UPDATE bookings SET booking_status=? WHERE id=? LIMIT 1", [status, booking.id], function(error) {
+		db.query("UPDATE gear_bookings SET booking_status=? WHERE id=? LIMIT 1", [status, booking.id], function(error) {
 			if(error) {
 				callback("Error updating booking status: " + error);
 				return;
@@ -491,7 +491,7 @@ updateToOwnerReturned = function(booking, callback) {
 	var completeUpdate;
 
 	completeUpdate = function(status) {
-		db.query("UPDATE bookings SET booking_status=? WHERE id=? LIMIT 1", [status, booking.id], function(error) {
+		db.query("UPDATE gear_bookings SET booking_status=? WHERE id=? LIMIT 1", [status, booking.id], function(error) {
 			if(error) {
 				callback("Error updating booking status: " + error);
 				return;

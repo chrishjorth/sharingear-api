@@ -735,7 +735,7 @@ setStatus = function(gearID, status, callback) {
  */
 checkForRentals = function(userID, callback) {
 	//Get bookings that are before or equal to the current day and for instruments that belong to the user
-	db.query("SELECT gear.id FROM bookings INNER JOIN gear ON DATE(bookings.start_time) <= DATE(NOW()) AND bookings.gear_id=gear.id AND (gear.owner_id=? OR bookings.renter_id=?) AND bookings.booking_status='accepted'", [userID, userID], function(error, rows) {
+	db.query("SELECT gear.id FROM gear_bookings INNER JOIN gear ON DATE(gear_bookings.start_time) <= DATE(NOW()) AND gear_bookings.gear_id=gear.id AND (gear.owner_id=? OR gear_bookings.renter_id=?) AND gear_bookings.booking_status='accepted'", [userID, userID], function(error, rows) {
 		var sql, i, params;
 		if(error) {
 			callback("Error selecting gear bookings equal or prior to current day: " + error);
