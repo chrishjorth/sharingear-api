@@ -95,11 +95,6 @@ secureServer.on("uncaughtException", function(req, res, route, error) {
 	res.send(error);
 });
 
-//Tunnelblick uses 1337 apparently
-secureServer.listen(1338, function() {
-	console.log("%s listening at %s", secureServer.name, secureServer.url);
-});
-
 secureServer.use(restify.CORS());
 secureServer.use(restify.fullResponse());
 secureServer.use(restify.bodyParser());
@@ -108,9 +103,24 @@ server = restify.createServer({
 	name: "Sharingear health check"
 });
 
-server.listen(1339);
-
-Localization.loadLocalization();
+console.log("Initializing API...");
+Localization.loadLocalization(function(error) {
+	if(error) {
+		console.log(error);
+		return;
+	}
+	Payment.loadPayment(function(error) {
+		if(error) {
+			console.log(error);
+			return;
+		}
+		//Tunnelblick uses 1337 apparently
+		secureServer.listen(1338, function() {
+			console.log("%s listening at %s", secureServer.name, secureServer.url);
+		});
+		server.listen(1339);
+	});
+});
 
 
 //ROUTE HANDLERS

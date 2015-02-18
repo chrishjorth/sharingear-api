@@ -9,12 +9,14 @@
 var db = require("./database"),
     XChangeRates = require("./xchangerates"),
     localizationData = [],
+    supportedCurrencies = [],
 
     loadLocalization,
     getLocalizationData,
     isCountrySupported,
     getCurrency,
-    convertPrices;
+    convertPrices,
+    getSupportedCurrencies;
 
 /*alpha2Countries = {
     "AD": "andorra",
@@ -51,6 +53,17 @@ loadLocalization = function(callback) {
             return;
         }
         localizationData = rows;
+        db.query("SELECT currency FROM countries GROUP BY currency", [], function(error, rows) {
+            var i;
+            if(error) {
+                callback("Error retrieving supported currencies: " + error);
+                return;
+            }
+            for(i = 0; i < rows.length; i++) {
+                supportedCurrencies.push(rows[i].currency);
+            }
+            callback(null);
+        });
     });
 };
 
@@ -106,10 +119,15 @@ convertPrices = function(prices, fromCurrency, toCurrency, callback) {
     });
 };
 
+getSupportedCurrencies = function() {
+    return supportedCurrencies.slice();
+};
+
 module.exports = {
     getLocalizationData: getLocalizationData,
     loadLocalization: loadLocalization,
     isCountrySupported: isCountrySupported,
     getCurrency: getCurrency,
-    convertPrices: convertPrices
+    convertPrices: convertPrices,
+    getSupportedCurrencies: getSupportedCurrencies
 };

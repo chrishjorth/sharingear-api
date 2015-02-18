@@ -26,7 +26,7 @@ var db = require("./database"),
 	checkLocales;
 
 getUserFromFacebookID = function(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, wallet_id, bank_id, buyer_fee, seller_fee FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		var user;
 		if(error) {
 			callback(error);
@@ -53,7 +53,6 @@ getUserFromFacebookID = function(fbid, callback) {
 			phone: rows[0].phone,
 			image_url: rows[0].image_url,
 			bio: rows[0].bio,
-			hasWallet: (rows[0].wallet_id !== null),
 			hasBank: (rows[0].bank_id !== null),
 			buyer_fee: rows[0].buyer_fee,
 			seller_fee: rows[0].seller_fee
@@ -170,7 +169,7 @@ readPublicUser = function(userID, callback) {
 };
 
 readUser = function(userID, callback) {
-	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, wallet_id, bank_id, buyer_fee, seller_fee FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var user;
 		if(error) {
 			callback(error);
@@ -196,7 +195,6 @@ readUser = function(userID, callback) {
 			phone: rows[0].phone,
 			image_url: rows[0].image_url,
 			bio: rows[0].bio,
-			hasWallet: (rows[0].wallet_id !== null),
 			hasBank: (rows[0].bank_id !== null),
 			buyer_fee: rows[0].buyer_fee,
 			seller_fee: rows[0].seller_fee
@@ -207,7 +205,7 @@ readUser = function(userID, callback) {
 };
 
 update = function(userID, updatedInfo, callback) {
-	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, wallet_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var userInfo, updateUser;
 		if(error) {
 			callback(error);
@@ -233,7 +231,6 @@ update = function(userID, updatedInfo, callback) {
 			phone: (updatedInfo.phone ? updatedInfo.phone : rows[0].phone),
 			image_url: (updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
 			bio: (updatedInfo.bio ? updatedInfo.bio : rows[0].bio),
-			hasWallet: (rows[0].wallet_id !== null),
 			hasBank: (rows[0].bank_id !== null),
 			id: userID
 		};
@@ -243,30 +240,31 @@ update = function(userID, updatedInfo, callback) {
 			return;
 		}
 
-		updateUser = function(mangopay_id, wallet_id) {
+		updateUser = function(mangopay_id) {
 			var userInfoArray;
-			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.time_zone, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, wallet_id, userInfo.id];
-			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, time_zone=?, nationality=?, phone=?, image_url=?, bio=?, wallet_id=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
+			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.time_zone, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, userInfo.id];
+			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, time_zone=?, nationality=?, phone=?, image_url=?, bio=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
 				if(error) {
 					callback(error);
 					return;
 				}
 				userInfo.hasWallet = true;
+				userInfo.currency = Localization.getCurrency(userInfo.country);
 				callback(null, userInfo);
 			});
 		};
 
 		if(userInfo.birthdate === null || userInfo.address === null || userInfo.country === null || userInfo.nationality === null) {
 			//We do not have enough data to create a Payment user
-			updateUser(rows[0].mangopay_id, rows[0].wallet_id);
+			updateUser(rows[0].mangopay_id);
 		}
 		else {
-			Payment.updateUser(rows[0].mangopay_id, rows[0].wallet_id, userInfo, function(error, mangopay_id, wallet_id) {
+			Payment.updateUser(rows[0].mangopay_id, userInfo, function(error, mangopay_id) {
 				if(error) {
 					callback(error);
 					return;
 				}
-				updateUser(mangopay_id, wallet_id);
+				updateUser(mangopay_id);
 			});
 		}
 	});
@@ -327,7 +325,7 @@ getCardObject = function(userID, callback) {
 };
 
 getUserWithMangoPayData = function(userID, callback) {
-	db.query("SELECT users.id, users.email, users.name, users.surname, users.birthdate, users.address, users.postal_code, users.city, users.region, users.country, users.nationality, users.phone, users.image_url, users.bio, users.mangopay_id, users.wallet_id, users.bank_id, users.buyer_fee, users.seller_fee, countries.vat FROM users, countries WHERE id=? AND countries.code=users.country LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT users.id, users.email, users.name, users.surname, users.birthdate, users.address, users.postal_code, users.city, users.region, users.country, users.nationality, users.phone, users.image_url, users.bio, users.mangopay_id, users.bank_id, users.buyer_fee, users.seller_fee, countries.vat FROM users, countries WHERE id=? AND countries.code=users.country LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
