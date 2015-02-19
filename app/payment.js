@@ -899,13 +899,22 @@ gatewayPost = function(apiPath, data, callback) {
 gatewayPut = function(apiPath, data, callback) {
 	getToken(function(error, token) {
 		var buffer = "",
-			options, postData, request;
+			options, postData, request, utf8overLoad;
 		if(error) {
 			callback(error);
 			return;
 		}
 
 		postData = JSON.stringify(data);
+
+		//This is to send correct content length when dealing with unicode characters
+		utf8overLoad = encodeURIComponent(postData).match(/%[89ABab]/g);
+		if(utf8overLoad === null) {
+			utf8overLoad = 0;
+		}
+		else {
+			utf8overLoad = utf8overLoad.length;
+		}
 
 		options = {
 			host: Config.MANGOPAY_SANDBOX_URL,
@@ -914,7 +923,7 @@ gatewayPut = function(apiPath, data, callback) {
 			method: "PUT",
 			headers: {
 				"Content-Type": "application/json",
-				"Content-Length": postData.length,
+				"Content-Length": postData.length + utf8overLoad,
 				"Authorization": "Bearer " + token
 			}
 		};
