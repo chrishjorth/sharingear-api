@@ -56,28 +56,28 @@ create = function(renterID, bookingData, callback) {
 				callback(error);
 				return;
 			}
-			User.readUser(gear.owner_id, function(error, ownerData) {
+			//User.readUser(gear.owner_id, function(error, ownerData) {
 				var renter_currency;
-				if(error) {
+				/*if(error) {
 					callback(error);
 					return;
-				}
+				}*/
 				renter_currency = Localization.getCurrency(renterData.country);
-				Localization.convertPrices([gear.price_a, gear.price_b, gear.price_c], "EUR", renter_currency, function(error, convertedPrices) {
-					var renter_price, owner_currency;
+				Localization.convertPrices([gear.price_a, gear.price_b, gear.price_c], gear.currency, renter_currency, function(error, convertedPrices) {
+					var renter_price/*, owner_currency*/;
 					if(error) {
 						callback(error);
 						return;
 					}
 					renter_price = Gear.getPrice(Math.ceil(convertedPrices[0]), Math.ceil(convertedPrices[1]), Math.ceil(convertedPrices[2]), bookingData.start_time, bookingData.end_time);
-					owner_currency = Localization.getCurrency(ownerData.country);
-					Localization.convertPrices([gear.price_a, gear.price_b, gear.price_c], "EUR", owner_currency, function(error, convertedPrices) {
+					//owner_currency = Localization.getCurrency(ownerData.country);
+					//Localization.convertPrices([gear.price_a, gear.price_b, gear.price_c], "EUR", owner_currency, function(error, convertedPrices) {
 						var owner_price;
-						if(error) {
+						/*if(error) {
 							callback(error);
 							return;
-						}
-						owner_price = Gear.getPrice(Math.ceil(convertedPrices[0]), Math.ceil(convertedPrices[1]), Math.ceil(convertedPrices[2]), bookingData.start_time, bookingData.end_time);
+						}*/
+						owner_price = Gear.getPrice(gear.price_a, gear.price_b, gear.price_c, bookingData.start_time, bookingData.end_time);
 						bookingData = {
 							gear_id: gear.id,
 							start_time: bookingData.start_time,
@@ -87,7 +87,7 @@ create = function(renterID, bookingData, callback) {
 							renter_price: renter_price,
 							renter_currency: renter_currency,
 							owner_price: owner_price,
-							owner_currency: owner_currency,
+							owner_currency: gear.currency,
 							cardId: bookingData.cardId,
 							gear_type: gear.gear_type,
 							gear_subtype: gear.subtype,
@@ -100,9 +100,9 @@ create = function(renterID, bookingData, callback) {
 							returnURL: bookingData.returnURL
 						};
 						_insertBooking(bookingData, callback);
-					});
+					//});
 				});
-			});
+			//});
 		});
 	});
 };
