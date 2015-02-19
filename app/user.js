@@ -21,7 +21,6 @@ var db = require("./database"),
 	updateBankDetails,
 	getCardObject,
 	getUserWithMangoPayData,
-	//hasClosedBetaAccess,
 
 	checkLocales;
 
@@ -338,21 +337,6 @@ getUserWithMangoPayData = function(userID, callback) {
 	});
 };
 
-/*hasClosedBetaAccess = function(user, callback) {
-	
-	db.query("SELECT id FROM closedbeta WHERE fbid=? OR email=? LIMIT 1", [user.fbid, user.email], function(error, rows) {
-		if(error) {
-			callback(error);
-			return;
-		}
-		if(rows.length <= 0) {
-			callback(null, false);
-			return;
-		}
-		callback(null, true);
-	});
-};*/
-
 checkLocales = function(user) {
 	if(user.country !== null) {
 		user.country = user.country.toUpperCase();
@@ -382,6 +366,5 @@ module.exports = {
 	update: update,
 	updateBankDetails: updateBankDetails,
 	getCardObject: getCardObject,
-	getUserWithMangoPayData: getUserWithMangoPayData,
-	//hasClosedBetaAccess: hasClosedBetaAccess
+	getUserWithMangoPayData: getUserWithMangoPayData
 };
