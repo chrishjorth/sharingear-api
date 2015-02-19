@@ -1,5 +1,7 @@
 /**
  * Payment handling.
+ * A user has a wallet for each currency.
+ * User wallets are only used as middlemen, hence they always have balance 0 unless during a transaction.
  * @author: Chris Hjorth
  */
 
@@ -9,15 +11,21 @@
 var https = require("https"),
 	Moment = require("moment"),
 	SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
+	_ = require("underscore"),
 	db = require("./database"),
 	Config = require("./config"),
 	Gear = require("./gear"),
+	Localization = require("./localization"),
 	FROM_ADDRESS = "service@sharingear.com",
-	sg_user,
 	
+	loadPayment,
+	createSGWallets,
+	getSGWalletForCurrency,
 	updateUser,
 	registerBankAccountForUser,
-	createWalletForUser,
+	createWalletsForUser,
+	getWallets,
+	getWalletForCurrency,
 	getCardObject,
 	preAuthorize,
 	getPreauthorizationStatus,
@@ -39,74 +47,132 @@ var https = require("https"),
 	createSharingearUser,
 	registerSharingearBankDetails;
 
-//Check if Sharingear user exists, if not create it and store ID in database
-sg_user = null;
-db.query("SELECT mangopay_id, wallet_id, vat FROM sharingear LIMIT 1", [], function(error, rows) {
-	var createSGWallet, vat;
-	if(error) {
-		console.log("Error selecting Sharingear payment details: " + error);
-		return;
-	}
-	if(rows.length > 0) {
-		vat = rows[0].vat;
-		if(rows[0].mangopay_id !== null && rows[0].mangopay_id !== "" && rows[0].wallet_id !== null && rows[0].wallet_id !== "") {
-			sg_user = {
-				mangopay_id: rows[0].mangopay_id,
-				wallet_id: rows[0].wallet_id,
-				vat: vat
-			};
+
+loadPayment = function(callback) {
+	var Payment = this;
+	this.sg_user = {
+		mangopay_id: null,
+		wallets: [],
+		vat: 0
+	};
+	//Check if Sharingear user exists, if not create it and store ID in database
+	db.query("SELECT mangopay_id, vat FROM sharingear LIMIT 1", [], function(error, rows) {
+		if(error) {
+			callback("Error selecting Sharingear payment details: " + error);
 			return;
 		}
-	}
+		if(rows[0] && rows[0].mangopay_id !== null && rows[0].mangopay_id !== "") {
+			Payment.sg_user.mangopay_id = rows[0].mangopay_id;
+			Payment.sg_user.vat = rows[0].vat;
 
-	createSGWallet = function(mangopay_id) {
-		createWalletForUser(mangopay_id, function(error, wallet_id) {
-			if(error) {
-				console.log("Error creating wallet for Sharingear: " + error);
-				return;
-			}
-			db.query("UPDATE sharingear SET wallet_id=? LIMIT 1", [wallet_id], function(error) {
+			Payment.getWallets(Payment.sg_user.mangopay_id, function(error, wallets) {
+				var sgCurrencies = [],
+					supportedCurrencies, i;
 				if(error) {
-					console.log("Error storing Sharingear payment IDs: " + error);
+					callback("Error retrieving SG wallets: " + error);
 					return;
 				}
-				sg_user = {
-					mangopay_id: mangopay_id,
-					wallet_id: wallet_id,
-					vat: vat
-				};
+				supportedCurrencies = Localization.getSupportedCurrencies();
+				if(wallets.length <= 0) {
+					Payment.createSGWallets(supportedCurrencies, callback);
+				}
+				else if(wallets.length < supportedCurrencies.length) {
+					for(i = 0; i < wallets.length; i++) {
+						sgCurrencies.push(wallets[i].currency);
+					}
+					Payment.createSGWallets(_.difference(supportedCurrencies, sgCurrencies), callback);
+				}
+				else {
+					callback(null);
+				}
 			});
-		});
-	};
-
-	if(rows[0] && rows[0].mangopay_id !== null && rows[0].mangopay_id !== "") {
-		createSGWallet(rows[0].mangopay_id);
-	}
-	else {
-		createSharingearUser(function(error, mangopay_id) {
-			if(error) {
-				console.log("Error creating Sharingear user: " + error);
-				return;
-			}
-			registerSharingearBankDetails(mangopay_id, function(error) {
+		}
+		else {
+			createSharingearUser(function(error, mangopay_id) {
 				if(error) {
-					console.log("Error registering Sharingear bank details: " + error);
+					callback("Error creating Sharingear user: " + error);
 					return;
 				}
-				db.query("INSERT INTO sharingear(mangopay_id) VALUES(?)", [mangopay_id], function(error) {
+				registerSharingearBankDetails(mangopay_id, function(error) {
 					if(error) {
-						console.log("Error storing Sharingear mangopay_id: " + error);
+						callback("Error registering Sharingear bank details: " + error);
 						return;
 					}
-					createSGWallet(mangopay_id);
+					db.query("INSERT INTO sharingear(mangopay_id) VALUES(?)", [mangopay_id], function(error) {
+						if(error) {
+							callback("Error storing Sharingear mangopay_id: " + error);
+							return;
+						}
+						Payment.createSGWallets(null, callback);
+					});
 				});
+			});
+		}
+	});
+};
+
+createSGWallets = function(currencies, callback) {
+	var Payment = this;
+	Payment.createWalletsForUser(Payment.sg_user.mangopay_id, currencies, function(error) {
+		if(error) {
+			callback("Error creating wallet for Sharingear: " + error);
+			return;
+		}
+		Payment.getWallets(Payment.sg_user.mangopay_id, function(error, wallets) {
+			if(error) {
+				callback("Error retrieving newly created SG wallets: " + error);
+				return;
+			}
+			Payment.sg_user.wallets = wallets;
+			callback(null);
+		});
+	});
+};
+
+getSGWalletForCurrency = function(currency, callback) {
+	var Payment = this,
+		supportedCurrencies = Localization.getSupportedCurrencies(),
+		sgCurrencies = [],
+		getWallet, i;
+
+	getWallet = function() {
+		for(i = 0; i < Payment.sg_user.wallets.length; i++) {
+			if(Payment.sg_user.wallets[i].currency === currency) {
+				callback(null, Payment.sg_user.wallets[i]);
+				return;
+			}
+		}
+		callback("No SG wallet for currency: " + currency);
+	};
+
+	if(Payment.sg_user.wallets.length < supportedCurrencies.length) {
+		//A currency got added since sg user was created
+		for(i = 0; i < Payment.sg_user.wallets.length; i++) {
+			sgCurrencies.push(Payment.sg_user.wallets[i].currency);
+		}
+		Payment.createSGWallets(_.difference(supportedCurrencies, sgCurrencies), function(error) {
+			if(error) {
+				callback("Error creating wallets for missing currencies");
+				return;
+			}
+			Payment.getWallets(Payment.sg_user.mangopay_id, function(error, wallets) {
+				if(error) {
+					callback("Error retrieving newly created SG wallets: " + error);
+					return;
+				}
+				Payment.sg_user.wallets = wallets;
+				getWallet();
 			});
 		});
 	}
-});
+	else {
+		getWallet();
+	}
+};
 
-updateUser = function(mangopay_id, wallet_id, user, callback) {
-	var data, handleResponse;
+updateUser = function(mangopay_id, user, callback) {
+	var Payment = this,
+		data, handleResponse;
 
 	data = {
 		Email: user.email,
@@ -142,18 +208,43 @@ updateUser = function(mangopay_id, wallet_id, user, callback) {
 			return;
 		}
 		mangopay_id = responseData.Id;
-		if(wallet_id !== null) {
-			callback(null, mangopay_id, wallet_id);
-		}
-		else {
-			createWalletForUser(mangopay_id, function(error, wallet_id) {
-				if(error) {
-					callback("Error creating wallet for updated user: " + error);
-					return;
+
+		Payment.getWallets(mangopay_id, function(error, wallets) {
+			var userCurrencies = [],
+				supportedCurrencies, i;
+			if(error) {
+				callback("Error retrieving wallet IDs for user: " + error);
+				return;
+			}
+			supportedCurrencies = Localization.getSupportedCurrencies();
+			if(wallets.length <= 0) {
+				//Create wallets for user
+				Payment.createWalletsForUser(mangopay_id, null, function(error) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					callback(null, mangopay_id);
+				});
+			}
+			else if(supportedCurrencies.length < wallets.length) {
+				//The user is missing wallets for some currencies
+				for(i = 0; i < wallets.length; i++) {
+					userCurrencies.push(wallets[i].currency);
 				}
-				callback(null, mangopay_id, wallet_id);
-			});
-		}
+				Payment.createWalletsForUser(mangopay_id, _.difference(supportedCurrencies, userCurrencies), function(error) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					callback(null, mangopay_id);
+				});
+			}
+			else {
+				//The user already has the required wallets
+				callback(null, mangopay_id);
+			}
+		});
 	};
 
 	if(mangopay_id === null) {
@@ -207,18 +298,110 @@ registerBankAccountForUser = function(user, iban, swift, callback) {
 	});
 };
 
-createWalletForUser = function(mangopay_id, callback) {
-	var postData = {
-		Owners: [mangopay_id],
-		Description: "Sharingear user wallet.",
-		Currency: "DKK"
+/**
+ * Since MangoPay does not support cross currency transactions.
+ */
+createWalletsForUser = function(mangopay_id, currencies, callback) {
+	var wallets = [],
+		createWallet, i, callbackCount, errorCount, errorMsg, addWalletsToDB, walletCreatedCallback;
+
+	if(currencies === null) {
+		currencies = Localization.getSupportedCurrencies();
+	}
+
+	createWallet = function(mangopay_id, currency, callback) {
+		var postData = {
+			Owners: [mangopay_id],
+			Description: "Sharingear user wallet.",
+			Currency: currency
+		};
+		gatewayPost("/wallets", postData, function(error, data) {
+			var parsedData;
+			if(error) {
+				console.log("Error creating wallet for user: " + error);
+				return;
+			}
+			parsedData = JSON.parse(data);
+			if(parsedData.errors) {
+				console.log("Error creating wallet for user: " + data);
+				return;
+			}
+			callback(null, parsedData);
+		});
 	};
-	gatewayPost("/wallets", postData, function(error, data) {
+
+	addWalletsToDB = function() {
+		var sql = "INSERT INTO wallets(mangopay_id, wallet_id, currency) VALUES ",
+			params = [],
+			i;
+		for(i = 0; i < wallets.length - 1; i++) {
+			sql += "(?, ?, ?),";
+			params.push(mangopay_id, wallets[i].id, wallets[i].currency);
+		}
+		sql += "(?, ?, ?)";
+		params.push(mangopay_id, wallets[wallets.length - 1].id, wallets[wallets.length - 1].currency);
+		db.query(sql, params, function(error) {
+			if(error) {
+				callback("Error adding created wallets to db: " + error);
+				return;
+			}
+			callback(null);
+		});
+	};
+
+	callbackCount = 0;
+	errorCount = 0;
+	walletCreatedCallback = function(error, wallet) {
+		callbackCount++;
 		if(error) {
-			console.log("Error creating wallet for user: " + error);
+			errorCount++;
+			errorMsg = error;
 			return;
 		}
-		callback(null, JSON.parse(data).Id);
+		wallets.push({
+			id: wallet.Id,
+			currency: wallet.Currency
+		});
+		
+		if(callbackCount === currencies.length) {
+			if(errorCount > 0) {
+				callback("Error creating wallets for user: " + errorMsg);
+			}
+			else {
+				addWalletsToDB();
+			}
+		}
+	};
+
+	for(i = 0; i < currencies.length; i++) {
+		console.log("Create wallet for currency: " + currencies[i]);
+		createWallet(mangopay_id, currencies[i], walletCreatedCallback);
+	}
+};
+
+getWallets = function(mangopay_id, callback) {
+	db.query("SELECT wallet_id, currency FROM wallets WHERE mangopay_id=?", [mangopay_id], function(error, rows) {
+		if(error) {
+			callback("Error selecting wallets: " + error);
+			return;
+		}
+		callback(null, rows);
+	});
+};
+
+getWalletForCurrency = function(mangopay_id, currency, callback) {
+	console.log("mangopay_id: " + mangopay_id);
+	console.log("currency: " + currency);
+	db.query("SELECT wallet_id FROM wallets WHERE mangopay_id=? AND currency=? LIMIT 1", [mangopay_id, currency], function(error, rows) {
+		if(error) {
+			callback("Error selecting wallet: " + error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No wallets found for id " + mangopay_id + " and currency " + currency);
+			return;
+		}
+		callback(null, rows[0].wallet_id);
 	});
 };
 
@@ -252,7 +435,7 @@ preAuthorize = function(sellerMangoPayData, buyerMangoPayData, bookingData, call
 	//var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
 	var price, buyerFee, amount, postData;
 
-	price = parseInt(bookingData.renter_price, 10);
+	price = parseInt(bookingData.owner_price, 10); //The transactions happen in the owner currency
 
 	//View Sharingear transaction model document for explanation
 	/*sellerFee = price / 100 * parseFloat(sellerMangoPayData.seller_fee);
@@ -281,7 +464,7 @@ preAuthorize = function(sellerMangoPayData, buyerMangoPayData, bookingData, call
 		AuthorId: buyerMangoPayData.mangopay_id,
 		CardId: bookingData.cardId,
 		DebitedFunds: {
-			Currency: bookingData.renter_currency,
+			Currency: bookingData.owner_currency,
 			Amount: amount * 100
 		},
 		SecureMode: "FORCE",
@@ -321,173 +504,197 @@ getPreauthorizationStatus = function(preauthID, callback) {
 };
 
 chargePreAuthorization = function(seller, buyer, bookingData, callback) {
-	//var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
-	var price, buyerFee, amount, postData;
-
-	price = parseInt(bookingData.renter_price, 10);
-	
-	//View Sharingear transaction model document for explanation
-	/*sellerFee = price / 100 * parseFloat(seller.seller_fee);
-	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
-	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
-	buyerFee = price / 100 * parseFloat(buyer.buyer_fee);
-	buyerFeeVAT = buyerFee / 100 * sg_user.vat;
-	amount = price + sellerVAT + buyerFee + buyerFeeVAT;
-	
-	console.log("--- CHARGE:");
-	console.log("price: " + price);
-	console.log("sellerVAT: " + sellerVAT);
-	console.log("buyerFee: " + buyerFee);
-	console.log("buyerFeeVAT: " + buyerFeeVAT);
-	console.log("amount: " + amount);*/
-
-	buyerFee = price / 100 * parseFloat(buyer.buyer_fee);
-	amount = price + buyerFee;
-
-	console.log("--- CHARGE:");
-	console.log("price: " + price);
-	console.log("buyerFee: " + buyerFee);
-	console.log("amount: " + amount);
-
-	postData = {
-		AuthorId: buyer.mangopay_id,
-		DebitedFunds: {
-			Currency: bookingData.renter_currency,
-			Amount: amount * 100
-		},
-		Fees: {
-			Currency: bookingData.renter_currency,
-			Amount: buyerFee * 100
-		},
-		CreditedWalletId: sg_user.wallet_id,
-		PreauthorizationId: bookingData.preauth_id
-	};
-	gatewayPost("/payins/PreAuthorized/direct", postData, function(error, data) {
-		var parsedData, receiptParameters;
+	this.getWalletForCurrency(this.sg_user.mangopay_id, bookingData.owner_currency, function(error, wallet_id) {
 		if(error) {
-			callback("Error charging preauthorized booking: " + error);
+			callback("Error getting SG wallet: " + error);
 			return;
 		}
-		parsedData = JSON.parse(data);
-		if(parsedData.Status !== "SUCCEEDED") {
-			console.log("chargePreAuthorization response: ");
-			console.log(data);
-			callback("Charging preauthorized booking failed.");
-			return;
-		}
-		console.log("charged successfully");
-		callback(null);
-		receiptParameters = {
-			price: price,
-			fee: buyerFee,
-			//vat: buyerFeeVAT,
-			vat: "",
-			//feeVat: sellerVAT,
-			feeVat: "",
-			currency: bookingData.renter_currency
+
+		//var postData, sellerFee, sellerFeeVAT, buyerFee, buyerFeeVAT, sellerVAT, amount;
+		var price, buyerFee, amount, postData;
+
+		price = parseInt(bookingData.owner_price, 10); //Transactions happen in owner currency
+	
+		//View Sharingear transaction model document for explanation
+		/*sellerFee = price / 100 * parseFloat(seller.seller_fee);
+		sellerFeeVAT = sellerFee / 100 * sg_user.vat;
+		sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
+		buyerFee = price / 100 * parseFloat(buyer.buyer_fee);
+		buyerFeeVAT = buyerFee / 100 * sg_user.vat;
+		amount = price + sellerVAT + buyerFee + buyerFeeVAT;
+	
+		console.log("--- CHARGE:");
+		console.log("price: " + price);
+		console.log("sellerVAT: " + sellerVAT);
+		console.log("buyerFee: " + buyerFee);
+		console.log("buyerFeeVAT: " + buyerFeeVAT);
+		console.log("amount: " + amount);*/
+
+		buyerFee = price / 100 * parseFloat(buyer.buyer_fee);
+		amount = price + buyerFee;
+
+		console.log("--- CHARGE:");
+		console.log("price: " + price);
+		console.log("buyerFee: " + buyerFee);
+		console.log("amount: " + amount);
+
+
+
+		postData = {
+			AuthorId: buyer.mangopay_id,
+			DebitedFunds: {
+				Currency: bookingData.owner_currency,
+				Amount: amount * 100
+			},
+			Fees: {
+				Currency: bookingData.owner_currency,
+				Amount: buyerFee * 100
+			},
+			CreditedWalletId: wallet_id,
+			PreauthorizationId: bookingData.preauth_id
 		};
-		sendReceipt(buyer, bookingData.gear_id, receiptParameters, function(error) {
+		gatewayPost("/payins/PreAuthorized/direct", postData, function(error, data) {
+			var parsedData, receiptParameters;
 			if(error) {
-				console.log("Error sending receipt: " + error);
+				callback("Error charging preauthorized booking: " + error);
 				return;
 			}
+			parsedData = JSON.parse(data);
+			if(parsedData.Status !== "SUCCEEDED") {
+				console.log("chargePreAuthorization response: ");
+				console.log(data);
+				callback("Charging preauthorized booking failed.");
+				return;
+			}
+			console.log("charged successfully");
+			callback(null);
+			receiptParameters = {
+				price: price,
+				fee: buyerFee,
+				//vat: buyerFeeVAT,
+				vat: "",
+				//feeVat: sellerVAT,
+				feeVat: "",
+				currency: bookingData.owner_currency
+			};
+			sendReceipt(buyer, bookingData.gear_id, receiptParameters, function(error) {
+				if(error) {
+					console.log("Error sending receipt: " + error);
+					return;
+				}
+			});
 		});
 	});
 };
 
 payOutSeller = function(seller, bookingData, callback) {
-	//var sellerFee, sellerFeeVAT, sellerVAT, amount, postData;
-	var price, sellerFee, amount, postData;
-
-	price = parseInt(bookingData.owner_price, 10);
-
-	/*sellerFee = price / 100 * parseFloat(seller.seller_fee);
-	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
-	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
-	amount = price + sellerVAT;
-
-	console.log("--- PAY OWNER:");
-	console.log("price: " + price);
-	console.log("sellerFee: " + sellerFee);
-	console.log("sellerFeeVAT: " + sellerFeeVAT);
-	console.log("sellerVAT: " + sellerVAT);
-	console.log("amount: " + amount);*/
-
-	sellerFee = price / 100 * parseFloat(seller.seller_fee);
-	amount = price;
-
-	console.log("--- PAY OWNER:");
-	console.log("price: " + price);
-	console.log("sellerFee: " + sellerFee);
-	console.log("amount: " + amount);
-
-	postData = {
-		AuthorId: sg_user.mangopay_id,
-		CreditedUserId: seller.mangopay_id,
-		DebitedFunds: {
-			Amount: amount * 100,
-			Currency: bookingData.owner_currency
-		},
-		Fees: {
-			Amount: sellerFee * 100,
-			Currency: bookingData.owner_currency
-		},
-		DebitedWalletID: sg_user.wallet_id,
-		CreditedWalletID: seller.wallet_id
-	};
-
-	gatewayPost("/transfers", postData, function(error, data) {
-		var parsedData;
+	var Payment = this;
+	Payment.getWalletForCurrency(seller.mangopay_id, bookingData.owner_currency, function(error, seller_wallet_id) {
 		if(error) {
-			callback("Error transfering between wallets: " + error);
+			callback("Error selecting owner wallet: " + error);
 			return;
 		}
-		parsedData = JSON.parse(data);
-		if(parsedData.Status !== "SUCCEEDED") {
-			callback("Error transfering between wallets: " + data);
-			return;
-		}
-		postData = {
-			AuthorId: seller.mangopay_id,
-			DebitedFunds: {
-				Amount: parsedData.CreditedFunds.Amount,
-				Currency: bookingData.owner_currency
-			},
-			Fees: {
-				Amount: 0,
-				Currency: bookingData.owner_currency
-			},
-			DebitedWalletID: seller.wallet_id,
-			BankAccountId: seller.bank_id,
-			BankWireRef: "Sharingear rental"
-		};
-		gatewayPost("/payouts/bankwire", postData, function(error, data) {
-			var parsedData, receiptParameters;
+
+		Payment.getWalletForCurrency(Payment.sg_user.mangopay_id, bookingData.owner_currency, function(error, sg_wallet_id) {
 			if(error) {
-				callback("Error wiring from wallet: " + error);
+				callback("Error selecting SG wallet: " + error);
 				return;
 			}
-			parsedData = JSON.parse(data);
-			if(parsedData.Status !== "SUCCEEDED" && parsedData.Status !== "CREATED") {
-				callback("Error wiring from wallet: " + data);
-				return;
-			}
-			console.log("payout successful");
-			callback(null);
-			receiptParameters = {
-				price: price,
-				fee: sellerFee,
-				//vat: sellerVAT,
-				vat: "",
-				//feeVat: sellerFeeVAT,
-				feeVat: "",
-				currency: bookingData.owner_currency
+
+			//var sellerFee, sellerFeeVAT, sellerVAT, amount, postData;
+			var price, sellerFee, amount, postData;
+
+			price = parseInt(bookingData.owner_price, 10);
+
+			/*sellerFee = price / 100 * parseFloat(seller.seller_fee);
+			sellerFeeVAT = sellerFee / 100 * sg_user.vat;
+			sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
+			amount = price + sellerVAT;
+
+			console.log("--- PAY OWNER:");
+			console.log("price: " + price);
+			console.log("sellerFee: " + sellerFee);
+			console.log("sellerFeeVAT: " + sellerFeeVAT);
+			console.log("sellerVAT: " + sellerVAT);
+			console.log("amount: " + amount);*/
+
+			sellerFee = price / 100 * parseFloat(seller.seller_fee);
+			amount = price;
+
+			console.log("--- PAY OWNER:");
+			console.log("price: " + price);
+			console.log("sellerFee: " + sellerFee);
+			console.log("amount: " + amount);
+
+			postData = {
+				AuthorId: Payment.sg_user.mangopay_id,
+				CreditedUserId: seller.mangopay_id,
+				DebitedFunds: {
+					Amount: amount * 100,
+					Currency: bookingData.owner_currency
+				},
+				Fees: {
+					Amount: sellerFee * 100,
+					Currency: bookingData.owner_currency
+				},
+				DebitedWalletID: sg_wallet_id,
+				CreditedWalletID: seller_wallet_id
 			};
-			sendInvoice(seller, bookingData.gear_id, receiptParameters, function(error) {
+
+			gatewayPost("/transfers", postData, function(error, data) {
+				var parsedData;
 				if(error) {
-					console.log("Error sending receipt: " + error);
+					callback("Error transfering between wallets: " + error);
 					return;
 				}
+				parsedData = JSON.parse(data);
+				if(parsedData.Status !== "SUCCEEDED") {
+					callback("Error transfering between wallets: " + data);
+					return;
+				}
+				postData = {
+					AuthorId: seller.mangopay_id,
+					DebitedFunds: {
+						Amount: parsedData.CreditedFunds.Amount,
+						Currency: bookingData.owner_currency
+					},
+					Fees: {
+						Amount: 0,
+						Currency: bookingData.owner_currency
+					},
+					DebitedWalletID: seller_wallet_id,
+					BankAccountId: seller.bank_id,
+					BankWireRef: "Sharingear rental"
+				};
+				gatewayPost("/payouts/bankwire", postData, function(error, data) {
+					var parsedData, receiptParameters;
+					if(error) {
+						callback("Error wiring from wallet: " + error);
+						return;
+					}
+					parsedData = JSON.parse(data);
+					if(parsedData.Status !== "SUCCEEDED" && parsedData.Status !== "CREATED") {
+						callback("Error wiring from wallet: " + data);
+						return;
+					}
+					console.log("payout successful");
+					callback(null);
+					receiptParameters = {
+						price: price,
+						fee: sellerFee,
+						//vat: sellerVAT,
+						vat: "",
+						//feeVat: sellerFeeVAT,
+						feeVat: "",
+						currency: bookingData.owner_currency
+					};
+					sendInvoice(seller, bookingData.gear_id, receiptParameters, function(error) {
+						if(error) {
+							console.log("Error sending receipt: " + error);
+							return;
+						}
+					});
+				});
 			});
 		});
 	});
@@ -564,7 +771,7 @@ sendInvoice = function(receiver, bookedGearID, parameters, callback) {
 };
 
 getSGBalance = function(callback) {
-	gatewayGet("/wallets/" + sg_user.wallet_id, function(error, data) {
+	gatewayGet("/wallets/" + this.sg_user.wallet_id, function(error, data) {
 		var parsedData;
 		if(error) {
 			callback("Error getting Sharingear wallet: " + error);
@@ -576,7 +783,7 @@ getSGBalance = function(callback) {
 };
 
 getSGTransactions = function(callback) {
-	gatewayGet("/wallets/" + sg_user.wallet_id + "/transactions", function(error, data) {
+	gatewayGet("/wallets/" + this.sg_user.wallet_id + "/transactions", function(error, data) {
 		var parsedData;
 		if(error) {
 			callback("Error getting Sharingear transactions: " + error);
@@ -642,7 +849,7 @@ gatewayPost = function(apiPath, data, callback) {
 		var buffer = "",
 			options, postData, request, utf8overLoad;
 		if(error) {
-			callback(error);
+			callback("Error getting token: " + error);
 			return;
 		}
 
@@ -692,13 +899,22 @@ gatewayPost = function(apiPath, data, callback) {
 gatewayPut = function(apiPath, data, callback) {
 	getToken(function(error, token) {
 		var buffer = "",
-			options, postData, request;
+			options, postData, request, utf8overLoad;
 		if(error) {
 			callback(error);
 			return;
 		}
 
 		postData = JSON.stringify(data);
+
+		//This is to send correct content length when dealing with unicode characters
+		utf8overLoad = encodeURIComponent(postData).match(/%[89ABab]/g);
+		if(utf8overLoad === null) {
+			utf8overLoad = 0;
+		}
+		else {
+			utf8overLoad = utf8overLoad.length;
+		}
 
 		options = {
 			host: Config.MANGOPAY_SANDBOX_URL,
@@ -707,7 +923,7 @@ gatewayPut = function(apiPath, data, callback) {
 			method: "PUT",
 			headers: {
 				"Content-Type": "application/json",
-				"Content-Length": postData.length,
+				"Content-Length": postData.length + utf8overLoad,
 				"Authorization": "Bearer " + token
 			}
 		};
@@ -838,8 +1054,15 @@ registerSharingearBankDetails = function(mangopay_id, callback) {
 };
 
 module.exports = {
+	loadPayment: loadPayment,
+	createSGWallets: createSGWallets,
+	getSGWalletForCurrency: getSGWalletForCurrency,
+
 	updateUser: updateUser,
 	registerBankAccountForUser: registerBankAccountForUser,
+	createWalletsForUser: createWalletsForUser,
+	getWallets: getWallets,
+	getWalletForCurrency: getWalletForCurrency,
 	getCardObject: getCardObject,
 
 	preAuthorize: preAuthorize,

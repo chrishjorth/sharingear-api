@@ -21,7 +21,7 @@ var db = require("./database"),
 set = function(gearID, availability, callback) {
 	//Remove all availability for the gear id
 	//separate the wipe and call here
-	db.query("DELETE FROM availability WHERE gear_id=?", [gearID], function(error) {
+	db.query("DELETE FROM gear_availability WHERE gear_id=?", [gearID], function(error) {
 		var sql, i, valueArray, startMoment, endMoment;
 		if(error) {
 			callback(error);
@@ -31,7 +31,7 @@ set = function(gearID, availability, callback) {
 			callback(null);
 			return;
 		}
-		sql = "INSERT INTO availability(start_time, end_time, gear_id) VALUES ";
+		sql = "INSERT INTO gear_availability(start_time, end_time, gear_id) VALUES ";
 		valueArray = [];
 		for(i = 0; i < availability.length - 1; i++) {
 			if(!availability[i].start_time || !availability[i].end_time) {
@@ -60,7 +60,7 @@ set = function(gearID, availability, callback) {
 };
 
 get = function(gearID, callback) {
-	db.query("SELECT start_time, end_time FROM availability WHERE gear_id=?", [gearID], function(error, rows) {
+	db.query("SELECT start_time, end_time FROM gear_availability WHERE gear_id=?", [gearID], function(error, rows) {
 		var availabilityArray, i;
 		if(error) {
 			callback(error);
@@ -80,7 +80,7 @@ get = function(gearID, callback) {
 removeInterval = function(gearID, startTime, endTime, callback) {
 	var Availability = this;
 	//Get availability sorted, add data and then call set
-	db.query("SELECT id, start_time, end_time, gear_id FROM availability WHERE gear_id=? ORDER BY start_time DESC", [gearID], function(error, rows) {
+	db.query("SELECT id, start_time, end_time, gear_id FROM gear_availability WHERE gear_id=? ORDER BY start_time DESC", [gearID], function(error, rows) {
 		var i, startMoment, endMoment, intervalStartMoment, intervalEndMoment, dummyMoment;
 		if(error) {
 			callback("Error selecting availability: " + error);

@@ -27,9 +27,7 @@ var db = require("./database"),
 	readGearWithID,
 	search,
 	getPrice,
-	getOwner,
-	setStatus,
-	checkForRentals;
+	getOwner;
 
 /**
  * @returns fx {
@@ -317,6 +315,7 @@ createGear = function(newGear, callback) {
 			newGear.price_a,
 			newGear.price_b,
 			newGear.price_c,
+			newGear.currency,
 			newGear.address,
 			newGear.postal_code,
 			newGear.city,
@@ -327,7 +326,7 @@ createGear = function(newGear, callback) {
 			newGear.owner_id
 		];
 
-		db.query("INSERT INTO gear(gear_type, subtype, brand, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)", gear, function(error, result) {
+		db.query("INSERT INTO gear(gear_type, subtype, brand, model, description, images, price_a, price_b, price_c, currency, address, postal_code, city, region, country, latitude, longitude, updated, owner_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)", gear, function(error, result) {
 			if(error) {
 				callback(error);
 				return;
@@ -394,15 +393,15 @@ createGear = function(newGear, callback) {
 
 readGearFromUser = function(userID, callback) {
 	//Check if any gear is rented out
-	checkForRentals(userID, function(error) {
+	//checkForRentals(userID, function(error) {
 		var sql;
-		if(error) {
+		/*if(error) {
 			callback("Error checking users gear for rentals: " + error);
 			return;
-		}
+		}*/
 		//Get users gear, with names for type, subtype and brans and accessories
-		sql = "SELECT gear.id, gear.gear_type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id, accessories.accessory";
-		sql += " FROM (SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear.owner_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand) AS gear";
+		sql = "SELECT gear.id, gear.gear_type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.currency, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id, accessories.accessory";
+		sql += " FROM (SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.currency, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear.owner_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand) AS gear";
 		sql += " LEFT JOIN (SELECT gear_has_accessories.gear_id, gear_accessories.accessory FROM gear_has_accessories, gear_accessories WHERE gear_has_accessories.accessory_id=gear_accessories.id) AS accessories ON accessories.gear_id=gear.id;";
 		db.query(sql, [userID], function(error, rows) {
 			var gear, accessories, i, currentGearID, gearItem;
@@ -439,6 +438,7 @@ readGearFromUser = function(userID, callback) {
 						price_a: gearItem.price_a,
 						price_b: gearItem.price_b,
 						price_c: gearItem.price_c,
+						currency: gearItem.currency,
 						address: gearItem.address,
 						postal_code: gearItem.postal_code,
 						city: gearItem.city,
@@ -446,7 +446,6 @@ readGearFromUser = function(userID, callback) {
 						country: gearItem.country,
 						latitude: gearItem.latitude,
 						longitude: gearItem.longitude,
-						gear_status: gearItem.gear_status,
 						owner_id: gearItem.owner_id,
 						accessories: accessories
 					});
@@ -454,7 +453,7 @@ readGearFromUser = function(userID, callback) {
 			}
 			callback(null, gear);
 		});
-	});
+	//});
 };
 
 addImage = function(userID, gearID, imageURL, callback) {
@@ -510,6 +509,7 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 			updatedGearData.price_a,
 			updatedGearData.price_b,
 			updatedGearData.price_c,
+			updatedGearData.currency,
 			updatedGearData.address,
 			updatedGearData.postal_code,
 			updatedGearData.city,
@@ -520,7 +520,7 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 			gearID
 		];
 
-		db.query("UPDATE gear SET subtype=?, brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=?, updated=NULL WHERE id=? LIMIT 1", inputs, function(error, result) {
+		db.query("UPDATE gear SET subtype=?, brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=?, currency=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=?, updated=NULL WHERE id=? LIMIT 1", inputs, function(error, result) {
 			if(error) {
 				callback(error);
 				return;
@@ -590,8 +590,8 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 
 readGearWithID = function(gearID, callback) {
 	var sql;
-	sql = "SELECT gear.id, gear.gear_type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id, accessories.accessory";
-	sql += " FROM (SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.gear_status, gear.owner_id FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear.id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand LIMIT 1) AS gear";
+	sql = "SELECT gear.id, gear.gear_type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.currency, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id, accessories.accessory";
+	sql += " FROM (SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.currency, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear.id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand LIMIT 1) AS gear";
 	sql += " LEFT JOIN (SELECT gear_has_accessories.gear_id, gear_accessories.accessory FROM gear_has_accessories, gear_accessories WHERE gear_has_accessories.accessory_id=gear_accessories.id) AS accessories ON accessories.gear_id=gear.id;";
 	db.query(sql, [gearID], function(error, rows) {
 		var gear, gearItem, accessories, i;
@@ -621,6 +621,7 @@ readGearWithID = function(gearID, callback) {
 			price_a: gearItem.price_a,
 			price_b: gearItem.price_b,
 			price_c: gearItem.price_c,
+			currency: gearItem.currency,
 			address: gearItem.address,
 			postal_code: gearItem.postal_code,
 			city: gearItem.city,
@@ -628,7 +629,6 @@ readGearWithID = function(gearID, callback) {
 			country: gearItem.country,
 			latitude: gearItem.latitude * 180 / Math.PI,
 			longitude: gearItem.longitude * 180 / Math.PI,
-			gear_status: gearItem.gear_status,
 			owner_id: gearItem.owner_id,
 			accessories: accessories
 		};
@@ -642,7 +642,7 @@ readGearWithID = function(gearID, callback) {
  */
 search = function(location, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
-	db.search("SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
+	db.search("SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
 			console.log("Error searching for match: " + JSON.stringify(error));
@@ -667,7 +667,7 @@ search = function(location, gear, callback) {
 		//Convert to radians
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
-		sql = "SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, latitude, longitude, gear_status, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
+		sql = "SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM gear_main, gear_delta WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ",";
 		}
@@ -716,53 +716,6 @@ getOwner = function(gearID, callback) {
 	});
 };
 
-setStatus = function(gearID, status, callback) {
-	if(status !== "rented-out" && status !== null) {
-		callback("Error: invalid gear status.");
-		return;
-	}
-	db.query("UPDATE gear SET gear_status=? WHERE id=? LIMIT 1", [status, gearID], function(error) {
-		if(error) {
-			callback("Error updating gear status: " + error);
-			return;
-		}
-		callback(null);
-	});
-};
-
-/**
- * Checks status of gear owned by the user id as well as gear currently booked by the user id
- */
-checkForRentals = function(userID, callback) {
-	//Get bookings that are before or equal to the current day and for instruments that belong to the user
-	db.query("SELECT gear.id FROM bookings INNER JOIN gear ON DATE(bookings.start_time) <= DATE(NOW()) AND bookings.gear_id=gear.id AND (gear.owner_id=? OR bookings.renter_id=?) AND bookings.booking_status='accepted'", [userID, userID], function(error, rows) {
-		var sql, i, params;
-		if(error) {
-			callback("Error selecting gear bookings equal or prior to current day: " + error);
-			return;
-		}
-		if(rows.length <= 0) {
-			callback(null);
-			return;
-		}
-		sql = "UPDATE gear SET gear_status='rented-out' WHERE id IN(";
-		params = [];
-		for(i = 0; i < rows.length - 1; i++) {
-			sql += "?,";
-			params.push(rows[i].id);
-		}
-		sql += "?)";
-		params.push(rows[rows.length - 1].id);
-		db.query(sql, params, function(error) {
-			if(error) {
-				callback("Error setting gear_status to rented-out: " + error);
-				return;
-			}
-			callback(null);
-		});
-	});
-};
-
 module.exports = {
 	getClassification: getClassification,
 	checkTypes: checkTypes,
@@ -782,8 +735,6 @@ module.exports = {
 	readGearWithID: readGearWithID,
 	search: search,
 	getPrice: getPrice,
-	getOwner: getOwner,
-	setStatus: setStatus,
-	checkForRentals: checkForRentals
+	getOwner: getOwner
 };
 
