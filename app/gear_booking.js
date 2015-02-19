@@ -180,12 +180,12 @@ read = function(bookingID, callback) {
 };
 
 readRentalsForUser = function(userID, callback) {
-	Gear.checkForRentals(userID, function(error) {
+	/*Gear.checkForRentals(userID, function(error) {
 		if(error) {
 			callback("Error checking gear for rentals: " + error);
 			return;
-		}
-		db.query("SELECT gear_bookings.id AS booking_id, gear_bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, gear_bookings.start_time, gear_bookings.end_time, gear_bookings.renter_price, gear_bookings.renter_currency, gear_bookings.owner_price, gear_bookings.owner_currency, gear_bookings.booking_status FROM gear, gear_bookings, gear_types, gear_subtypes, gear_brands WHERE gear.id=gear_bookings.gear_id AND gear.owner_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [userID], function(error, rows) {
+		}*/
+		db.query("SELECT gear_bookings.id AS booking_id, gear_bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.owner_id, gear_bookings.start_time, gear_bookings.end_time, gear_bookings.renter_price, gear_bookings.renter_currency, gear_bookings.owner_price, gear_bookings.owner_currency, gear_bookings.booking_status FROM gear, gear_bookings, gear_types, gear_subtypes, gear_brands WHERE gear.id=gear_bookings.gear_id AND gear.owner_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [userID], function(error, rows) {
 			if(error) {
 				callback("Error reading user rentals: " + error);
 				return;
@@ -197,16 +197,16 @@ readRentalsForUser = function(userID, callback) {
 				callback(null, rows);
 			}
 		});
-	});
+	//});
 };
 
 readReservationsForUser = function(renterID, callback){
-	Gear.checkForRentals(renterID, function(error) {
+	/*Gear.checkForRentals(renterID, function(error) {
 		if(error) {
 			callback("Error checking gear for rentals: " + error);
 			return;
-		}
-		db.query("SELECT gear_bookings.id AS booking_id, gear_bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.gear_status, gear.owner_id, gear_bookings.start_time, gear_bookings.end_time, gear_bookings.renter_price, gear_bookings.renter_currency, gear_bookings.owner_price, gear_bookings.owner_currency, gear_bookings.booking_status FROM gear, gear_bookings, gear_types, gear_subtypes, gear_brands WHERE gear_bookings.gear_id = gear.id AND gear_bookings.renter_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [renterID], function(error, rows) {
+		}*/
+		db.query("SELECT gear_bookings.id AS booking_id, gear_bookings.gear_id AS id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.city, gear.owner_id, gear_bookings.start_time, gear_bookings.end_time, gear_bookings.renter_price, gear_bookings.renter_currency, gear_bookings.owner_price, gear_bookings.owner_currency, gear_bookings.booking_status FROM gear, gear_bookings, gear_types, gear_subtypes, gear_brands WHERE gear_bookings.gear_id = gear.id AND gear_bookings.renter_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [renterID], function(error, rows) {
         	if(error) {
             	callback(error);
             	return;
@@ -218,7 +218,7 @@ readReservationsForUser = function(renterID, callback){
         		callback(null, rows);
         	}
     	});
-	});
+	//});
 };
 
 update = function(bookingData, callback) {
@@ -575,16 +575,16 @@ endBooking = function(bookingData, callback) {
 				callback(error);
 				return;
 			}
-			Gear.setStatus(bookingData.gear_id, null, function(error) {
+			/*Gear.setStatus(bookingData.gear_id, null, function(error) {
 				if(error) {
 					callback(error);
 					return;
-				}
+				}*/
 				callback(null);
 
 				Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, bookingData.owner_id);
 				Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, bookingData.renter_id);
-			});
+			//});
 		});
 	});
 };
