@@ -9,6 +9,7 @@
 var db = require("./database"),
 	Payment = require("./payment"),
 	Localization = require("./localization"),
+	XChangeRates = require("./xchangerates"),
 
 	getUserFromFacebookID,
 	createUserFromFacebookInfo,
@@ -205,7 +206,7 @@ readUser = function(userID, callback) {
 
 update = function(userID, updatedInfo, callback) {
 	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
-		var userInfo, updateUser;
+		var userInfo, updateUser, updatePaymentUser, newCurrency;
 		if(error) {
 			callback(error);
 			return;
@@ -253,18 +254,42 @@ update = function(userID, updatedInfo, callback) {
 			});
 		};
 
-		if(userInfo.birthdate === null || userInfo.address === null || userInfo.country === null || userInfo.nationality === null) {
-			//We do not have enough data to create a Payment user
-			updateUser(rows[0].mangopay_id);
-		}
-		else {
-			Payment.updateUser(rows[0].mangopay_id, userInfo, function(error, mangopay_id) {
+		updatePaymentUser = function() {
+			if(userInfo.birthdate === null || userInfo.address === null || userInfo.country === null || userInfo.nationality === null) {
+				//We do not have enough data to create a Payment user
+				updateUser(rows[0].mangopay_id);
+			}
+			else {
+				Payment.updateUser(rows[0].mangopay_id, userInfo, function(error, mangopay_id) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					updateUser(mangopay_id);
+				});
+			}
+		};
+
+		//TODO: We need to separate pricing into it's own table and module
+		if(userInfo.country !== rows[0].country) {
+			//We need to update gear currencies
+			newCurrency = Localization.getCurrency(userInfo.country);
+			XChangeRates.getRate(Localization.getCurrency(rows[0].country), newCurrency, function(error, rate) {
 				if(error) {
 					callback(error);
 					return;
 				}
-				updateUser(mangopay_id);
+				db.query("UPDATE gear SET price_a=price_a*?, price_b=price_b*?, price_c=price_c*?, currency=? WHERE owner_id=?", [rate, rate, rate, newCurrency, userID], function(error) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					updatePaymentUser();
+				});
 			});
+		}
+		else {
+			updatePaymentUser();
 		}
 	});
 };
