@@ -8,6 +8,7 @@
 
 var IS_PRODUCTION = true, //This variable should be set and saved according to the git branch: true for master and false for develop
 	fs = require('fs'),
+	SEARCH_RADIUS = 80000,
 	MYSQL_URL,
 	MYSQL_CA,
 	MYSQL_CERT,
@@ -61,5 +62,6 @@ module.exports = {
 	MANGOPAY_SANDBOX_URL: MANGOPAY_SANDBOX_URL,
 	MANGOPAY_USERNAME: MANGOPAY_USERNAME,
 	MANGOPAY_SANDBOX_KEY: MANGOPAY_SANDBOX_KEY,
+	SEARCH_RADIUS: SEARCH_RADIUS,
 	isProduction: isProduction
 };
