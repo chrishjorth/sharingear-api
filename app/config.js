@@ -7,7 +7,9 @@
 "use strict";
 
 var IS_PRODUCTION = false, //This variable should be set and saved according to the git branch: true for master and false for develop
-	fs = require('fs'),
+	fs = require("fs"),
+	SEARCH_RADIUS = 80000,
+	SHARINGEAR_VAT = 25.0,
 	MYSQL_URL,
 	MYSQL_CA,
 	MYSQL_CERT,
@@ -61,5 +63,7 @@ module.exports = {
 	MANGOPAY_SANDBOX_URL: MANGOPAY_SANDBOX_URL,
 	MANGOPAY_USERNAME: MANGOPAY_USERNAME,
 	MANGOPAY_SANDBOX_KEY: MANGOPAY_SANDBOX_KEY,
+	SEARCH_RADIUS: SEARCH_RADIUS,
+	SHARINGEAR_VAT: SHARINGEAR_VAT,
 	isProduction: isProduction
 };

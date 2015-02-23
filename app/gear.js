@@ -8,6 +8,7 @@
 
 var db = require("./database"),
 	Moment = require("moment"),
+	Config = require("./config"),
 
 	getClassification,
 	checkTypes,
@@ -672,8 +673,8 @@ search = function(location, gear, callback) {
 			sql += rows[i].id + ",";
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
-		sql += ") AND distance <= 10000.0 ORDER BY distance ASC LIMIT 100";
-		db.search(sql, [lat, lng], function(error, rows) {
+		sql += ") AND distance <= ?.0  ORDER BY distance ASC LIMIT 100";
+		db.search(sql, [lat, lng, Config.SEARCH_RADIUS], function(error, rows) {
 			var i;
 			if(error) {
 				console.log("Error filtering by location: " + JSON.stringify(error));

@@ -94,12 +94,14 @@ loadPayment = function(callback) {
 					callback("Error creating Sharingear user: " + error);
 					return;
 				}
+				Payment.sg_user.mangopay_id = mangopay_id;
+				Payment.sg_user.vat = Config.SHARINGEAR_VAT;
 				registerSharingearBankDetails(mangopay_id, function(error) {
 					if(error) {
 						callback("Error registering Sharingear bank details: " + error);
 						return;
 					}
-					db.query("INSERT INTO sharingear(mangopay_id) VALUES(?)", [mangopay_id], function(error) {
+					db.query("INSERT INTO sharingear(mangopay_id, vat) VALUES(?, ?)", [Payment.sg_user.mangopay_id, Payment.sg_user.vat], function(error) {
 						if(error) {
 							callback("Error storing Sharingear mangopay_id: " + error);
 							return;
