@@ -39,11 +39,19 @@ getServerSideToken = function(accessToken, callback) {
 getUserInfo = function(longToken, callback) {
 	var apiPath = "/me?scope=email&access_token=" + longToken;
 	graphCall(apiPath, function(error, data) {
+		var parsedData;
 		if(error) {
 			callback(error);
 			return;
 		}
-		callback(null, JSON.parse(data));
+		try {
+			parsedData = JSON.parse(data);
+		}
+		catch(error) {
+			callback(error);
+			return;
+		}
+		callback(null, parsedData);
 	});
 };
 

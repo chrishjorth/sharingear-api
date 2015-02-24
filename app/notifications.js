@@ -9,7 +9,7 @@
 var fs = require("fs"),
 	_ = require("underscore"),
 	SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
-	User = require("./user"),
+	// User = require("./user"),
 	FROM_ADDRESS = "service@sharingear.com",
 
 	BOOKING_PENDING_OWNER = 0,
@@ -42,6 +42,14 @@ var fs = require("fs"),
 	bookingEndedOwnerEmail,
 	BOOKING_ENDED_RENTER = 8,
 	bookingEndedRenterEmail,
+	RECEIPT_RENTER = 9,
+	receiptRenterEmailSubject,
+	receiptRenterEmailTextTemplate,
+	receiptRenterEmailHTMLTemplate,
+	RECEIPT_OWNER = 10,
+	receiptOwnerEmailSubject,
+	receiptOwnerEmailTextTemplate,
+	receiptOwnerEmailHTMLTemplate,
 
 	send;
 
@@ -74,6 +82,7 @@ bookingDeniedEmail = {
 	subject: "Sharingear - your booking got denied",
 	text: "Hi,\n\nunfortunately your booking got denied by the owner of the gear.\n\nSearch for other gear https://www.sharingear.com.\n\nHope you have more luck next time,\n\n- Sharingear"
 };
+
 bookingOwnerReturnedEmailSubject = "End booking and get paid - step 3 of 3";
 bookingOwnerReturnedEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/end_booking_owner.txt", "utf8"));
 bookingOwnerReturnedEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/end_booking_owner.html", "utf8"));
@@ -81,6 +90,16 @@ bookingOwnerReturnedEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "
 bookingRenterReturnedEmailSubject = "End booking and collect your deposit - step 3 of 3";
 bookingRenterReturnedEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/end_booking_renter.txt", "utf8"));
 bookingRenterReturnedEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/end_booking_renter.html", "utf8"));
+
+receiptRenterEmailSubject = "Sharingear Booking Receipt";
+receiptRenterEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/receipt_renter.txt", "utf8"));
+receiptRenterEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/receipt_renter.html", "utf8"));
+
+receiptOwnerEmailSubject = "Sharingear Booking Invoice";
+receiptOwnerEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/receipt_owner.txt", "utf8"));
+receiptOwnerEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/receipt_owner.html", "utf8"));
+
+
 //Defines an email to the owner of gear, sent on the event that the rental has ended successfully.
 bookingEndedOwnerEmail = {
 	to: null,
@@ -88,6 +107,7 @@ bookingEndedOwnerEmail = {
 	subject: "Sharingear - rental of your gear is completed",
 	text: "Hi,\n\nthe rental of your gear has been completed. We hope you enjoyed the experience.\n\n All the best,\n\n- Sharingear"
 };
+
 //Defines an email to the renter of gear, sent on the event that the rental has ended successfully
 bookingEndedRenterEmail = {
 	to: null,
@@ -96,7 +116,7 @@ bookingEndedRenterEmail = {
 	text: "Hi,\n\nyour rental of gear has been completed. We hope you enjoyed the experience.\n\n See you soon,\n\n- Sharingear"
 };
 
-send = function(notificationType, notificationParameters, recipientID) {
+send = function(notificationType, notificationParameters, recipientEmail) {
 	var emailParams,
 		textTemplate,
 		htmlTemplate,
@@ -104,6 +124,7 @@ send = function(notificationType, notificationParameters, recipientID) {
 	emailParams = {
 		from: FROM_ADDRESS
 	};
+
 	switch(notificationType) {
 		case BOOKING_PENDING_OWNER:
 			emailParams.subject = bookingPendingOwnerEmailSubject;
@@ -144,15 +165,28 @@ send = function(notificationType, notificationParameters, recipientID) {
 		case BOOKING_ENDED_RENTER:
 			emailParams = bookingEndedRenterEmail;
 			break;
+		case RECEIPT_OWNER:
+			emailParams.subject = receiptOwnerEmailSubject;
+			emailParams.text = receiptOwnerEmailTextTemplate(notificationParameters);
+			emailParams.html = receiptOwnerEmailHTMLTemplate(notificationParameters);
+			break;
+		case RECEIPT_RENTER:
+			emailParams.subject = receiptRenterEmailSubject;
+			emailParams.text = receiptRenterEmailTextTemplate(notificationParameters);
+			emailParams.html = receiptRenterEmailHTMLTemplate(notificationParameters);
+			break;
 		default:
 			return;
 	}
-	User.readUser(recipientID, function(error, recipient) {
-		if(error) {
-			console.log("Error retrieving recipient: " + error);
-			return;
-		}
-		emailParams.to = recipient.email;
+		//Commented because of requere cycle of death
+
+		// User.readUser(recipientID, function(error, recipient) {
+		// if(error) {
+		// 	console.log("Error retrieving recipient: " + error);
+		// 	return;
+		// }
+		// emailParams.to = recipient.email;
+		emailParams.to = recipientEmail;
 		textTemplate = _.template(emailParams.text);
 		emailParams.text = textTemplate(notificationParameters);
 		if(emailParams.html) {
@@ -160,13 +194,14 @@ send = function(notificationType, notificationParameters, recipientID) {
 			emailParams.html = htmlTemplate(notificationParameters);
 		}
 		email = new SendGrid.Email(emailParams);
+		
 		SendGrid.send(email, function(error) {
 			if(error) {
 				console.log("Error sending notification email: " + error);
 				return;
 			}
 		});
-	});
+	// });
 };
 
 module.exports = {
@@ -179,6 +214,8 @@ module.exports = {
 	BOOKING_RENTER_RETURNED: BOOKING_RENTER_RETURNED,
 	BOOKING_ENDED_OWNER: BOOKING_ENDED_OWNER,
 	BOOKING_ENDED_RENTER: BOOKING_ENDED_RENTER,
-
+	RECEIPT_OWNER: RECEIPT_OWNER,
+	RECEIPT_RENTER: RECEIPT_RENTER,
+	
 	send: send
 };

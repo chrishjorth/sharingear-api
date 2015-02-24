@@ -56,12 +56,12 @@ create = function(renterID, bookingData, callback) {
 				callback(error);
 				return;
 			}
-			//User.readUser(gear.owner_id, function(error, ownerData) {
+			User.readUser(gear.owner_id, function(error, ownerData) {
 				var renter_currency;
-				/*if(error) {
+				if(error) {
 					callback(error);
 					return;
-				}*/
+				}
 				renter_currency = Localization.getCurrency(renterData.country);
 				Localization.convertPrices([gear.price_a, gear.price_b, gear.price_c], gear.currency, renter_currency, function(error, convertedPrices) {
 					var renter_price/*, owner_currency*/;
@@ -84,6 +84,8 @@ create = function(renterID, bookingData, callback) {
 							end_time: bookingData.end_time,
 							renter_id: renterData.id,
 							owner_id: gear.owner_id,
+							renter_email: renterData.email,
+							owner_email: ownerData.email,
 							renter_price: renter_price,
 							renter_currency: renter_currency,
 							owner_price: owner_price,
@@ -102,7 +104,7 @@ create = function(renterID, bookingData, callback) {
 						_insertBooking(bookingData, callback);
 					//});
 				});
-			//});
+			});
 		});
 	});
 };
@@ -126,11 +128,13 @@ _insertBooking = function(bookingData, callback) {
 		bookingData.pickup_street,
 		bookingData.pickup_postal_code,
 		bookingData.pickup_city,
-		bookingData.pickup_country
+		bookingData.pickup_country,
+		bookingData.renter_email,
+		bookingData.owner_email
 	];
 
 	//We have to insert before the preauthorization to get the booking id
-	db.query("INSERT INTO gear_bookings(gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", booking, function(error, result) {
+	db.query("INSERT INTO gear_bookings(gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country, renter_email, owner_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", booking, function(error, result) {
 		var url, queryIndex;
 		if(error) {
 			callback("Error inserting booking: " + error);
@@ -166,7 +170,7 @@ _insertBooking = function(bookingData, callback) {
 };
 
 read = function(bookingID, callback) {
-	db.query("SELECT id, gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, payment_timestamp, payin_time, payout_time, preauth_id, booking_status, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country FROM gear_bookings WHERE id=?", [bookingID], function(error, rows) {
+	db.query("SELECT id, gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, payment_timestamp, payin_time, payout_time, preauth_id, booking_status, gear_type, gear_subtype, gear_model, gear_brand, pickup_street, pickup_postal_code, pickup_city, pickup_country, renter_email, owner_email FROM gear_bookings WHERE id=?", [bookingID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -301,6 +305,8 @@ updateToPending = function(booking, callback) {
 						model: booking.gear_model,
 						subtype: booking.gear_subtype,
 						price: booking.owner_price,
+						fee: booking.owner_price*10/100,
+						total_price: booking.owner_price - (booking.owner_price*10/100),
 						currency: booking.owner_currency,
 						street: booking.pickup_street,
 						postal_code: booking.pickup_postal_code,
@@ -311,7 +317,7 @@ updateToPending = function(booking, callback) {
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
 						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
-					}, owner.id);
+					}, owner.email);
 
 					Notifications.send(Notifications.BOOKING_PENDING_RENTER, {
 						name: renter.name,
@@ -321,6 +327,8 @@ updateToPending = function(booking, callback) {
 						model: booking.gear_model,
 						subtype: booking.gear_subtype,
 						price: booking.renter_price,
+						fee: booking.renter_price*10/100,
+						total_price: booking.renter_price + (booking.renter_price*10/100),
 						currency: booking.renter_currency,
 						street: booking.pickup_street,
 						postal_code: booking.pickup_postal_code,
@@ -331,7 +339,7 @@ updateToPending = function(booking, callback) {
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
 						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
-					}, renter.id);
+					}, renter.email);
 				});
 			});
 		});
@@ -353,7 +361,7 @@ updateToDenied = function(booking, callback) {
 			}
 			Notifications.send(Notifications.BOOKING_DENIED, {
 
-			}, renter.id);
+			}, renter.email);
 		});
 	});
 };
@@ -394,6 +402,8 @@ updateToAccepted = function(booking, callback) {
 						model: booking.gear_model,
 						subtype: booking.gear_subtype,
 						price: booking.renter_price,
+						fee: booking.renter_price*10/100,
+						total_price: booking.renter_price - (booking.renter_price*10/100),
 						currency: booking.renter_currency,
 						street: booking.pickup_street,
 						postal_code: booking.pickup_postal_code,
@@ -405,7 +415,7 @@ updateToAccepted = function(booking, callback) {
 						dropoff_time: endTime.format("HH:mm"),
 						username_owner: owner.name,
 						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
-					}, renter.id);
+					}, renter.email);
 
 					Notifications.send(Notifications.BOOKING_ACCEPTED_OWNER, {
 						name: owner.name,
@@ -415,6 +425,8 @@ updateToAccepted = function(booking, callback) {
 						model: booking.gear_model,
 						subtype: booking.gear_subtype,
 						price: booking.owner_price,
+						fee: booking.owner_price*10/100,
+						total_price: booking.owner_price - (booking.owner_price*10/100),
 						currency: booking.owner_currency,
 						street: booking.pickup_street,
 						postal_code: booking.pickup_postal_code,
@@ -425,7 +437,7 @@ updateToAccepted = function(booking, callback) {
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
 						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
-					}, owner.id);
+					}, owner.email);
 				});
 			});
 		});
@@ -481,7 +493,7 @@ updateToRenterReturned = function(booking, callback) {
 					name: owner.name,
 					username_renter: renter.name + " " + renter.surname,
 					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
-				}, owner.id);
+				}, owner.email);
 			});
 		});
 	}
@@ -522,11 +534,12 @@ updateToOwnerReturned = function(booking, callback) {
 					console.log("Error getting owner for notification to owner on booking update to owner-returned: " + error);
 					return;
 				}
+				
 				Notifications.send(Notifications.BOOKING_RENTER_RETURNED, {
 					name: renter.name,
 					username_owner: owner.name + " " + owner.surname,
 					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
-				}, renter.id);
+				}, renter.email);
 			});
 		});
 	}
@@ -582,8 +595,8 @@ endBooking = function(bookingData, callback) {
 				}*/
 				callback(null);
 
-				Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, bookingData.owner_id);
-				Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, bookingData.renter_id);
+				Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, bookingData.owner_email);
+				Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, bookingData.renter_email);
 			//});
 		});
 	});
