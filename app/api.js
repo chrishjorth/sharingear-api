@@ -5,13 +5,14 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Payment, Notifications, Localization,
+var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, Payment, Notifications, Localization,
 
 	readFileSuccess,
 
 	healthCheck,
 	readLocalizationData,
-	readGearClassification,
+	readContentClassification,
+
 	createGear,
 	readGearWithID,
 	addImageToGear,
@@ -30,6 +31,10 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Pay
 	createGearBooking,
 	readGearBooking,
 	updateGearBooking,
+
+	readVansFromUserWithID,
+	createVansForUserWithID,
+
 	createCardObject,
 
 	readSGBalance,
@@ -54,6 +59,7 @@ User = require("./user");
 Gear = require("./gear");
 GearAvailability = require("./gear_availability");
 GearBooking = require("./gear_booking");
+Vans = require("./vans");
 Payment = require("./payment");
 Notifications = require("./notifications");
 Localization = require("./localization");
@@ -135,14 +141,26 @@ readLocalizationData = function(req, res, next) {
 	next();
 };
 
-readGearClassification = function(req, res, next) {
+readContentClassification = function(req, res, next) {
 	Gear.getClassification(function(error, gearClassification) {
+		var contentClassification;
 		if(error) {
 			handleError(res, next, "Error retrieving gear classification: ", error);
 			return;
 		}
-		res.send(gearClassification);
-		next();
+		Vans.getClassification(function(error, vanClassification) {
+			if(error) {
+				handleError("Error retrieving van classification: " + error);
+				return;
+			}
+			contentClassification = {
+				gearClassification: gearClassification.classification,
+				gearBrands: gearClassification.brands,
+				vanClassification: vanClassification
+			};
+			res.send(contentClassification);
+			next();
+		});
 	});
 };
 
@@ -594,6 +612,38 @@ updateGearBooking = function(req, res, next) {
 	});
 };
 
+readVansFromUserWithID = function(req, res, next) {
+	Vans.readVansFromUser(req.params.user_id, function(error, vans) {
+		if(error) {
+			handleError(res, next, "Error reading vans for user: " + error);
+			return;
+		}
+		res.send(vans);
+		next();
+	});
+};
+
+createVansForUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		Vans.createVans(req.params.user_id, req.params, function(error, van) {
+			if(error) {
+				handleError(res, next, "Error creating van: ", error);
+				return;
+			}
+			res.send(van);
+			next();
+		});
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -755,7 +805,7 @@ secureServer.on("MethodNotAllowed", function(req, res) {
 });
 
 secureServer.get("/localization", readLocalizationData);
-secureServer.get("/gearclassification", readGearClassification);
+secureServer.get("/contentclassification", readContentClassification);
 
 secureServer.post("/gear", createGear);
 secureServer.get("/gear/:id", readGearWithID);
@@ -766,16 +816,21 @@ secureServer.post("/users/login", createUserSession);
 secureServer.get("/users/:id", readUserWithID);
 secureServer.put("/users/:id", updateUserWithID);
 secureServer.put("/users/:id/bankdetails", updateUserBankDetails);
+secureServer.get("/users/:id/newfilename/:filename", generateFileName);
+
 secureServer.get("/users/:user_id/gear", readGearFromUserWithID);
 secureServer.put("/users/:user_id/gear/:gear_id", updateGearFromUserWithID);
 secureServer.post("/users/:user_id/gear/:gear_id/availability", createGearAvailability);
 secureServer.get("/users/:user_id/gear/:gear_id/availability", readGearAvailability);
 secureServer.get("/users/:user_id/gearrentals", readGearRentalsFromUserWithID);
 secureServer.get("/users/:user_id/gearreservations", readGearReservationsFromUserWithID);
-secureServer.get("/users/:id/newfilename/:filename", generateFileName);
 secureServer.post("/users/:user_id/gear/:gear_id/bookings", createGearBooking);
 secureServer.get("/users/:user_id/gear/:gear_id/bookings/:booking_id", readGearBooking);
 secureServer.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateGearBooking);
+
+secureServer.get("/users/:user_id/vans", readVansFromUserWithID);
+secureServer.post("/users/:user_id/vans", createVansForUserWithID);
+
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
 secureServer.get("/users/:user_id/dashboard/balance", readSGBalance);
