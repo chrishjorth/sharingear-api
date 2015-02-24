@@ -1,5 +1,6 @@
 /**
  * Defines Sharingear vans.
+ * Van types are handled by type IDs, but returned by their names.
  * @author: Chris Hjorth
  */
  
@@ -14,11 +15,13 @@ var db = require("./database"),
 	readVansFromUser,
 	createVans,
 	getTypeID,
+	getTypeName,
 	addAccessories,
-	addImage;
+	addImage,
+	updateVanWithID;
 
 getClassification = function(callback) {
-	var sql = "SELECT van_types.van_type, accessories.accessory FROM  van_types";
+	var sql = "SELECT van_types.van_type, van_types.price_a_suggestion, van_types.price_b_suggestion, van_types.price_c_suggestion, accessories.accessory FROM  van_types";
 	sql += " LEFT JOIN (SELECT van_accessories.accessory, van_type_has_accessories.van_type_id FROM van_accessories, van_type_has_accessories WHERE van_type_has_accessories.van_accessory_id=van_accessories.id) AS accessories";
 	sql += " ON accessories.van_type_id=van_types.id ORDER BY van_types.sorting";
 	db.query(sql, [], function(error, rows) {
@@ -34,6 +37,9 @@ getClassification = function(callback) {
 			currentType = rows[i].van_type;
 			vanType = {
 				vanType: rows[i].van_type,
+				price_a_suggestion: rows[i].price_a_suggestion,
+				price_b_suggestion: rows[i].price_b_suggestion,
+				price_c_suggestion: rows[i].price_c_suggestion,
 				accessories: []
 			};
 			while(i < rows.length && currentType === rows[i].van_type) {
@@ -121,7 +127,7 @@ createVans = function(userID, params, callback) {
 					//return object 
 					callback(null, {
 						id: result.insertId,
-						van_type: typeID,
+						van_type: params.van_type,
 						model: params.model,
 						description: params.description,
 						images: params.images,
@@ -159,6 +165,21 @@ getTypeID = function(vanType, callback) {
 		}
 		else {
 			callback(null, rows[0].id);
+		}
+	});
+};
+
+getTypeName = function(vanTypeID, callback) {
+	db.query("SELECT van_type FROM van_types WHERE id=? LIMIT 1;", [vanTypeID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, null);
+		}
+		else {
+			callback(null, rows[0].van_type);
 		}
 	});
 };
@@ -244,11 +265,140 @@ addImage = function(userID, vanID, imageURL, callback) {
 	});
 };
 
+/**
+ * Latitude and longitude must be in degrees.
+ */
+updateVanWithID = function(userID, vanID, updatedVanData, callback) {
+	var vans = this;
+	db.query("SELECT id, van_type, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, always_available, owner_id FROM vans WHERE id=? LIMIT 1;", [vanID], function(error, rows) {
+		var update;
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No van with id " + vanID + " to update.");
+			return;
+		}
+		//Check if user is owner
+		if(parseInt(userID, 10) !== rows[0].owner_id) {
+			callback("User is not owner.");
+			return;
+		}
+
+		update = function(vanTypeID, vanTypeName) {
+			var vanInfo;
+			if(updatedVanData.latitude) {
+				updatedVanData.latitude = parseFloat(updatedVanData.latitude) * Math.PI / 180;
+				if(isNaN(updatedVanData.latitude)) {
+					updatedVanData.latitude = null;
+				}
+			}
+			if(updatedVanData.longitude) {
+				updatedVanData.longitude = parseFloat(updatedVanData.longitude) * Math.PI / 180;
+				if(isNaN(updatedVanData.longitude)) {
+					updatedVanData.longitude = null;
+				}
+			}
+			vanInfo = [
+				vanTypeID,
+				(updatedVanData.model ? updatedVanData.model : rows[0].model),
+				(updatedVanData.description ? updatedVanData.description : rows[0].description),
+				(updatedVanData.price_a ? updatedVanData.price_a : rows[0].price_a),
+				(updatedVanData.price_b ? updatedVanData.price_b : rows[0].price_b),
+				(updatedVanData.price_c ? updatedVanData.price_c : rows[0].price_c),
+				(updatedVanData.address ? updatedVanData.address : rows[0].address),
+				(updatedVanData.postal_code ? updatedVanData.postal_code : rows[0].postal_code),
+				(updatedVanData.city ? updatedVanData.city : rows[0].city),
+				(updatedVanData.region ? updatedVanData.region : rows[0].region),
+				(updatedVanData.country ? updatedVanData.country : rows[0].country),
+				(updatedVanData.latitude ? updatedVanData.latitude : rows[0].latitude),
+				(updatedVanData.longitude ? updatedVanData.longitude : rows[0].longitude),
+				vanID
+			];
+			db.query("UPDATE vans SET van_type=?, model=?, description=?, price_a=?, price_b=?, price_c=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=? WHERE id=? LIMIT 1;", vanInfo, function(error, result) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				if(result.affectedRows <= 0) {
+					callback("Found no van to update.");
+					return;
+				}
+				//Delete accessories and then add them
+				db.query("DELETE FROM van_has_accessories WHERE van_id=?;", [vanID], function(error) {
+					if(error) {
+						callback(error);
+						return;
+					}
+					updatedVanData.accessories = JSON.parse(updatedVanData.accessories);
+					vans.addAccessories(vanID, vanInfo[0], updatedVanData.accessories, function(error) {
+						var now = new Moment();
+						if(error) {
+							callback(error);
+							return;
+						}
+						callback(null, {
+							id: vanID,
+							van_type: vanTypeName,
+							model: vanInfo[1],
+							description: vanInfo[2],
+							price_a: vanInfo[3],
+							price_b: vanInfo[4],
+							price_c: vanInfo[5],
+							address: vanInfo[6],
+							postal_code: vanInfo[7],
+							city: vanInfo[8],
+							region: vanInfo[9],
+							country: vanInfo[10],
+							latitude: vanInfo[11],
+							longitude: vanInfo[12],
+							always_available: rows[0].always_available,
+							updated: now.format("YYYY-MM-DD HH:mm:ss"),
+							owner_id: userID
+						});
+					});
+				});
+			});
+		};
+
+		if(updatedVanData.van_type) {
+			//Check if van type is legal
+			vans.getTypeID(updatedVanData.van_type, function(error, typeID) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				if(typeID === null) {
+					callback("Invalid van type.");
+					return;
+				}
+				update(typeID, updatedVanData.van_type);
+			});
+		}
+		else {
+			vans.getTypeName(rows[0].van_type, function(error, typeName) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				if(typeName === null) {
+					callback("Invalid type ID.");
+					return;
+				}
+				update(rows[0].van_type, typeName);
+			});
+		}
+	});
+};
+
 module.exports = {
 	getClassification: getClassification,
 	readVansFromUser: readVansFromUser,
 	createVans: createVans,
 	getTypeID: getTypeID,
+	getTypeName: getTypeName,
 	addAccessories: addAccessories,
-	addImage: addImage
+	addImage: addImage,
+	updateVanWithID: updateVanWithID
 };

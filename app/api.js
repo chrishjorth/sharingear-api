@@ -35,6 +35,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	readVansFromUserWithID,
 	createVansForUserWithID,
 	addImageToVan,
+	updateVansForUserWithID,
 
 	createCardObject,
 
@@ -677,6 +678,27 @@ addImageToVan = function(req, res, next) {
 	});
 };
 
+updateVansForUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		Vans.updateVanWithID(req.params.user_id, req.params.van_id, req.params, function(error, updatedVan) {
+			if(error) {
+				handleError(res, next, "Error updating van: ", error);
+				return;
+			}
+			res.send(updatedVan);
+			next();
+		});
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -864,6 +886,7 @@ secureServer.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateGea
 secureServer.get("/users/:user_id/vans", readVansFromUserWithID);
 secureServer.post("/users/:user_id/vans", createVansForUserWithID);
 secureServer.post("/users/:user_id/vans/:van_id/image", addImageToVan);
+secureServer.put("/users/:user_id/vans/:van_id", updateVansForUserWithID);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
