@@ -4,10 +4,13 @@ Thanks for renting gear on Sharingear. We just sent your request to the Owner an
 Your credit card will not be charged until the Owner accepts the rental.\n\n
 {{gear_type}}\n
 {{brand}} {{model}} {{subtype}}\n
-{{price}} {{currency}}\n
+{{total_price}} {{currency}}\n
 {{city}}\n\n
 Pick Up Date: {{pickup_date}} {{pickup_time}}\n\n
 Drop Off Date: {{dropoff_date}} {{dropoff_time}}\n\n
+Price: {{price}} {{currency}}\n
+Fee: {{fee}} {{currency}}\n
+Total: {{total_price}} {{currency}}\n\n
 See your Dashboard to view this booking: {{dashboard_link}}\n\n
 Best Regards,\n
 - Sharingear Team\n\n

@@ -1,7 +1,6 @@
 Hi {{name}},\n\n
-Collect Your Deposit!\n\n
-You have now finished renting the gear from {{username_owner}}.\n
-In order to receive your deposit back you have to end the booking.\n\n
+{{username_owner}} ended the booking!\n\n
+You have now finished renting the gear. In order to complete the rental and confirm that you returned the gear you have to end the booking as well.\n\n
 End Booking: {{dashboard_link}}\n\n
 Best Regards,\n
 - Sharingear Team\n\n

@@ -1,0 +1,13 @@
+Hi {{name}},\n\n
+The transaction has been successful.\n\n
+{{brand}} {{model}} {{subtype}}\n\n
+Pick Up Date: {{date_from}} {{time_from}}\n\n
+Drop Off Date: {{date_to}} {{time_to}}\n\n
+{{total_price}} {{currency}}\n\n
+Rental price: {{price}} {{currency}}\n
+Sharingear service fee: {{fee}} {{currency}}\n
+Total: {{total_price}} {{currency}}\n\n
+Payment date: {{payment_date}} {{payment_time}}\n\n
+Best Regards,\n
+- Sharingear Team\n\n
+Sent from Sharingear (VAT: DK35845186), Landemærket 8, 1119 Copenhagen K, Denmark.\n
