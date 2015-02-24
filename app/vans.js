@@ -14,7 +14,8 @@ var db = require("./database"),
 	readVansFromUser,
 	createVans,
 	getTypeID,
-	addAccessories;
+	addAccessories,
+	addImage;
 
 getClassification = function(callback) {
 	var sql = "SELECT van_types.van_type, accessories.accessory FROM  van_types";
@@ -217,10 +218,37 @@ addAccessories = function(vanID, vanTypeID, accessories, callback) {
 	});
 };
 
+addImage = function(userID, vanID, imageURL, callback) {
+	db.query("SELECT images FROM vans WHERE id=? AND owner_id=? LIMIT 1", [vanID, userID], function(error, rows) {
+		var images = "";
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No gear found.");
+			return;
+		}
+		images = rows[0].images + imageURL + ",";
+		db.query("UPDATE vans SET images=? WHERE id=? AND owner_id=?", [images, vanID, userID], function(error, result) {
+			if(error) {
+				callback(error);
+				return;
+			}
+			if(result.affectedRows <= 0) {
+				callback("No gear found to update.");
+				return;
+			}
+			callback(null, images);
+		});
+	});
+};
+
 module.exports = {
 	getClassification: getClassification,
 	readVansFromUser: readVansFromUser,
 	createVans: createVans,
 	getTypeID: getTypeID,
-	addAccessories: addAccessories
+	addAccessories: addAccessories,
+	addImage: addImage
 };

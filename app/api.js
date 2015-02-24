@@ -34,6 +34,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 
 	readVansFromUserWithID,
 	createVansForUserWithID,
+	addImageToVan,
 
 	createCardObject,
 
@@ -644,6 +645,38 @@ createVansForUserWithID = function(req, res, next) {
 	});
 };
 
+addImageToVan = function(req, res, next) {
+	//Validate the image url
+	var imageURL = req.params.image_url,
+		validation;
+
+	imageURL = imageURL.split("?")[0]; //Remove eventual query string parameters inserted by meddlers
+	validation = imageURL.split("/");
+	if(validation[2] !== Config.VALID_IMAGE_HOST) {
+		handleError(res, next, "Error adding image to van: ", "image url is from an invalid domain.");
+		return;
+	}
+
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		Vans.addImage(req.params.user_id, req.params.van_id, imageURL, function(error, images) {
+			if(error) {
+				handleError(res, next, "Error authorizing user: ", error);
+				return;
+			}
+			res.send({images: images});
+			next();
+		});
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -830,6 +863,7 @@ secureServer.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateGea
 
 secureServer.get("/users/:user_id/vans", readVansFromUserWithID);
 secureServer.post("/users/:user_id/vans", createVansForUserWithID);
+secureServer.post("/users/:user_id/vans/:van_id/image", addImageToVan);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
