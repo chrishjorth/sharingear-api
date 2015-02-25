@@ -8,11 +8,11 @@
 
 var db = require("./database"),
 	Moment = require("moment"),
-	MomentUtilities = require("./momentutilities"),
+	//MomentUtilities = require("./momentutilities"),
 
 	set,
-	get,
-	removeInterval;
+	get/*,
+	removeInterval*/;
 
 
 /**
@@ -77,7 +77,7 @@ get = function(gearID, callback) {
 	});
 };
 
-removeInterval = function(gearID, startTime, endTime, callback) {
+/*removeInterval = function(gearID, startTime, endTime, callback) {
 	var Availability = this;
 	//Get availability sorted, add data and then call set
 	db.query("SELECT id, start_time, end_time, gear_id FROM gear_availability WHERE gear_id=? ORDER BY start_time DESC", [gearID], function(error, rows) {
@@ -136,10 +136,10 @@ removeInterval = function(gearID, startTime, endTime, callback) {
 			callback(error);
 		});
 	});
-};
+};*/
 
 module.exports = {
 	set: set,
-	get: get,
-	removeInterval: removeInterval
+	get: get/*,
+	removeInterval: removeInterval*/
 };

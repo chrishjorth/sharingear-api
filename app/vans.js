@@ -18,7 +18,10 @@ var db = require("./database"),
 	getTypeName,
 	addAccessories,
 	addImage,
-	updateVanWithID;
+	updateVanWithID,
+	setAlwaysFlag,
+	getAlwaysFlag,
+	checkOwner;
 
 getClassification = function(callback) {
 	var sql = "SELECT van_types.van_type, van_types.price_a_suggestion, van_types.price_b_suggestion, van_types.price_c_suggestion, accessories.accessory FROM  van_types";
@@ -392,6 +395,45 @@ updateVanWithID = function(userID, vanID, updatedVanData, callback) {
 	});
 };
 
+setAlwaysFlag = function(vanID, alwaysFlag, callback) {
+	db.query("UPDATE vans SET always_available=? WHERE id=? LIMIT 1", [alwaysFlag, vanID], function(error) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		callback(null);
+	});
+};
+
+getAlwaysFlag = function(vanID, callback) {
+	db.query("SELECT always_available FROM vans WHERE id=? LIMIT 1", [vanID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No van found for ID.");
+			return;
+		}
+		callback(null, rows[0]);
+	});
+};
+
+checkOwner = function(userID, vanID, callback) {
+	db.query("SELECT id FROM vans WHERE id=? AND owner_id=? LIMIT 1", [vanID, userID], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, false);
+		}
+		else {
+			callback(null, true);
+		}
+	});
+};
+
 module.exports = {
 	getClassification: getClassification,
 	readVansFromUser: readVansFromUser,
@@ -400,5 +442,8 @@ module.exports = {
 	getTypeName: getTypeName,
 	addAccessories: addAccessories,
 	addImage: addImage,
-	updateVanWithID: updateVanWithID
+	updateVanWithID: updateVanWithID,
+	setAlwaysFlag: setAlwaysFlag,
+	getAlwaysFlag: getAlwaysFlag,
+	checkOwner: checkOwner
 };

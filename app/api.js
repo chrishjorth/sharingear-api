@@ -5,7 +5,7 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, Payment, Notifications, Localization,
+var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, Payment, Notifications, Localization,
 
 	readFileSuccess,
 
@@ -36,6 +36,8 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	createVansForUserWithID,
 	addImageToVan,
 	updateVansForUserWithID,
+	createVanAvailability,
+	readVanAvailability,
 
 	createCardObject,
 
@@ -62,6 +64,7 @@ Gear = require("./gear");
 GearAvailability = require("./gear_availability");
 GearBooking = require("./gear_booking");
 Vans = require("./vans");
+VanAvailability = require("./van_availability");
 Payment = require("./payment");
 Notifications = require("./notifications");
 Localization = require("./localization");
@@ -699,6 +702,91 @@ updateVansForUserWithID = function(req, res, next) {
 	});
 };
 
+createVanAvailability = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		var availability;
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		availability = JSON.parse(req.params.availability);
+		//Check that the user owns the gear
+		Vans.checkOwner(req.params.user_id, req.params.van_id, function(error, data) {
+			if(error) {
+				handleError(res, next, "Error checking van ownership: ", error);
+				return;
+			}
+			if(data === false) {
+				handleError(res, next, "Error checking van ownership: ", "User " + req.params.user_id + " does not own van " + req.params.van_id);
+				return;
+			}
+			Vans.getAlwaysFlag(req.params.van_id, function(error, result) {
+				var setAvailability;
+				if(error) {
+					handleError(res, next, "Error getting always flag: ", error);
+					return;
+				}
+				setAvailability = function() {
+					VanAvailability.set(req.params.van_id, availability, function(error) {
+						if(error) {
+							handleError(res, next, "Error setting van availability: ", error);
+							return;
+						}
+						res.send({});
+						next();
+					});
+				};
+				if(result.always_available != req.params.alwaysFlag) { //if flag changed and availability is empty, set it
+					Vans.setAlwaysFlag(req.params.van_id, req.params.alwaysFlag, function(error) {
+						if(error) {
+							handleError(res, next, "Error setting always flag: ", error);
+							return;
+						}
+						setAvailability();
+					});
+				}
+				else {
+					setAvailability();
+				}
+			});
+		});
+	});
+};
+
+readVanAvailability = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		VanAvailability.get(req.params.van_id, function(error, availabilityArray) {
+			if(error) {
+				handleError(res, next, "Error getting van availability: ", error);
+				return;
+			}
+			Vans.getAlwaysFlag(req.params.van_id, function(error, result) {
+				if(error) {
+					handleError(res, next, "Error getting alwaysFlag: ", error);
+					return;
+				}
+				res.send({
+					availabilityArray: availabilityArray,
+					alwaysFlag: result.always_available
+				});
+				next();
+			});
+		});
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -887,6 +975,8 @@ secureServer.get("/users/:user_id/vans", readVansFromUserWithID);
 secureServer.post("/users/:user_id/vans", createVansForUserWithID);
 secureServer.post("/users/:user_id/vans/:van_id/image", addImageToVan);
 secureServer.put("/users/:user_id/vans/:van_id", updateVansForUserWithID);
+secureServer.post("/users/:user_id/vans/:van_id/availability", createVanAvailability);
+secureServer.get("/users/:user_id/vans/:van_id/availability", readVanAvailability);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
