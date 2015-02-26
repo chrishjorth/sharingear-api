@@ -5,7 +5,7 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Payment, Notifications, Localization,
+var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Payment, Notifications, Localization, SGDashboard,
 
 	readFileSuccess,
 
@@ -35,6 +35,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Pay
 	readSGBalance,
 	readSGTransactions,
 	readSGPreauthorization,
+	wipeout,
 
 	handleError,
 	isAuthorized,
@@ -57,6 +58,7 @@ GearBooking = require("./gear_booking");
 Payment = require("./payment");
 Notifications = require("./notifications");
 Localization = require("./localization");
+SGDashboard = require("./sgdashboard");
 
 readFileSuccess = true;
 try {
@@ -693,6 +695,33 @@ readSGPreauthorization = function(req, res, next) {
 	}
 };
 
+wipeout = function(req, res, next) {
+	if(req.params.user_id === "1" || req.params.user_id === "2" || req.params.user_id === "5") {
+		isAuthorized(req.params.user_id, function(error, status) {
+			if(error) {
+				handleError(res, next, "Error authorizing user: ", error);
+				return;
+			}
+			if(status === false) {
+				handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+				return;
+			}
+			SGDashboard.wipeout(function(error) {
+				if(error) {
+					handleError(res, next, "Error performing wipeout: ", error);
+					return;
+				}
+				console.log("Database wiped out successfully.");
+				res.send({});
+				next();
+			});
+		});
+	}
+	else {
+		handleError(res, next, "Error authorizing user: ", "User id is not allowed in SG dashboard.");
+	}
+};
+
 /* UTILITIES */
 handleError = function(res, next, message, error) {
 	console.log(message + JSON.stringify(error));
@@ -781,8 +810,11 @@ secureServer.get("/users/:user_id/cardobject", createCardObject);
 secureServer.get("/users/:user_id/dashboard/balance", readSGBalance);
 secureServer.get("/users/:user_id/dashboard/transactions", readSGTransactions);
 secureServer.get("/users/:user_id/dashboard/payments/preauthorization/:preauth_id", readSGPreauthorization);
+secureServer.get("/users/:user_id/dashboard/wipeout", wipeout);
 
 module.exports = {
 	server: server,
-	secureServer: secureServer
+	secureServer: secureServer,
+
+	wipeout: wipeout
 };
