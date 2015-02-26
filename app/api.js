@@ -5,14 +5,13 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, Payment, Notifications, Localization,
+var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Payment, Notifications, Localization, SGDashboard,
 
 	readFileSuccess,
 
 	healthCheck,
 	readLocalizationData,
-	readContentClassification,
-
+	readGearClassification,
 	createGear,
 	readGearWithID,
 	addImageToGear,
@@ -31,19 +30,12 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	createGearBooking,
 	readGearBooking,
 	updateGearBooking,
-
-	readVansFromUserWithID,
-	createVansForUserWithID,
-	addImageToVan,
-	updateVansForUserWithID,
-	createVanAvailability,
-	readVanAvailability,
-
 	createCardObject,
 
 	readSGBalance,
 	readSGTransactions,
 	readSGPreauthorization,
+	wipeout,
 
 	handleError,
 	isAuthorized,
@@ -63,11 +55,10 @@ User = require("./user");
 Gear = require("./gear");
 GearAvailability = require("./gear_availability");
 GearBooking = require("./gear_booking");
-Vans = require("./vans");
-VanAvailability = require("./van_availability");
 Payment = require("./payment");
 Notifications = require("./notifications");
 Localization = require("./localization");
+SGDashboard = require("./sgdashboard");
 
 readFileSuccess = true;
 try {
@@ -146,26 +137,14 @@ readLocalizationData = function(req, res, next) {
 	next();
 };
 
-readContentClassification = function(req, res, next) {
+readGearClassification = function(req, res, next) {
 	Gear.getClassification(function(error, gearClassification) {
-		var contentClassification;
 		if(error) {
 			handleError(res, next, "Error retrieving gear classification: ", error);
 			return;
 		}
-		Vans.getClassification(function(error, vanClassification) {
-			if(error) {
-				handleError("Error retrieving van classification: " + error);
-				return;
-			}
-			contentClassification = {
-				gearClassification: gearClassification.classification,
-				gearBrands: gearClassification.brands,
-				vanClassification: vanClassification
-			};
-			res.send(contentClassification);
-			next();
-		});
+		res.send(gearClassification);
+		next();
 	});
 };
 
@@ -617,176 +596,6 @@ updateGearBooking = function(req, res, next) {
 	});
 };
 
-readVansFromUserWithID = function(req, res, next) {
-	Vans.readVansFromUser(req.params.user_id, function(error, vans) {
-		if(error) {
-			handleError(res, next, "Error reading vans for user: " + error);
-			return;
-		}
-		res.send(vans);
-		next();
-	});
-};
-
-createVansForUserWithID = function(req, res, next) {
-	isAuthorized(req.params.user_id, function(error, status) {
-		if(error) {
-			handleError(res, next, "Error authorizing user: ", error);
-			return;
-		}
-		if(status === false) {
-			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-			return;
-		}
-		Vans.createVans(req.params.user_id, req.params, function(error, van) {
-			if(error) {
-				handleError(res, next, "Error creating van: ", error);
-				return;
-			}
-			res.send(van);
-			next();
-		});
-	});
-};
-
-addImageToVan = function(req, res, next) {
-	//Validate the image url
-	var imageURL = req.params.image_url,
-		validation;
-
-	imageURL = imageURL.split("?")[0]; //Remove eventual query string parameters inserted by meddlers
-	validation = imageURL.split("/");
-	if(validation[2] !== Config.VALID_IMAGE_HOST) {
-		handleError(res, next, "Error adding image to van: ", "image url is from an invalid domain.");
-		return;
-	}
-
-	isAuthorized(req.params.user_id, function(error, status) {
-		if(error) {
-			handleError(res, next, "Error authorizing user: ", error);
-			return;
-		}
-		if(status === false) {
-			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-			return;
-		}
-		Vans.addImage(req.params.user_id, req.params.van_id, imageURL, function(error, images) {
-			if(error) {
-				handleError(res, next, "Error authorizing user: ", error);
-				return;
-			}
-			res.send({images: images});
-			next();
-		});
-	});
-};
-
-updateVansForUserWithID = function(req, res, next) {
-	isAuthorized(req.params.user_id, function(error, status) {
-		if(error) {
-			handleError(res, next, "Error authorizing user: ", error);
-			return;
-		}
-		if(status === false) {
-			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-			return;
-		}
-		Vans.updateVanWithID(req.params.user_id, req.params.van_id, req.params, function(error, updatedVan) {
-			if(error) {
-				handleError(res, next, "Error updating van: ", error);
-				return;
-			}
-			res.send(updatedVan);
-			next();
-		});
-	});
-};
-
-createVanAvailability = function(req, res, next) {
-	isAuthorized(req.params.user_id, function(error, status) {
-		var availability;
-		if(error) {
-			handleError(res, next, "Error authorizing user: ", error);
-			return;
-		}
-		if(status === false) {
-			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-			return;
-		}
-		availability = JSON.parse(req.params.availability);
-		//Check that the user owns the gear
-		Vans.checkOwner(req.params.user_id, req.params.van_id, function(error, data) {
-			if(error) {
-				handleError(res, next, "Error checking van ownership: ", error);
-				return;
-			}
-			if(data === false) {
-				handleError(res, next, "Error checking van ownership: ", "User " + req.params.user_id + " does not own van " + req.params.van_id);
-				return;
-			}
-			Vans.getAlwaysFlag(req.params.van_id, function(error, result) {
-				var setAvailability;
-				if(error) {
-					handleError(res, next, "Error getting always flag: ", error);
-					return;
-				}
-				setAvailability = function() {
-					VanAvailability.set(req.params.van_id, availability, function(error) {
-						if(error) {
-							handleError(res, next, "Error setting van availability: ", error);
-							return;
-						}
-						res.send({});
-						next();
-					});
-				};
-				if(result.always_available != req.params.alwaysFlag) { //if flag changed and availability is empty, set it
-					Vans.setAlwaysFlag(req.params.van_id, req.params.alwaysFlag, function(error) {
-						if(error) {
-							handleError(res, next, "Error setting always flag: ", error);
-							return;
-						}
-						setAvailability();
-					});
-				}
-				else {
-					setAvailability();
-				}
-			});
-		});
-	});
-};
-
-readVanAvailability = function(req, res, next) {
-	isAuthorized(req.params.user_id, function(error, status) {
-		if(error) {
-			handleError(res, next, "Error authorizing user: ", error);
-			return;
-		}
-		if(status === false) {
-			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-			return;
-		}
-		VanAvailability.get(req.params.van_id, function(error, availabilityArray) {
-			if(error) {
-				handleError(res, next, "Error getting van availability: ", error);
-				return;
-			}
-			Vans.getAlwaysFlag(req.params.van_id, function(error, result) {
-				if(error) {
-					handleError(res, next, "Error getting alwaysFlag: ", error);
-					return;
-				}
-				res.send({
-					availabilityArray: availabilityArray,
-					alwaysFlag: result.always_available
-				});
-				next();
-			});
-		});
-	});
-};
-
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -886,6 +695,33 @@ readSGPreauthorization = function(req, res, next) {
 	}
 };
 
+wipeout = function(req, res, next) {
+	if(req.params.user_id === "1" || req.params.user_id === "2" || req.params.user_id === "5") {
+		isAuthorized(req.params.user_id, function(error, status) {
+			if(error) {
+				handleError(res, next, "Error authorizing user: ", error);
+				return;
+			}
+			if(status === false) {
+				handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+				return;
+			}
+			SGDashboard.wipeout(function(error) {
+				if(error) {
+					handleError(res, next, "Error performing wipeout: ", error);
+					return;
+				}
+				console.log("Database wiped out successfully.");
+				res.send({});
+				next();
+			});
+		});
+	}
+	else {
+		handleError(res, next, "Error authorizing user: ", "User id is not allowed in SG dashboard.");
+	}
+};
+
 /* UTILITIES */
 handleError = function(res, next, message, error) {
 	console.log(message + JSON.stringify(error));
@@ -948,7 +784,7 @@ secureServer.on("MethodNotAllowed", function(req, res) {
 });
 
 secureServer.get("/localization", readLocalizationData);
-secureServer.get("/contentclassification", readContentClassification);
+secureServer.get("/gearclassification", readGearClassification);
 
 secureServer.post("/gear", createGear);
 secureServer.get("/gear/:id", readGearWithID);
@@ -959,32 +795,26 @@ secureServer.post("/users/login", createUserSession);
 secureServer.get("/users/:id", readUserWithID);
 secureServer.put("/users/:id", updateUserWithID);
 secureServer.put("/users/:id/bankdetails", updateUserBankDetails);
-secureServer.get("/users/:id/newfilename/:filename", generateFileName);
-
 secureServer.get("/users/:user_id/gear", readGearFromUserWithID);
 secureServer.put("/users/:user_id/gear/:gear_id", updateGearFromUserWithID);
 secureServer.post("/users/:user_id/gear/:gear_id/availability", createGearAvailability);
 secureServer.get("/users/:user_id/gear/:gear_id/availability", readGearAvailability);
 secureServer.get("/users/:user_id/gearrentals", readGearRentalsFromUserWithID);
 secureServer.get("/users/:user_id/gearreservations", readGearReservationsFromUserWithID);
+secureServer.get("/users/:id/newfilename/:filename", generateFileName);
 secureServer.post("/users/:user_id/gear/:gear_id/bookings", createGearBooking);
 secureServer.get("/users/:user_id/gear/:gear_id/bookings/:booking_id", readGearBooking);
 secureServer.put("/users/:user_id/gear/:gear_id/bookings/:booking_id", updateGearBooking);
-
-secureServer.get("/users/:user_id/vans", readVansFromUserWithID);
-secureServer.post("/users/:user_id/vans", createVansForUserWithID);
-secureServer.post("/users/:user_id/vans/:van_id/image", addImageToVan);
-secureServer.put("/users/:user_id/vans/:van_id", updateVansForUserWithID);
-secureServer.post("/users/:user_id/vans/:van_id/availability", createVanAvailability);
-secureServer.get("/users/:user_id/vans/:van_id/availability", readVanAvailability);
-
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
 secureServer.get("/users/:user_id/dashboard/balance", readSGBalance);
 secureServer.get("/users/:user_id/dashboard/transactions", readSGTransactions);
 secureServer.get("/users/:user_id/dashboard/payments/preauthorization/:preauth_id", readSGPreauthorization);
+secureServer.get("/users/:user_id/dashboard/wipeout", wipeout);
 
 module.exports = {
 	server: server,
-	secureServer: secureServer
+	secureServer: secureServer,
+
+	wipeout: wipeout
 };
