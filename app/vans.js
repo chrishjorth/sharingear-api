@@ -21,7 +21,8 @@ var db = require("./database"),
 	updateVanWithID,
 	setAlwaysFlag,
 	getAlwaysFlag,
-	checkOwner;
+	checkOwner,
+	readVanWithID;
 
 getClassification = function(callback) {
 	var sql = "SELECT van_types.van_type, van_types.price_a_suggestion, van_types.price_b_suggestion, van_types.price_c_suggestion, accessories.accessory FROM  van_types";
@@ -59,7 +60,7 @@ getClassification = function(callback) {
 };
 
 readVansFromUser = function(userID, callback) {
-	db.query("SELECT id, van_type, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, always_available, updated, owner_id FROM vans WHERE owner_id=?", [userID], function(error, rows) {
+	db.query("SELECT id, van_type, model, description, images, price_a, price_b, price_c, currency, address, postal_code, city, region, country, latitude, longitude, always_available, updated, owner_id FROM vans WHERE owner_id=?", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -105,6 +106,7 @@ createVans = function(userID, params, callback) {
 				params.price_a,
 				params.price_b,
 				params.price_c,
+				params.currency,
 				params.address,
 				params.postal_code,
 				params.city,
@@ -116,7 +118,7 @@ createVans = function(userID, params, callback) {
 				userID
 			];
 			//insert
-			db.query("INSERT INTO vans(van_type, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, always_available, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", newVan, function(error, result) {
+			db.query("INSERT INTO vans(van_type, model, description, images, price_a, price_b, price_c, currency, address, postal_code, city, region, country, latitude, longitude, always_available, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", newVan, function(error, result) {
 				if(error) {
 					callback(error);
 					return;
@@ -137,6 +139,7 @@ createVans = function(userID, params, callback) {
 						price_a: params.price_a,
 						price_b: params.price_b,
 						price_c: params.price_c,
+						currency: params.currency,
 						address: params.address,
 						postal_code: params.postal_code,
 						city: params.city,
@@ -310,6 +313,7 @@ updateVanWithID = function(userID, vanID, updatedVanData, callback) {
 				(updatedVanData.price_a ? updatedVanData.price_a : rows[0].price_a),
 				(updatedVanData.price_b ? updatedVanData.price_b : rows[0].price_b),
 				(updatedVanData.price_c ? updatedVanData.price_c : rows[0].price_c),
+				(updatedVanData.currency ? updatedVanData.currency : rows[0].currency),
 				(updatedVanData.address ? updatedVanData.address : rows[0].address),
 				(updatedVanData.postal_code ? updatedVanData.postal_code : rows[0].postal_code),
 				(updatedVanData.city ? updatedVanData.city : rows[0].city),
@@ -319,7 +323,7 @@ updateVanWithID = function(userID, vanID, updatedVanData, callback) {
 				(updatedVanData.longitude ? updatedVanData.longitude : rows[0].longitude),
 				vanID
 			];
-			db.query("UPDATE vans SET van_type=?, model=?, description=?, price_a=?, price_b=?, price_c=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=? WHERE id=? LIMIT 1;", vanInfo, function(error, result) {
+			db.query("UPDATE vans SET van_type=?, model=?, description=?, price_a=?, price_b=?, price_c=?, currency=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=? WHERE id=? LIMIT 1;", vanInfo, function(error, result) {
 				if(error) {
 					callback(error);
 					return;
@@ -349,13 +353,14 @@ updateVanWithID = function(userID, vanID, updatedVanData, callback) {
 							price_a: vanInfo[3],
 							price_b: vanInfo[4],
 							price_c: vanInfo[5],
-							address: vanInfo[6],
-							postal_code: vanInfo[7],
-							city: vanInfo[8],
-							region: vanInfo[9],
-							country: vanInfo[10],
-							latitude: vanInfo[11],
-							longitude: vanInfo[12],
+							currency: vanInfo[6],
+							address: vanInfo[7],
+							postal_code: vanInfo[8],
+							city: vanInfo[9],
+							region: vanInfo[10],
+							country: vanInfo[11],
+							latitude: vanInfo[12],
+							longitude: vanInfo[13],
 							always_available: rows[0].always_available,
 							updated: now.format("YYYY-MM-DD HH:mm:ss"),
 							owner_id: userID
@@ -434,6 +439,52 @@ checkOwner = function(userID, vanID, callback) {
 	});
 };
 
+readVanWithID = function(vanID, callback) {
+	var sql;
+	sql = "SELECT van.id, van.van_type, van.model, van.description, van.images, van.price_a, van.price_b, van.price_c, van.currency, van.address, van.postal_code, van.city, van.region, van.country, van.latitude, van.longitude, van.owner_id, accessories.accessory";
+	sql += " FROM (SELECT vans.id, van_types.van_type, vans.model, vans.description, vans.images, vans.price_a, vans.price_b, vans.price_c, vans.currency, vans.address, vans.postal_code, vans.city, vans.region, vans.country, vans.latitude, vans.longitude, vans.owner_id FROM vans, van_types WHERE vans.id=? AND van_types.id=vans.van_type LIMIT 1) AS van";
+	sql += " LEFT JOIN (SELECT van_has_accessories.van_id, van_accessories.accessory FROM van_has_accessories, van_accessories WHERE van_has_accessories.accessory_id=van_accessories.id) AS accessories ON accessories.van_id=van.id;";
+	db.query(sql, [vanID], function(error, rows) {
+		var van, vanItem, accessories, i;
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback("No van found for the id.");
+			return;
+		}
+		accessories = [];
+		for(i = 0; i < rows.length; i++) {
+			if(rows[i].accessory !== null) {
+				accessories.push(rows[i].accessory);
+			}
+		}
+		vanItem = rows[0];
+		van = {
+			id: vanItem.id,
+			van_type: vanItem.van_type,
+			model: vanItem.model,
+			description: vanItem.description,
+			images: vanItem.images,
+			price_a: vanItem.price_a,
+			price_b: vanItem.price_b,
+			price_c: vanItem.price_c,
+			currency: vanItem.currency,
+			address: vanItem.address,
+			postal_code: vanItem.postal_code,
+			city: vanItem.city,
+			region: vanItem.region,
+			country: vanItem.country,
+			latitude: vanItem.latitude * 180 / Math.PI,
+			longitude: vanItem.longitude * 180 / Math.PI,
+			owner_id: vanItem.owner_id,
+			accessories: accessories
+		};
+		callback(null, van);
+	});
+};
+
 module.exports = {
 	getClassification: getClassification,
 	readVansFromUser: readVansFromUser,
@@ -445,5 +496,6 @@ module.exports = {
 	updateVanWithID: updateVanWithID,
 	setAlwaysFlag: setAlwaysFlag,
 	getAlwaysFlag: getAlwaysFlag,
-	checkOwner: checkOwner
+	checkOwner: checkOwner,
+	readVanWithID: readVanWithID
 };

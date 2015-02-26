@@ -284,7 +284,13 @@ update = function(userID, updatedInfo, callback) {
 						callback(error);
 						return;
 					}
-					updatePaymentUser();
+					db.query("UPDATE vans SET price_a=price_a*?, price_b=price_b*?, price_c=price_c*?, currency=? WHERE owner_id=?", [rate, rate, rate, newCurrency, userID], function(error) {
+						if(error) {
+							callback(error);
+							return;
+						}
+						updatePaymentUser();
+					});
 				});
 			});
 		}
