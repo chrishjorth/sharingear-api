@@ -745,7 +745,7 @@ sendReceipt = function(receiver, bookedGearID, parameters, callback) {
 		// text += "VAT:\t\t" + parameters.vat + " " + parameters.currency + "\n";
 		// text += "Sharingear service fee VAT:\t\t" + parameters.feeVat + " " + parameters.currency + "\n";
 		// text += "Total:\t\t" + (parameters.price + parameters.fee + parameters.vat + parameters.feeVat) + " " + parameters.currency + "\n\n\n";
-		// text += "Sharingear, Landemærket 8, 1. 1119, København K, Denmark, DK35845186, www.sharingear.com";
+		// text += "Sharingear, Danneskiold-Samsøes Allé 41, 1, 1434, København K, Denmark, DK35845186, www.sharingear.com";
 		// emailParameters = {
 		// 	to: receiver.email,
 		// 	from: FROM_ADDRESS,
@@ -814,7 +814,7 @@ sendInvoice = function(receiver, bookedGearID, parameters, callback) {
 		// text += receiver.name + " " + receiver.surname + "\n";
 		// text += receiver.address + ", " + receiver.postal_code + " " + receiver.city + ", " + receiver.country + "\n";
 		// text += (new Moment()).format("DD/MM/YYYY HH:mm") + "\n\n\n";
-		// text += "Sharingear, Landemærket 8, 1. 1119, København K, Denmark, DK35845186, www.sharingear.com";
+		// text += "Sharingear, Danneskiold-Samsøes Allé 41, 1, 1434, København K, Denmark, DK35845186, www.sharingear.com";
 		// emailParameters = {
 		// 	to: receiver.email,
 		// 	from: FROM_ADDRESS,
@@ -1108,7 +1108,7 @@ registerSharingearBankDetails = function(mangopay_id, callback) {
 		name: "Mircea Gabriel",
 		surname: "Eftemie",
 		id: "sharingear",
-		address: "Landemærket 8, 1. 1119 København K, Denmark"
+		address: "Danneskiold-Samsøes Allé 41, 1, 1434 København K, Denmark"
 	};
 	registerBankAccountForUser(user, iban, swift, function(error) {
 		callback(error);
