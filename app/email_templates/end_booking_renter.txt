@@ -4,4 +4,4 @@ You have now finished renting the gear. In order to complete the rental and conf
 End Booking: {{dashboard_link}}\n\n
 Best Regards,\n
 - Sharingear Team\n\n
-Sent from Sharingear (VAT: DK35845186), Landemærket 8, 1119 Copenhagen K, Denmark.\n
+Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsøes Allé 41, 1, 1434 Copenhagen K, Denmark.\n
