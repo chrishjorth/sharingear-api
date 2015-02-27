@@ -60,12 +60,58 @@ getClassification = function(callback) {
 };
 
 readVansFromUser = function(userID, callback) {
-	db.query("SELECT id, van_type, model, description, images, price_a, price_b, price_c, currency, address, postal_code, city, region, country, latitude, longitude, always_available, updated, owner_id FROM vans WHERE owner_id=?", [userID], function(error, rows) {
+	var sql;
+	//Get users gear, with names for type, subtype and brans and accessories
+	sql = "SELECT vans.id, vans.van_type, vans.model, vans.description, vans.images, vans.price_a, vans.price_b, vans.price_c, vans.currency, vans.address, vans.postal_code, vans.city, vans.region, vans.country, vans.latitude, vans.longitude, vans.owner_id, accessories.accessory";
+	sql += " FROM (SELECT vans.id, van_types.van_type, vans.model, vans.description, vans.images, vans.price_a, vans.price_b, vans.price_c, vans.currency, vans.address, vans.postal_code, vans.city, vans.region, vans.country, vans.latitude, vans.longitude, vans.owner_id FROM vans, van_types WHERE vans.owner_id=? AND van_types.id=vans.van_type) AS vans";
+	sql += " LEFT JOIN (SELECT van_has_accessories.van_id, van_accessories.accessory FROM van_has_accessories, van_accessories WHERE van_has_accessories.accessory_id=van_accessories.id) AS accessories ON accessories.van_id=vans.id;";
+	db.query(sql, [userID], function(error, rows) {
+		var vans, accessories, i, currentVanID, vanItem;
 		if(error) {
 			callback(error);
 			return;
 		}
-		callback(null, rows);
+		vans = [];
+		accessories = [];
+		//Convert latitudes and longitudes and merge rows of same gear because of accessories
+		for(i = 0; i < rows.length; i++) {
+			vanItem = rows[i];
+			if(vanItem.id === currentVanID) {
+				if(vanItem.accessory !== null) {
+					vans[vans.length - 1].accessories.push(vanItem.accessory);
+				}
+			}
+			else {
+				currentVanID = vanItem.id;
+				accessories = [];
+				vanItem.latitude = vanItem.latitude * 180 / Math.PI;
+				vanItem.longitude = vanItem.longitude * 180 / Math.PI;
+				if(vanItem.accessory !== null) {
+					accessories.push(vanItem.accessory);
+				}
+				vans.push({
+					id: vanItem.id,
+					van_type: vanItem.van_type,
+					model: vanItem.model,
+					description: vanItem.description,
+					images: vanItem.images,
+					price_a: vanItem.price_a,
+					price_b: vanItem.price_b,
+					price_c: vanItem.price_c,
+					currency: vanItem.currency,
+					address: vanItem.address,
+					postal_code: vanItem.postal_code,
+					city: vanItem.city,
+					region: vanItem.region,
+					country: vanItem.country,
+					latitude: vanItem.latitude,
+					longitude: vanItem.longitude,
+					owner_id: vanItem.owner_id,
+					accessories: accessories
+				});
+			}
+		}
+		callback(null, vans);
 	});
 };
 

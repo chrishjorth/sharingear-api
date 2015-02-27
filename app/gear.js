@@ -393,68 +393,61 @@ createGear = function(newGear, callback) {
 };
 
 readGearFromUser = function(userID, callback) {
-	//Check if any gear is rented out
-	//checkForRentals(userID, function(error) {
-		var sql;
-		/*if(error) {
-			callback("Error checking users gear for rentals: " + error);
+	var sql;
+	//Get users gear, with names for type, subtype and brans and accessories
+	sql = "SELECT gear.id, gear.gear_type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.currency, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id, accessories.accessory";
+	sql += " FROM (SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.currency, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear.owner_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand) AS gear";
+	sql += " LEFT JOIN (SELECT gear_has_accessories.gear_id, gear_accessories.accessory FROM gear_has_accessories, gear_accessories WHERE gear_has_accessories.accessory_id=gear_accessories.id) AS accessories ON accessories.gear_id=gear.id;";
+	db.query(sql, [userID], function(error, rows) {
+		var gear, accessories, i, currentGearID, gearItem;
+		if(error) {
+			callback(error);
 			return;
-		}*/
-		//Get users gear, with names for type, subtype and brans and accessories
-		sql = "SELECT gear.id, gear.gear_type, gear.subtype, gear.brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.currency, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id, accessories.accessory";
-		sql += " FROM (SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.description, gear.images, gear.price_a, gear.price_b, gear.price_c, gear.currency, gear.address, gear.postal_code, gear.city, gear.region, gear.country, gear.latitude, gear.longitude, gear.owner_id FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear.owner_id=? AND gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand) AS gear";
-		sql += " LEFT JOIN (SELECT gear_has_accessories.gear_id, gear_accessories.accessory FROM gear_has_accessories, gear_accessories WHERE gear_has_accessories.accessory_id=gear_accessories.id) AS accessories ON accessories.gear_id=gear.id;";
-		db.query(sql, [userID], function(error, rows) {
-			var gear, accessories, i, currentGearID, gearItem;
-			if(error) {
-				callback(error);
-				return;
-			}
-			gear = [];
-			accessories = [];
-			//Convert latitudes and longitudes and merge rows of same gear because of accessories
-			for(i = 0; i < rows.length; i++) {
-				gearItem = rows[i];
-				if(gearItem.id === currentGearID) {
-					if(gearItem.accessory !== null) {
-						gear[gear.length - 1].accessories.push(gearItem.accessory);
-					}
-				}
-				else {
-					currentGearID = gearItem.id;
-					accessories = [];
-					gearItem.latitude = gearItem.latitude * 180 / Math.PI;
-					gearItem.longitude = gearItem.longitude * 180 / Math.PI;
-					if(gearItem.accessory !== null) {
-						accessories.push(gearItem.accessory);
-					}
-					gear.push({
-						id: gearItem.id,
-						gear_type: gearItem.gear_type,
-						subtype: gearItem.subtype,
-						brand: gearItem.brand,
-						model: gearItem.model,
-						description: gearItem.description,
-						images: gearItem.images,
-						price_a: gearItem.price_a,
-						price_b: gearItem.price_b,
-						price_c: gearItem.price_c,
-						currency: gearItem.currency,
-						address: gearItem.address,
-						postal_code: gearItem.postal_code,
-						city: gearItem.city,
-						region: gearItem.region,
-						country: gearItem.country,
-						latitude: gearItem.latitude,
-						longitude: gearItem.longitude,
-						owner_id: gearItem.owner_id,
-						accessories: accessories
-					});
+		}
+		gear = [];
+		accessories = [];
+		//Convert latitudes and longitudes and merge rows of same gear because of accessories
+		for(i = 0; i < rows.length; i++) {
+			gearItem = rows[i];
+			if(gearItem.id === currentGearID) {
+				if(gearItem.accessory !== null) {
+					gear[gear.length - 1].accessories.push(gearItem.accessory);
 				}
 			}
-			callback(null, gear);
-		});
-	//});
+			else {
+				currentGearID = gearItem.id;
+				accessories = [];
+				gearItem.latitude = gearItem.latitude * 180 / Math.PI;
+				gearItem.longitude = gearItem.longitude * 180 / Math.PI;
+				if(gearItem.accessory !== null) {
+					accessories.push(gearItem.accessory);
+				}
+				gear.push({
+					id: gearItem.id,
+					gear_type: gearItem.gear_type,
+					subtype: gearItem.subtype,
+					brand: gearItem.brand,
+					model: gearItem.model,
+					description: gearItem.description,
+					images: gearItem.images,
+					price_a: gearItem.price_a,
+					price_b: gearItem.price_b,
+					price_c: gearItem.price_c,
+					currency: gearItem.currency,
+					address: gearItem.address,
+					postal_code: gearItem.postal_code,
+					city: gearItem.city,
+					region: gearItem.region,
+					country: gearItem.country,
+					latitude: gearItem.latitude,
+					longitude: gearItem.longitude,
+					owner_id: gearItem.owner_id,
+					accessories: accessories
+				});
+			}
+		}
+		callback(null, gear);
+	});
 };
 
 addImage = function(userID, gearID, imageURL, callback) {
