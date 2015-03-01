@@ -195,7 +195,7 @@ readRentalsForUser = function(userID, callback) {
 };
 
 readReservationsForUser = function(renterID, callback){
-	db.query("SELECT van_bookings.id AS booking_id, van_bookings.van_id AS id, van_types.van_type, van.model, van.images, van.city, van.owner_id, van_bookings.start_time, van_bookings.end_time, van_bookings.renter_price, van_bookings.renter_currency, van_bookings.owner_price, van_bookings.owner_currency, van_bookings.booking_status FROM vans, van_bookings, van_types WHERE van_bookings.van_id = vans.id AND van_bookings.renter_id=? AND van_types.id=vans.van_type;", [renterID], function(error, rows) {
+	db.query("SELECT van_bookings.id AS booking_id, van_bookings.van_id AS id, van_types.van_type, vans.model, vans.images, vans.city, vans.owner_id, van_bookings.start_time, van_bookings.end_time, van_bookings.renter_price, van_bookings.renter_currency, van_bookings.owner_price, van_bookings.owner_currency, van_bookings.booking_status FROM vans, van_bookings, van_types WHERE van_bookings.van_id = vans.id AND van_bookings.renter_id=? AND van_types.id=vans.van_type;", [renterID], function(error, rows) {
         if(error) {
             callback(error);
             return;

@@ -43,6 +43,8 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	createVanBooking,
 	readVanBooking,
 	updateVanBooking,
+	readVanRentalsFromUserWithID,
+	readVanReservationsFromUserWithID,
 
 	createCardObject,
 
@@ -881,6 +883,48 @@ updateVanBooking = function(req, res, next) {
 	});
 };
 
+readVanRentalsFromUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+    	VanBooking.readRentalsForUser(req.params.user_id, function (error, rentals) {
+        	if (error) {
+            	handleError(res,next,"Error reading reservations for user: ",error);
+            	return;
+        	}
+        	res.send(rentals);
+        	next();
+    	});
+    });
+};
+
+readVanReservationsFromUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+    	VanBooking.readReservationsForUser(req.params.user_id, function (error, reservations) {
+        	if (error) {
+            	handleError(res,next,"Error reading reservations for user: ",error);
+            	return;
+        	}
+        	res.send(reservations);
+        	next();
+    	});
+    });
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -1103,6 +1147,8 @@ secureServer.get("/vans/search/:location/:van/:daterange", readVanSearchResults)
 secureServer.post("/users/:user_id/vans/:van_id/bookings", createVanBooking);
 secureServer.get("/users/:user_id/vans/:van_id/bookings/:booking_id", readVanBooking);
 secureServer.put("/users/:user_id/vans/:van_id/bookings/:booking_id", updateVanBooking);
+secureServer.get("/users/:user_id/vanrentals", readVanRentalsFromUserWithID);
+secureServer.get("/users/:user_id/vanreservations", readVanReservationsFromUserWithID);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
