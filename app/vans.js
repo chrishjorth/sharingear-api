@@ -22,7 +22,8 @@ var db = require("./database"),
 	setAlwaysFlag,
 	getAlwaysFlag,
 	checkOwner,
-	readVanWithID;
+	readVanWithID,
+	search;
 
 getClassification = function(callback) {
 	var sql = "SELECT van_types.van_type, van_types.price_a_suggestion, van_types.price_b_suggestion, van_types.price_c_suggestion, accessories.accessory FROM  van_types";
@@ -531,6 +532,56 @@ readVanWithID = function(vanID, callback) {
 	});
 };
 
+search = function(location, van, callback) {
+	//Do a full text search on vans, then narrow down by location, because location search is slower.
+	console.log(van);
+	db.search("SELECT id, van_type, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM vans_main, vans_delta WHERE MATCH(?) LIMIT 100", [van], function(error, rows) {
+		var latLngArray, lat, lng, sql, i;
+		if(error) {
+			console.log("Error searching for match: " + JSON.stringify(error));
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, []);
+			return;
+		}
+		if(location === "all") {
+			for(i = 0; i < rows.length; i++) {
+				rows[i].latitude = rows[i].latitude * 180 / Math.PI;
+				rows[i].longitude = rows[i].longitude * 180 / Math.PI;
+			}
+			callback(null, rows);
+			return;
+		}
+		latLngArray = location.split(",");
+		lat = latLngArray[0];
+		lng = latLngArray[1];
+		//Convert to radians
+		lat = parseFloat(lat) * Math.PI / 180;
+		lng = parseFloat(lng) * Math.PI / 180;
+		sql = "SELECT id, van_type, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM vans_main, vans_delta WHERE id IN (";
+		for(i = 0; i < rows.length - 1; i++) {
+			sql += rows[i].id + ",";
+		}
+		sql += rows[rows.length - 1].id; //rows has at least one item
+		sql += ") AND distance <= ?.0  ORDER BY distance ASC LIMIT 100";
+		db.search(sql, [lat, lng, Config.SEARCH_RADIUS], function(error, rows) {
+			var i;
+			if(error) {
+				console.log("Error filtering by location: " + JSON.stringify(error));
+				callback(error);
+				return;
+			}
+			for(i = 0; i < rows.length; i++) {
+				rows[i].latitude = rows[i].latitude * 180 / Math.PI;
+				rows[i].longitude = rows[i].longitude * 180 / Math.PI;
+			}
+			callback(null, rows);
+		});
+	});
+};
+
 module.exports = {
 	getClassification: getClassification,
 	readVansFromUser: readVansFromUser,
@@ -543,5 +594,6 @@ module.exports = {
 	setAlwaysFlag: setAlwaysFlag,
 	getAlwaysFlag: getAlwaysFlag,
 	checkOwner: checkOwner,
-	readVanWithID: readVanWithID
+	readVanWithID: readVanWithID,
+	search: search
 };

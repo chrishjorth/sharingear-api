@@ -39,6 +39,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	createVanAvailability,
 	readVanAvailability,
 	readVan,
+	readVanSearchResults,
 
 	createCardObject,
 
@@ -801,6 +802,18 @@ readVan = function(req, res, next) {
 	});
 };
 
+readVanSearchResults = function(req, res, next) {
+	Vans.search(req.params.location, req.params.van, function(error, results) {
+		if(error) {
+			res.send([]);
+			next();
+			return;
+		}
+		res.send(results);
+		next();
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -1019,6 +1032,7 @@ secureServer.put("/users/:user_id/vans/:van_id", updateVansForUserWithID);
 secureServer.post("/users/:user_id/vans/:van_id/availability", createVanAvailability);
 secureServer.get("/users/:user_id/vans/:van_id/availability", readVanAvailability);
 secureServer.get("/vans/:van_id", readVan);
+secureServer.get("/vans/search/:location/:van/:daterange", readVanSearchResults);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
