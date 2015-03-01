@@ -9,6 +9,7 @@
 
 var db = require("./database"),
 	Moment = require("moment"),
+	Config = require("./config"),
 	
 	getClassification,
 
@@ -23,7 +24,8 @@ var db = require("./database"),
 	getAlwaysFlag,
 	checkOwner,
 	readVanWithID,
-	search;
+	search,
+	getPrice;
 
 getClassification = function(callback) {
 	var sql = "SELECT van_types.van_type, van_types.price_a_suggestion, van_types.price_b_suggestion, van_types.price_c_suggestion, accessories.accessory FROM  van_types";
@@ -582,6 +584,20 @@ search = function(location, van, callback) {
 	});
 };
 
+//TODO: Move this to a general utility or into payment, depending of circular reference risk
+getPrice = function(priceA, priceB, priceC, startTime, endTime) {
+	var startMoment, endMoment, months, weeks, days, price;
+	startMoment = new Moment(startTime, "YYYY-MM-DD HH:mm:ss");
+	endMoment = new Moment(endTime, "YYYY-MM-DD HH:mm:ss");
+	months = parseInt(endMoment.diff(startMoment, "months"), 10);
+	endMoment.subtract(months, "months");
+	weeks = parseInt(endMoment.diff(startMoment, "weeks"), 10);
+	endMoment.subtract(weeks, "weeks");
+	days = parseInt(endMoment.diff(startMoment, "days"), 10);
+	price = priceA * days + priceB * weeks + priceC * months;
+	return price;
+};
+
 module.exports = {
 	getClassification: getClassification,
 	readVansFromUser: readVansFromUser,
@@ -595,5 +611,6 @@ module.exports = {
 	getAlwaysFlag: getAlwaysFlag,
 	checkOwner: checkOwner,
 	readVanWithID: readVanWithID,
-	search: search
+	search: search,
+	getPrice: getPrice
 };

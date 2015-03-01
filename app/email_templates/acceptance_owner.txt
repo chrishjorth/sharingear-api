@@ -2,8 +2,8 @@ Hi {{name}},\n\n
 You just accepted a rental request.\n\n
 You just accepted a rental request, now renter needs to confirm the rental by completing the payment.\n
 We will send you a confirmation email as soon as the booking period is over in order for you to receive your payment.\n\n
-{{gear_type}}\n
-{{brand}} {{model}} {{subtype}}\n
+{{item_type}}\n
+{{item_name}}\n
 {{total_price}} {{currency}}\n
 {{city}}\n\n
 Pick Up Location: {{street}}, {{postal_code}} {{city}}, {{country}}\n

@@ -5,7 +5,7 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, Payment, Notifications, Localization, SGDashboard,
+var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, VanBooking, Payment, Notifications, Localization, SGDashboard,
 
 	readFileSuccess,
 
@@ -40,6 +40,9 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	readVanAvailability,
 	readVan,
 	readVanSearchResults,
+	createVanBooking,
+	readVanBooking,
+	updateVanBooking,
 
 	createCardObject,
 
@@ -68,6 +71,7 @@ GearAvailability = require("./gear_availability");
 GearBooking = require("./gear_booking");
 Vans = require("./vans");
 VanAvailability = require("./van_availability");
+VanBooking = require("./van_booking");
 Payment = require("./payment");
 Notifications = require("./notifications");
 Localization = require("./localization");
@@ -814,6 +818,69 @@ readVanSearchResults = function(req, res, next) {
 	});
 };
 
+createVanBooking = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		VanBooking.create(req.params.user_id, req.params, function(error, booking) {
+			if(error) {
+				handleError(res, next, "Error creating booking: ", error);
+				return;
+			}
+			res.send(booking);
+			next();
+		});
+	});
+};
+
+readVanBooking = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		VanBooking.read(req.params.booking_id, function(error, booking) {
+			if(error) {
+				handleError(res, next, "Error reading booking: ", error);
+				return;
+			}
+			res.send(booking);
+			next();
+		});
+	});
+};
+
+updateVanBooking = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		VanBooking.update(req.params, function(error) {
+			if(error) {
+				handleError(res, next, "Error updating booking: ", error);
+				return;
+			}
+			res.send({});
+			next();
+		});
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -1033,6 +1100,9 @@ secureServer.post("/users/:user_id/vans/:van_id/availability", createVanAvailabi
 secureServer.get("/users/:user_id/vans/:van_id/availability", readVanAvailability);
 secureServer.get("/vans/:van_id", readVan);
 secureServer.get("/vans/search/:location/:van/:daterange", readVanSearchResults);
+secureServer.post("/users/:user_id/vans/:van_id/bookings", createVanBooking);
+secureServer.get("/users/:user_id/vans/:van_id/bookings/:booking_id", readVanBooking);
+secureServer.put("/users/:user_id/vans/:van_id/bookings/:booking_id", updateVanBooking);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
