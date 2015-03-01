@@ -564,6 +564,7 @@ chargePreAuthorization = function(bookingData, callback) {
 				callback("Error getting MangoPay data for gear renter: " + error);
 				return;
 			}
+			bookingData.item_name = bookingData.gear_brand + " " + bookingData.gear_model + " " + bookingData.gear_subtype;
 			Payment.chargePreAuthorization(seller, renter, bookingData, callback);
 		});
 	});
@@ -575,6 +576,7 @@ endBooking = function(bookingData, callback) {
 			callback("Error getting MangoPay data for gear owner: " + error);
 			return;
 		}
+		bookingData.item_name = bookingData.gear_brand + " " + bookingData.gear_model + " " + bookingData.gear_subtype;
 		Payment.payOutSeller(owner, bookingData, function(error) {
 			if(error) {
 				callback(error);

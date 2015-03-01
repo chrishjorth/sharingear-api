@@ -548,6 +548,7 @@ chargePreAuthorization = function(bookingData, callback) {
 				callback("Error getting MangoPay data for vehicle renter: " + error);
 				return;
 			}
+			bookingData.item_name = bookingData.van_type + " " + bookingData.van_model;
 			Payment.chargePreAuthorization(seller, renter, bookingData, callback);
 		});
 	});
@@ -559,6 +560,7 @@ endBooking = function(bookingData, callback) {
 			callback("Error getting MangoPay data for vehicle owner: " + error);
 			return;
 		}
+		bookingData.item_name = bookingData.van_type + " " + bookingData.van_model;
 		Payment.payOutSeller(owner, bookingData, function(error) {
 			if(error) {
 				callback(error);

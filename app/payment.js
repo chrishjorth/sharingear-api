@@ -10,14 +10,11 @@
 
 var https = require("https"),
 	Moment = require("moment"),
-	SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
 	_ = require("underscore"),
 	db = require("./database"),
 	Notifications = require("./notifications"),
 	Config = require("./config"),
-	Gear = require("./gear"),
 	Localization = require("./localization"),
-	FROM_ADDRESS = "service@sharingear.com",
 	
 	loadPayment,
 	createSGWallets,
@@ -32,9 +29,6 @@ var https = require("https"),
 	getPreauthorizationStatus,
 	chargePreAuthorization,
 	payOutSeller,
-
-	sendReceipt,
-	sendInvoice,
 
 	getSGBalance,
 	getSGTransactions,
@@ -557,7 +551,7 @@ chargePreAuthorization = function(seller, buyer, bookingData, callback) {
 			PreauthorizationId: bookingData.preauth_id
 		};
 		gatewayPost("/payins/PreAuthorized/direct", postData, function(error, data) {
-			var parsedData, receiptParameters;
+			var parsedData, startTime, endTime, paymentTime;
 			if(error) {
 				callback("Error charging preauthorized booking: " + error);
 				return;
@@ -571,24 +565,25 @@ chargePreAuthorization = function(seller, buyer, bookingData, callback) {
 			}
 			console.log("charged successfully");
 			callback(null);
-			receiptParameters = {
+
+			startTime = new Moment(bookingData.start_time, "YYYY-MM-DD HH:mm:ss");
+			endTime = new Moment(bookingData.end_time, "YYYY-MM-DD HH:mm:ss");
+			paymentTime = new Moment();
+
+			Notifications.send(Notifications.RECEIPT_RENTER,{
+				name: buyer.name,
+				item_name: bookingData.item_name,
 				price: price,
 				fee: buyerFee,
-				//vat: buyerFeeVAT,
-				vat: "",
-				//feeVat: sellerVAT,
-				feeVat: "",
+				total_price: amount,
 				currency: bookingData.owner_currency,
-				start_time: bookingData.start_time,
-				end_time: bookingData.end_time,
-				payment_timestamp: bookingData.payment_timestamp
-			};
-			sendReceipt(buyer, bookingData.gear_id, receiptParameters, function(error) {
-				if(error) {
-					console.log("Error sending receipt: " + error);
-					return;
-				}
-			});
+				payment_date: paymentTime.format("DD/MM/YYYY"),
+				payment_time: paymentTime.format("HH:mm"),
+				date_from: startTime.format("DD/MM/YYYY"),
+				time_from: startTime.format("HH:mm"),
+				date_to: endTime.format("DD/MM/YYYY"),
+				time_to: endTime.format("HH:mm")
+			}, buyer.email);
 		});
 	});
 };
@@ -673,7 +668,7 @@ payOutSeller = function(seller, bookingData, callback) {
 					BankWireRef: "Sharingear rental"
 				};
 				gatewayPost("/payouts/bankwire", postData, function(error, data) {
-					var parsedData, receiptParameters;
+					var parsedData, startTime, endTime, paymentTime;
 					if(error) {
 						callback("Error wiring from wallet: " + error);
 						return;
@@ -685,150 +680,36 @@ payOutSeller = function(seller, bookingData, callback) {
 					}
 					console.log("payout successful");
 					callback(null);
-					receiptParameters = {
+					
+					startTime = new Moment(bookingData.start_time, "YYYY-MM-DD HH:mm:ss");
+					endTime = new Moment(bookingData.end_time, "YYYY-MM-DD HH:mm:ss");
+					paymentTime = new Moment();
+
+					Notifications.send(Notifications.RECEIPT_OWNER,{
+						name: seller.name,
+						surname: seller.surname,
+						street: seller.street,
+						postal_code: seller.postal_code,
+						city: seller.city,
+						country: seller.country,			
+						item_name: bookingData.item_name,
 						price: price,
 						fee: sellerFee,
-						//vat: sellerVAT,
-						vat: "",
-						//feeVat: sellerFeeVAT,
-						feeVat: "",
-						start_time: bookingData.start_time,
-						end_time: bookingData.end_time,
-						currency: bookingData.owner_currency
-					};
-					sendInvoice(seller, bookingData.gear_id, receiptParameters, function(error) {
-						if(error) {
-							console.log("Error sending receipt: " + error);
-							return;
-						}
-					});
+						total_price: price - sellerFee,
+						currency: bookingData.owner_currency,
+			
+						//These are for later use		
+						payment_date: paymentTime.format("DD/MM/YYYY"),
+						payment_time: paymentTime.format("HH:mm"),
+			
+						date_from: startTime.format("DD/MM/YYYY"),
+						time_from: startTime.format("HH:mm"),
+						date_to: endTime.format("DD/MM/YYYY"),
+						time_to: endTime.format("HH:mm")
+					}, seller.email);
 				});
 			});
 		});
-	});
-};
-
-sendReceipt = function(receiver, bookedGearID, parameters, callback) {
-	Gear.readGearWithID(bookedGearID, function(error, bookedGear) {
-		var emailParameters, text, email,startTime,endTime,paymentTime;
-		if(error) {
-			callback(error);
-			return;
-		}
-		
-		startTime = new Moment(parameters.start_time, "YYYY-MM-DD HH:mm:ss");
-		endTime = new Moment(parameters.end_time, "YYYY-MM-DD HH:mm:ss");
-		paymentTime = new Moment();
-
-		Notifications.send(Notifications.RECEIPT_RENTER,{
-			name: receiver.name,
-			brand: bookedGear.brand,
-			model: bookedGear.gear_model,
-			subtype: bookedGear.gear_subtype,
-			price: parameters.price,
-			fee: parameters.fee,
-			total_price: parameters.price + parameters.fee,
-			currency: parameters.renter_currency,
-			payment_date: paymentTime.format("DD/MM/YYYY"),
-			payment_time: paymentTime.format("HH:mm"),
-			date_from: startTime.format("DD/MM/YYYY"),
-			time_from: startTime.format("HH:mm"),
-			date_to: endTime.format("DD/MM/YYYY"),
-			time_to: endTime.format("HH:mm")
-		}, receiver.email);
-
-		// text = "Sharingear BOOKING RECEIPT:\n\n";
-		// text += "Item\t\t\t\tPrice\n--------------------\n";
-		// text += bookedGear.brand + " " + bookedGear.model + " " + bookedGear.subtype + "\t\t" + parameters.price + " " + parameters.currency + "\n";
-		// text += "Sharingear service fee\t\t" + parameters.fee + " " + parameters.currency + "\n";
-		// text += "Total ex. VAT:\t\t" + (parameters.price + parameters.fee) + " " + parameters.currency + "\n";
-		// text += "VAT:\t\t" + parameters.vat + " " + parameters.currency + "\n";
-		// text += "Sharingear service fee VAT:\t\t" + parameters.feeVat + " " + parameters.currency + "\n";
-		// text += "Total:\t\t" + (parameters.price + parameters.fee + parameters.vat + parameters.feeVat) + " " + parameters.currency + "\n\n\n";
-		// text += "Sharingear, Danneskiold-Samsøes Allé 41, 1, 1434, København K, Denmark, DK35845186, www.sharingear.com";
-		// emailParameters = {
-		// 	to: receiver.email,
-		// 	from: FROM_ADDRESS,
-		// 	subject: "Sharingear - payment receipt",
-		// 	text: text
-		// };
-		// email = new SendGrid.Email(emailParameters);
-		// SendGrid.send(email, function(error) {
-		// 	if(error) {
-		// 		callback(error);
-		// 		return;
-		// 	}
-		// 	callback(null);
-		// });
-	});
-};
-
-sendInvoice = function(receiver, bookedGearID, parameters, callback) {
-	Gear.readGearWithID(bookedGearID, function(error, bookedGear) {
-		var emailParameters, text, email,startTime,endTime,paymentTime;
-		if(error) {
-			callback(error);
-			return;
-		}
-
-		startTime = new Moment(parameters.start_time, "YYYY-MM-DD HH:mm:ss");
-		endTime = new Moment(parameters.end_time, "YYYY-MM-DD HH:mm:ss");
-		paymentTime = new Moment();
-
-		Notifications.send(Notifications.RECEIPT_OWNER,{
-			name: receiver.name,
-			surname: receiver.surname,
-			street: receiver.street,
-			postal_code: receiver.postal_code,
-			city: receiver.city,
-			country: receiver.country,			
-			brand: bookedGear.brand,
-			model: bookedGear.gear_model,
-			subtype: bookedGear.gear_subtype,
-			price: parameters.price,
-			fee: parameters.fee,
-			total_price: parameters.price + parameters.fee,
-			currency: parameters.renter_currency,
-			
-			//These are for later use		
-			payment_date: paymentTime.format("DD/MM/YYYY"),
-			payment_time: paymentTime.format("HH:mm"),
-			
-			date_from: startTime.format("DD/MM/YYYY"),
-			time_from: startTime.format("HH:mm"),
-			date_to: endTime.format("DD/MM/YYYY"),
-			time_to: endTime.format("HH:mm")
-		}, receiver.email);
-
-
-
-		// text = "Sharingear PAYOUT RECEIPT\n\n";
-		// text += "Item\t\t\t\tPrice\n--------------------";
-		// text += bookedGear.brand + " " + bookedGear.model + " " + bookedGear.subtype + "\t\t" + parameters.price + " " + parameters.currency + "\n";
-		// text += "Sharingear service fee\t\t" + (-1 * parameters.fee) + " " + parameters.currency + "\n";
-		// text += "Total ex. VAT:\t\t" + (parameters.price - parameters.fee) + " " + parameters.currency + "\n";
-		// text += "VAT:\t\t" + parameters.vat + " " + parameters.currency + "\n";
-		// text += "Sharingear service fee VAT:\t\t" + parameters.feeVat + " " + parameters.currency + "\n";
-		// text += "Total:\t\t" + (parameters.price - parameters.fee - parameters.feeVat + parameters.vat) + " " + parameters.currency + "\n\n";
-		// text += "PAID TO:\n";
-		// text += receiver.name + " " + receiver.surname + "\n";
-		// text += receiver.address + ", " + receiver.postal_code + " " + receiver.city + ", " + receiver.country + "\n";
-		// text += (new Moment()).format("DD/MM/YYYY HH:mm") + "\n\n\n";
-		// text += "Sharingear, Danneskiold-Samsøes Allé 41, 1, 1434, København K, Denmark, DK35845186, www.sharingear.com";
-		// emailParameters = {
-		// 	to: receiver.email,
-		// 	from: FROM_ADDRESS,
-		// 	subject: "Sharingear - payout receipt",
-		// 	text: text
-		// };
-		// email = new SendGrid.Email(emailParameters);
-		// SendGrid.send(email, function(error) {
-		// 	if(error) {
-		// 		callback(error);
-		// 		return;
-		// 	}
-		// 	callback(null);
-		// });
 	});
 };
 
@@ -1131,9 +1012,6 @@ module.exports = {
 	getPreauthorizationStatus: getPreauthorizationStatus,
 	chargePreAuthorization: chargePreAuthorization,
 	payOutSeller: payOutSeller,
-
-	sendReceipt: sendReceipt,
-	sendInvoice: sendInvoice,
 
 	getSGBalance: getSGBalance,
 	getSGTransactions: getSGTransactions,
