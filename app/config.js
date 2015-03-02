@@ -10,6 +10,7 @@ var IS_PRODUCTION = true, //This variable should be set and saved according to t
 	fs = require("fs"),
 	SEARCH_RADIUS = 80000,
 	SHARINGEAR_VAT = 25.0,
+	DB_WIPEABLE = false,
 	MYSQL_URL,
 	MYSQL_CA,
 	MYSQL_CERT,
@@ -24,6 +25,7 @@ var IS_PRODUCTION = true, //This variable should be set and saved according to t
 	isProduction;
 
 if(IS_PRODUCTION === true) {
+	DB_WIPEABLE = false; //Failsafe
 	MYSQL_URL = "173.194.246.188";
 	MYSQL_CA = fs.readFileSync(__dirname + "/../certificates/prod_server-ca.pem");
 	MYSQL_CERT = fs.readFileSync(__dirname + "/../certificates/prod_client-cert.pem");
@@ -65,5 +67,6 @@ module.exports = {
 	MANGOPAY_SANDBOX_KEY: MANGOPAY_SANDBOX_KEY,
 	SEARCH_RADIUS: SEARCH_RADIUS,
 	SHARINGEAR_VAT: SHARINGEAR_VAT,
+	DB_WIPEABLE: DB_WIPEABLE,
 	isProduction: isProduction
 };

@@ -2,8 +2,8 @@ Hi {{name}},\n\n
 You submitted a Reservation Request.\n\n
 Thanks for renting gear on Sharingear. We just sent your request to the Owner and they should get back to you as soon as possible.\n
 Your credit card will not be charged until the Owner accepts the rental.\n\n
-{{gear_type}}\n
-{{brand}} {{model}} {{subtype}}\n
+{{item_type}}\n
+{{item_name}}\n
 {{total_price}} {{currency}}\n
 {{city}}\n\n
 Pick Up Date: {{pickup_date}} {{pickup_time}}\n\n
@@ -14,4 +14,4 @@ Total: {{total_price}} {{currency}}\n\n
 See your Dashboard to view this booking: {{dashboard_link}}\n\n
 Best Regards,\n
 - Sharingear Team\n\n
-Sent from Sharingear (VAT: DK35845186), Landemærket 8, 1119 Copenhagen K, Denmark.\n
+Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsøes Allé 41, 1, 1434 Copenhagen K, Denmark.\n
