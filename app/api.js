@@ -256,7 +256,7 @@ generateFileName = function(req, res, next) {
 			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
 			return;
 		}
-		dot = params.filename.indexOf(".");
+		dot = params.filename.lastIndexOf(".");
 		extension = params.filename.substring(dot + 1);
 		newFileName = params.filename.substring(0, dot);
 		newFileName = Sec.generateFileName(newFileName) + "." + extension;
