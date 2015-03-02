@@ -298,7 +298,7 @@ updateToPending = function(booking, callback) {
 						pickup_time: startTime.format("HH:mm"),
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
-						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanrentals"
 					}, owner.email);
 
 					Notifications.send(Notifications.BOOKING_PENDING_RENTER, {
@@ -318,7 +318,7 @@ updateToPending = function(booking, callback) {
 						pickup_time: startTime.format("HH:mm"),
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
-						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanreservations"
 					}, renter.email);
 				});
 			});
@@ -392,7 +392,7 @@ updateToAccepted = function(booking, callback) {
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
 						username_owner: owner.name,
-						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanreservations"
 					}, renter.email);
 
 					Notifications.send(Notifications.BOOKING_ACCEPTED_OWNER, {
@@ -412,7 +412,7 @@ updateToAccepted = function(booking, callback) {
 						pickup_time: startTime.format("HH:mm"),
 						dropoff_date: endTime.format("DD/MM/YYYY"),
 						dropoff_time: endTime.format("HH:mm"),
-						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
+						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanrentals"
 					}, owner.email);
 				});
 			});
@@ -468,7 +468,7 @@ updateToRenterReturned = function(booking, callback) {
 				Notifications.send(Notifications.BOOKING_OWNER_RETURNED, {
 					name: owner.name,
 					username_renter: renter.name + " " + renter.surname,
-					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourrentals"
+					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanrentals"
 				}, owner.email);
 			});
 		});
@@ -514,7 +514,7 @@ updateToOwnerReturned = function(booking, callback) {
 				Notifications.send(Notifications.BOOKING_RENTER_RETURNED, {
 					name: renter.name,
 					username_owner: owner.name + " " + owner.surname,
-					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourreservations"
+					dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanreservations"
 				}, renter.email);
 			});
 		});
