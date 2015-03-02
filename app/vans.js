@@ -536,7 +536,6 @@ readVanWithID = function(vanID, callback) {
 
 search = function(location, van, callback) {
 	//Do a full text search on vans, then narrow down by location, because location search is slower.
-	console.log(van);
 	db.search("SELECT id, van_type, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM vans_main, vans_delta WHERE MATCH(?) LIMIT 100", [van], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
