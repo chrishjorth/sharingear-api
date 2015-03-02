@@ -1,5 +1,5 @@
 Hi {{name}},\n\n
-Congrats! Someone is requesting to book your gear! Below are details for your rental.\n
+Congrats! Someone is requesting to book one of your items! Below are details for your rental.\n
 Whether you accept or decline remember, the quicker you respond the better.\n\n
 {{item_type}}\n
 {{item_name}}\n

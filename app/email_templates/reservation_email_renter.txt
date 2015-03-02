@@ -1,6 +1,6 @@
 Hi {{name}},\n\n
 You submitted a Reservation Request.\n\n
-Thanks for renting gear on Sharingear. We just sent your request to the Owner and they should get back to you as soon as possible.\n
+Thanks for renting an item on Sharingear. We just sent your request to the Owner and they should get back to you as soon as possible.\n
 Your credit card will not be charged until the Owner accepts the rental.\n\n
 {{item_type}}\n
 {{item_name}}\n
