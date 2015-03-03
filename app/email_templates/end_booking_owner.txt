@@ -1,6 +1,6 @@
 Hi {{name}},\n\n
-{{username_renter}} has finished renting your gear, and wants you to end the booking period!\n\n
-Upon confirmation you are able to be payed for your rented gear.\n\n
+{{username_renter}} has finished renting your item, and wants you to end the booking period!\n\n
+Upon confirmation you are able to be payed for your rented item.\n\n
 Get Payment: {{dashboard_link}}\n\n
 Best Regards,\n
 - Sharingear Team\n\n
