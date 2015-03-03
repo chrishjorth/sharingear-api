@@ -5,7 +5,7 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, VanBooking, Payment, Notifications, Localization, SGDashboard,
+var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, VanBooking, Roadies, Payment, Notifications, Localization, SGDashboard,
 
 	readFileSuccess,
 
@@ -46,6 +46,8 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	readVanRentalsFromUserWithID,
 	readVanReservationsFromUserWithID,
 
+	readRoadiesFromUserWithID,
+
 	createCardObject,
 
 	readSGBalance,
@@ -74,6 +76,7 @@ GearBooking = require("./gear_booking");
 Vans = require("./vans");
 VanAvailability = require("./van_availability");
 VanBooking = require("./van_booking");
+Roadies = require("./roadies");
 Payment = require("./payment");
 Notifications = require("./notifications");
 Localization = require("./localization");
@@ -925,6 +928,17 @@ readVanReservationsFromUserWithID = function(req, res, next) {
     });
 };
 
+readRoadiesFromUserWithID = function(req, res, next) {
+	Roadies.readRoadiesFromUser(req.params.user_id, function(error, roadies) {
+		if(error) {
+			handleError(res, next, "Error reading roadies for user: " + error);
+			return;
+		}
+		res.send(roadies);
+		next();
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -1149,6 +1163,8 @@ secureServer.get("/users/:user_id/vans/:van_id/bookings/:booking_id", readVanBoo
 secureServer.put("/users/:user_id/vans/:van_id/bookings/:booking_id", updateVanBooking);
 secureServer.get("/users/:user_id/vanrentals", readVanRentalsFromUserWithID);
 secureServer.get("/users/:user_id/vanreservations", readVanReservationsFromUserWithID);
+
+secureServer.get("/users/:user_id/roadies", readRoadiesFromUserWithID);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
