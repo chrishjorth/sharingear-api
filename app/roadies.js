@@ -14,7 +14,7 @@ var db = require("./database"),
 	getClassification,
 
 	readRoadiesFromUser,
-	createRoadies,
+	createRoadie,
 	getTypeID,
 	getTypeName,
 	updateRoadieWithID,
@@ -42,9 +42,8 @@ getClassification = function(callback) {
 };
 
 readRoadiesFromUser = function(userID, callback) {
-	var sql;
 	//Get users gear, with names for type, subtype and brans and accessories
-	sql = "";
+	var sql = "SELECT roadies.id, roadie_types.roadie_type, roadies.price_a, roadies.price_b, roadies.price_c, roadies.currency, roadies.address, roadies.postal_code, roadies.city, roadies.region, roadies.country, roadies.latitude, roadies.longitude, roadies.owner_id FROM roadies, roadie_types WHERE roadies.owner_id=? AND roadie_types.id=roadies.roadie_type";
 	db.query(sql, [userID], function(error, rows) {
 		var roadies = [],
 			roadieItem, i;
@@ -79,7 +78,7 @@ readRoadiesFromUser = function(userID, callback) {
 	});
 };
 
-createRoadies = function(userID, params, callback) {
+createRoadie = function(userID, params, callback) {
 	var roadies = this;
 	//Check if user is owner
 	if(userID !== params.owner_id) {
@@ -110,6 +109,14 @@ createRoadies = function(userID, params, callback) {
 			now = new Moment();
 			newRoadie = [
 				typeID,
+				params.about,
+				params.currently,
+				params.genres,
+				params.experience,
+				params.xp_years,
+				params.tours,
+				params.companies,
+				params.bands,
 				params.price_a,
 				params.price_b,
 				params.price_c,
@@ -125,21 +132,29 @@ createRoadies = function(userID, params, callback) {
 				userID
 			];
 			//insert
-			db.query("INSERT INTO roadies(roadie_type, price_a, price_b, price_c, currency, address, postal_code, city, region, country, latitude, longitude, always_available, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", newRoadie, function(error, result) {
+			db.query("INSERT INTO roadies(roadie_type, about, currently, genres, experience, xp_years, tours, companies, bands, price_a, price_b, price_c, currency, address, postal_code, city, region, country, latitude, longitude, always_available, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", newRoadie, function(error, result) {
 				if(error) {
 					callback(error);
 					return;
 				}
 				//Insert accessories
-				roadies.addAccessories(result.insertId, typeID, params.accessories, function(error) {
+				/*roadies.addAccessories(result.insertId, typeID, params.accessories, function(error) {
 					if(error) {
 						callback(error);
 						return;
-					}
+					}*/
 					//return object 
 					callback(null, {
 						id: result.insertId,
 						roadie_type: params.roadie_type,
+						about: params.about,
+						currently: params.currently,
+						genres: params.genres,
+						experience: params.experience,
+						xp_years: params.xp_years,
+						tours: params.tours,
+						companies: params.companies,
+						bands: params.bands,
 						price_a: params.price_a,
 						price_b: params.price_b,
 						price_c: params.price_c,
@@ -154,7 +169,7 @@ createRoadies = function(userID, params, callback) {
 						updated: now.format("YYYY-MM-DD HH:mm:ss"),
 						owner_id: userID
 					});
-				});
+				//});
 			});
 		});
 	});
@@ -460,7 +475,7 @@ getPrice = function(priceA, priceB, priceC, startTime, endTime) {
 module.exports = {
 	getClassification: getClassification,
 	readRoadiesFromUser: readRoadiesFromUser,
-	createRoadies: createRoadies,
+	createRoadie: createRoadie,
 	getTypeID: getTypeID,
 	getTypeName: getTypeName,
 	updateRoadieWithID: updateRoadieWithID,

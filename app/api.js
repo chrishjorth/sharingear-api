@@ -47,6 +47,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	readVanReservationsFromUserWithID,
 
 	readRoadiesFromUserWithID,
+	createRoadieForUserWithID,
 
 	createCardObject,
 
@@ -171,13 +172,20 @@ readContentClassification = function(req, res, next) {
 				handleError("Error retrieving van classification: " + error);
 				return;
 			}
-			contentClassification = {
-				gearClassification: gearClassification.classification,
-				gearBrands: gearClassification.brands,
-				vanClassification: vanClassification
-			};
-			res.send(contentClassification);
-			next();
+			Roadies.getClassification(function(error, roadieClassification) {
+				if(error) {
+					handleError("Error retrieving roadie classification: " + error);
+					return;
+				}
+				contentClassification = {
+					gearClassification: gearClassification.classification,
+					gearBrands: gearClassification.brands,
+					vanClassification: vanClassification,
+					roadieClassification: roadieClassification
+				};
+				res.send(contentClassification);
+				next();
+			});
 		});
 	});
 };
@@ -939,6 +947,27 @@ readRoadiesFromUserWithID = function(req, res, next) {
 	});
 };
 
+createRoadieForUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		Roadies.createRoadie(req.params.user_id, req.params, function(error, van) {
+			if(error) {
+				handleError(res, next, "Error creating roadie: ", error);
+				return;
+			}
+			res.send(van);
+			next();
+		});
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -1115,14 +1144,12 @@ server.get("/", healthCheck);
 
 //405 debug
 server.on("MethodNotAllowed", function(req, res) {
-	console.log("---- Method not allowed in standard server");
-	console.log(JSON.stringify(req));
+	console.log("---- Method " + req.method + " on URI " + req.url + " not allowed in standard server");
 	return res.send(new restify.MethodNotAllowedError());
 });
 
 secureServer.on("MethodNotAllowed", function(req, res) {
-	console.log("---- Method not allowed in secure server");
-	console.log(JSON.stringify(req));
+	console.log("---- Method " + req.method + " on URI " + req.url + " not allowed in secure server");
 	return res.send(new restify.MethodNotAllowedError());
 });
 
@@ -1165,6 +1192,7 @@ secureServer.get("/users/:user_id/vanrentals", readVanRentalsFromUserWithID);
 secureServer.get("/users/:user_id/vanreservations", readVanReservationsFromUserWithID);
 
 secureServer.get("/users/:user_id/roadies", readRoadiesFromUserWithID);
+secureServer.post("/users/:user_id/roadies", createRoadieForUserWithID);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
