@@ -26,7 +26,7 @@ var db = require("./database"),
 	getPrice;
 
 getClassification = function(callback) {
-	var sql = "SELECT roadie_type FROM roadie_types ORDER BY sorting;";
+	var sql = "SELECT roadie_type, price_a_suggestion, price_b_suggestion, price_c_suggestion FROM roadie_types ORDER BY sorting;";
 	db.query(sql, [], function(error, rows) {
 		var roadieTypes = [],
 			i;
@@ -35,7 +35,12 @@ getClassification = function(callback) {
 			return;
 		}
 		for(i = 0; i < rows.length; i++) {
-			roadieTypes.push(rows[i].roadie_type);
+			roadieTypes.push({
+				roadie_type: rows[i].roadie_type,
+				price_a_suggestion: rows[i].price_a_suggestion,
+				price_b_suggestion: rows[i].price_b_suggestion,
+				price_c_suggestion: rows[i].price_c_suggestion
+			});
 		}
 		callback(null, roadieTypes);
 	});
@@ -214,7 +219,7 @@ getTypeName = function(roadieTypeID, callback) {
  */
 updateRoadieWithID = function(userID, roadieID, updatedRoadieData, callback) {
 	var roadies = this;
-	db.query("SELECT id, roadie_type, model, description, images, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, always_available, owner_id FROM roadies WHERE id=? LIMIT 1;", [roadieID], function(error, rows) {
+	db.query("SELECT id, roadie_type, about, currently, genres, experience, xp_years, tours, companies, bands, price_a, price_b, price_c, address, postal_code, city, region, country, latitude, longitude, always_available, owner_id FROM roadies WHERE id=? LIMIT 1;", [roadieID], function(error, rows) {
 		var update;
 		if(error) {
 			callback(error);
@@ -246,7 +251,14 @@ updateRoadieWithID = function(userID, roadieID, updatedRoadieData, callback) {
 			}
 			roadieInfo = [
 				roadieTypeID,
-				(updatedRoadieData.description ? updatedRoadieData.description : rows[0].description),
+				(updatedRoadieData.about ? updatedRoadieData.about : rows[0].about),
+				(updatedRoadieData.currently ? updatedRoadieData.currently : rows[0].currently),
+				(updatedRoadieData.genres ? updatedRoadieData.genres : rows[0].genres),
+				(updatedRoadieData.experience ? updatedRoadieData.experience : rows[0].experience),
+				(updatedRoadieData.xp_years ? updatedRoadieData.xp_years : rows[0].xp_years),
+				(updatedRoadieData.tours ? updatedRoadieData.tours : rows[0].tours),
+				(updatedRoadieData.companies ? updatedRoadieData.companies : rows[0].companies),
+				(updatedRoadieData.bands ? updatedRoadieData.bands : rows[0].bands),
 				(updatedRoadieData.price_a ? updatedRoadieData.price_a : rows[0].price_a),
 				(updatedRoadieData.price_b ? updatedRoadieData.price_b : rows[0].price_b),
 				(updatedRoadieData.price_c ? updatedRoadieData.price_c : rows[0].price_c),
@@ -260,7 +272,8 @@ updateRoadieWithID = function(userID, roadieID, updatedRoadieData, callback) {
 				(updatedRoadieData.longitude ? updatedRoadieData.longitude : rows[0].longitude),
 				roadieID
 			];
-			db.query("UPDATE roadies SET roadie_type=?, model=?, description=?, price_a=?, price_b=?, price_c=?, currency=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=? WHERE id=? LIMIT 1;", roadieInfo, function(error, result) {
+			db.query("UPDATE roadies SET roadie_type=?, about=?, currently=?, genres=?, experience=?, xp_years=?, tours=?, companies=?, bands=?, price_a=?, price_b=?, price_c=?, currency=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=? WHERE id=? LIMIT 1;", roadieInfo, function(error, result) {
+				var now = new Moment();
 				if(error) {
 					callback(error);
 					return;
@@ -270,7 +283,8 @@ updateRoadieWithID = function(userID, roadieID, updatedRoadieData, callback) {
 					return;
 				}
 				//Delete accessories and then add them
-				db.query("DELETE FROM roadie_has_accessories WHERE roadie_id=?;", [roadieID], function(error) {
+				/*db.query("DELETE FROM roadie_has_accessories WHERE roadie_id=?;", [roadieID], function(error) {
+					
 					if(error) {
 						callback(error);
 						return;
@@ -281,7 +295,7 @@ updateRoadieWithID = function(userID, roadieID, updatedRoadieData, callback) {
 						if(error) {
 							callback(error);
 							return;
-						}
+						}*/
 						callback(null, {
 							id: roadieID,
 							roadie_type: roadieTypeName,
@@ -301,8 +315,8 @@ updateRoadieWithID = function(userID, roadieID, updatedRoadieData, callback) {
 							updated: now.format("YYYY-MM-DD HH:mm:ss"),
 							owner_id: userID
 						});
-					});
-				});
+					//});
+				//});
 			});
 		};
 

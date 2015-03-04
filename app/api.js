@@ -48,6 +48,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 
 	readRoadiesFromUserWithID,
 	createRoadieForUserWithID,
+	updateRoadieForUserWithID,
 
 	createCardObject,
 
@@ -968,6 +969,27 @@ createRoadieForUserWithID = function(req, res, next) {
 	});
 };
 
+updateRoadieForUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		Roadies.updateRoadieWithID(req.params.user_id, req.params.roadie_id, req.params, function(error, updatedVan) {
+			if(error) {
+				handleError(res, next, "Error updating roadie: ", error);
+				return;
+			}
+			res.send(updatedVan);
+			next();
+		});
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -1193,6 +1215,7 @@ secureServer.get("/users/:user_id/vanreservations", readVanReservationsFromUserW
 
 secureServer.get("/users/:user_id/roadies", readRoadiesFromUserWithID);
 secureServer.post("/users/:user_id/roadies", createRoadieForUserWithID);
+secureServer.put("/users/:user_id/roadies/:roadie_id", updateRoadieForUserWithID);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
