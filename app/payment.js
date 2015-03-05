@@ -371,7 +371,6 @@ createWalletsForUser = function(mangopay_id, currencies, callback) {
 	};
 
 	for(i = 0; i < currencies.length; i++) {
-		console.log("Create wallet for currency: " + currencies[i]);
 		createWallet(mangopay_id, currencies[i], walletCreatedCallback);
 	}
 };
