@@ -64,7 +64,7 @@ readRoadiesFromUser = function(userID, callback) {
 			roadieItem.longitude = roadieItem.longitude * 180 / Math.PI;	
 			roadies.push({
 				id: roadieItem.id,
-				roadie_type: roadieItem.van_type,
+				roadie_type: roadieItem.roadie_type,
 				price_a: roadieItem.price_a,
 				price_b: roadieItem.price_b,
 				price_c: roadieItem.price_c,
