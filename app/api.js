@@ -51,6 +51,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	updateRoadieForUserWithID,
 	createRoadieAvailability,
 	readRoadieAvailability,
+	readRoadie,
 
 	createCardObject,
 
@@ -1078,6 +1079,17 @@ readRoadieAvailability = function(req, res, next) {
 	});
 };
 
+readRoadie = function(req, res, next) {
+	Roadies.readRoadieWithID(req.params.roadie_id, function(error, roadie) {
+		if(error) {
+			handleError(res, next, "Error retrieving roadie: ", error);
+			return;
+		}
+		res.send(roadie);
+		next();
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -1306,6 +1318,7 @@ secureServer.post("/users/:user_id/roadies", createRoadieForUserWithID);
 secureServer.put("/users/:user_id/roadies/:roadie_id", updateRoadieForUserWithID);
 secureServer.post("/users/:user_id/roadies/:roadie_id/availability", createRoadieAvailability);
 secureServer.get("/users/:user_id/roadies/:roadie_id/availability", readRoadieAvailability);
+secureServer.get("/roadies/:roadie_id", readRoadie);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 

@@ -10,6 +10,8 @@
 var db = require("./database"),
 	Moment = require("moment"),
 	Config = require("./config"),
+
+	roadieLevels = ["A+", "A", "B", "C", "D"],
 	
 	getClassification,
 
@@ -391,7 +393,7 @@ checkOwner = function(userID, roadieID, callback) {
 
 readRoadieWithID = function(roadieID, callback) {
 	var sql;
-	sql = ";";
+	sql = "SELECT roadies.id, roadie_types.roadie_type, about, currently, genres, experience, xp_years, tours, companies, bands, price_a, price_b, price_c, currency, address, postal_code, city, region, country, latitude, longitude, always_available, owner_id FROM roadies, roadie_types WHERE roadies.id=? AND roadie_types.id=roadies.roadie_type;";
 	db.query(sql, [roadieID], function(error, rows) {
 		var roadie, roadieItem;
 		if(error) {
@@ -406,6 +408,14 @@ readRoadieWithID = function(roadieID, callback) {
 		roadie = {
 			id: roadieItem.id,
 			roadie_type: roadieItem.roadie_type,
+			about: roadieItem.about,
+			currently: roadieItem.currently,
+			genres: roadieItem.genres,
+			experience: roadieLevels[roadieItem.experience - 1],
+			xp_years: roadieItem.xp_years,
+			tours: roadieItem.tours,
+			companies: roadieItem.companies,
+			bands: roadieItem.bands,
 			price_a: roadieItem.price_a,
 			price_b: roadieItem.price_b,
 			price_c: roadieItem.price_c,
