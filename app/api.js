@@ -5,7 +5,7 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, VanBooking, Roadies, Payment, Notifications, Localization, SGDashboard,
+var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, VanBooking, Roadies, RoadieAvailability, Payment, Notifications, Localization, SGDashboard,
 
 	readFileSuccess,
 
@@ -49,6 +49,8 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	readRoadiesFromUserWithID,
 	createRoadieForUserWithID,
 	updateRoadieForUserWithID,
+	createRoadieAvailability,
+	readRoadieAvailability,
 
 	createCardObject,
 
@@ -79,6 +81,7 @@ Vans = require("./vans");
 VanAvailability = require("./van_availability");
 VanBooking = require("./van_booking");
 Roadies = require("./roadies");
+RoadieAvailability = require("./roadie_availability");
 Payment = require("./payment");
 Notifications = require("./notifications");
 Localization = require("./localization");
@@ -990,6 +993,91 @@ updateRoadieForUserWithID = function(req, res, next) {
 	});
 };
 
+createRoadieAvailability = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		var availability;
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		availability = JSON.parse(req.params.availability);
+		//Check that the user owns the gear
+		Roadies.checkOwner(req.params.user_id, req.params.roadie_id, function(error, data) {
+			if(error) {
+				handleError(res, next, "Error checking roadie ownership: ", error);
+				return;
+			}
+			if(data === false) {
+				handleError(res, next, "Error checking roadie ownership: ", "User " + req.params.user_id + " does not own roadie profile " + req.params.roadie_id);
+				return;
+			}
+			Roadies.getAlwaysFlag(req.params.roadie_id, function(error, result) {
+				var setAvailability;
+				if(error) {
+					handleError(res, next, "Error getting always flag: ", error);
+					return;
+				}
+				setAvailability = function() {
+					RoadieAvailability.set(req.params.roadie_id, availability, function(error) {
+						if(error) {
+							handleError(res, next, "Error setting roadie availability: ", error);
+							return;
+						}
+						res.send({});
+						next();
+					});
+				};
+				if(result.always_available != req.params.alwaysFlag) { //if flag changed and availability is empty, set it
+					Roadies.setAlwaysFlag(req.params.van_id, req.params.alwaysFlag, function(error) {
+						if(error) {
+							handleError(res, next, "Error setting always flag: ", error);
+							return;
+						}
+						setAvailability();
+					});
+				}
+				else {
+					setAvailability();
+				}
+			});
+		});
+	});
+};
+
+readRoadieAvailability = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		RoadieAvailability.get(req.params.roadie_id, function(error, availabilityArray) {
+			if(error) {
+				handleError(res, next, "Error getting roadie availability: ", error);
+				return;
+			}
+			Roadies.getAlwaysFlag(req.params.roadie_id, function(error, result) {
+				if(error) {
+					handleError(res, next, "Error getting alwaysFlag: ", error);
+					return;
+				}
+				res.send({
+					availabilityArray: availabilityArray,
+					alwaysFlag: result.always_available
+				});
+				next();
+			});
+		});
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -1216,6 +1304,8 @@ secureServer.get("/users/:user_id/vanreservations", readVanReservationsFromUserW
 secureServer.get("/users/:user_id/roadies", readRoadiesFromUserWithID);
 secureServer.post("/users/:user_id/roadies", createRoadieForUserWithID);
 secureServer.put("/users/:user_id/roadies/:roadie_id", updateRoadieForUserWithID);
+secureServer.post("/users/:user_id/roadies/:roadie_id/availability", createRoadieAvailability);
+secureServer.get("/users/:user_id/roadies/:roadie_id/availability", readRoadieAvailability);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
