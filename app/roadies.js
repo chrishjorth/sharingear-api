@@ -50,7 +50,7 @@ getClassification = function(callback) {
 
 readRoadiesFromUser = function(userID, callback) {
 	//Get users gear, with names for type, subtype and brans and accessories
-	var sql = "SELECT roadies.id, roadie_types.roadie_type, roadies.price_a, roadies.price_b, roadies.price_c, roadies.currency, roadies.address, roadies.postal_code, roadies.city, roadies.region, roadies.country, roadies.latitude, roadies.longitude, roadies.owner_id FROM roadies, roadie_types WHERE roadies.owner_id=? AND roadie_types.id=roadies.roadie_type";
+	var sql = "SELECT roadies.id, roadie_types.roadie_type, about, currently, genres, experience, xp_years, tours, companies, bands, roadies.price_a, roadies.price_b, roadies.price_c, roadies.currency, roadies.address, roadies.postal_code, roadies.city, roadies.region, roadies.country, roadies.latitude, roadies.longitude, roadies.owner_id FROM roadies, roadie_types WHERE roadies.owner_id=? AND roadie_types.id=roadies.roadie_type";
 	db.query(sql, [userID], function(error, rows) {
 		var roadies = [],
 			roadieItem, i;
@@ -67,6 +67,14 @@ readRoadiesFromUser = function(userID, callback) {
 			roadies.push({
 				id: roadieItem.id,
 				roadie_type: roadieItem.roadie_type,
+				about: roadieItem.about,
+				currently: roadieItem.currently,
+				genres: roadieItem.genres,
+				experience: roadieItem.experience,
+				xp_years: roadieItem.xp_years,
+				tours: roadieItem.tours,
+				companies: roadieItem.companies,
+				bands: roadieItem.bands,
 				price_a: roadieItem.price_a,
 				price_b: roadieItem.price_b,
 				price_c: roadieItem.price_c,
