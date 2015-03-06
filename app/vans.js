@@ -248,9 +248,12 @@ addAccessories = function(vanID, vanTypeID, accessories, callback) {
 	var sql = "SELECT van_accessories.id, van_accessories.accessory FROM van_accessories, van_type_has_accessories WHERE van_accessories.accessory IN(",
 		valueArray = [],
 		i;
-	if(accessories.length <= 0) {
+	if(!accessories) {
 		callback(null, []);
 		return;
+	}
+	if(accessories.length <= 0) {
+		
 	}
 	for(i = 0; i < accessories.length - 1; i++) {
 		sql += "?, ";
