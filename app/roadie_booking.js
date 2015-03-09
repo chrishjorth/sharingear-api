@@ -183,7 +183,7 @@ read = function(bookingID, callback) {
 };
 
 readRentalsForUser = function(userID, callback) {
-	db.query("SELECT roadie_bookings.id AS booking_id, roadie_bookings.roadie_id AS id, roadie_types.roadie_type, users.name, users.surname, users.image_url, roadies.city, roadies.owner_id, roadie_bookings.start_time, roadie_bookings.end_time, roadie_bookings.renter_price, roadie_bookings.renter_currency, roadie_bookings.owner_price, roadie_bookings.owner_currency, roadie_bookings.booking_status FROM roadies, users, roadie_bookings, roadie_types WHERE roadies.id=roadie_bookings.roadie_id AND roadies.owner_id=? AND roadie_types.id=roadies.roadie_type AND users.id=roadies.owner.id;", [userID], function(error, rows) {
+	db.query("SELECT roadie_bookings.id AS booking_id, roadie_bookings.roadie_id AS id, roadie_types.roadie_type, users.name, users.surname, users.image_url, roadies.city, roadies.owner_id, roadie_bookings.start_time, roadie_bookings.end_time, roadie_bookings.renter_price, roadie_bookings.renter_currency, roadie_bookings.owner_price, roadie_bookings.owner_currency, roadie_bookings.booking_status FROM roadies, users, roadie_bookings, roadie_types WHERE roadies.id=roadie_bookings.roadie_id AND roadies.owner_id=? AND roadie_types.id=roadies.roadie_type AND users.id=roadies.owner_id;", [userID], function(error, rows) {
 		if(error) {
 			callback("Error reading user rentals: " + error);
 			return;
