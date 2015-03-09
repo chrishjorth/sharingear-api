@@ -443,7 +443,7 @@ readRoadieWithID = function(roadieID, callback) {
 
 search = function(location, roadie, callback) {
 	//Do a full text search on roadies, then narrow down by location, because location search is slower.
-	db.search("SELECT id, roadie_type, model, city, country, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM roadies_main, roadies_delta WHERE MATCH(?) LIMIT 100", [roadie], function(error, rows) {
+	db.search("SELECT id, roadie_type, name, surname, image_url, city, country, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM roadies_main, roadies_delta WHERE MATCH(?) LIMIT 100", [roadie], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
 			console.log("Error searching for match: " + JSON.stringify(error));
@@ -468,7 +468,7 @@ search = function(location, roadie, callback) {
 		//Convert to radians
 		lat = parseFloat(lat) * Math.PI / 180;
 		lng = parseFloat(lng) * Math.PI / 180;
-		sql = "SELECT id, roadie_type, model, city, country, price_a, price_b, price_c, currency, latitude, longitude, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM roadies_main, roadies_delta WHERE id IN (";
+		sql = "SELECT id, roadie_type, name, surname, image_url, city, country, price_a, price_b, price_c, currency, latitude, longitude, owner_id, GEODIST(?, ?, latitude, longitude) AS distance FROM roadies_main, roadies_delta WHERE id IN (";
 		for(i = 0; i < rows.length - 1; i++) {
 			sql += rows[i].id + ",";
 		}

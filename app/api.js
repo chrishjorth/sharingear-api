@@ -52,6 +52,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	createRoadieAvailability,
 	readRoadieAvailability,
 	readRoadie,
+	readRoadieSearchResults,
 
 	createCardObject,
 
@@ -1090,6 +1091,18 @@ readRoadie = function(req, res, next) {
 	});
 };
 
+readRoadieSearchResults = function(req, res, next) {
+	Roadies.search(req.params.location, req.params.roadie, function(error, results) {
+		if(error) {
+			res.send([]);
+			next();
+			return;
+		}
+		res.send(results);
+		next();
+	});
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -1319,6 +1332,7 @@ secureServer.put("/users/:user_id/roadies/:roadie_id", updateRoadieForUserWithID
 secureServer.post("/users/:user_id/roadies/:roadie_id/availability", createRoadieAvailability);
 secureServer.get("/users/:user_id/roadies/:roadie_id/availability", readRoadieAvailability);
 secureServer.get("/roadies/:roadie_id", readRoadie);
+secureServer.get("/roadies/search/:location/:roadie/:daterange", readRoadieSearchResults);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 
