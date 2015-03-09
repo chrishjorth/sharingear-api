@@ -1314,7 +1314,7 @@ readSGPreauthorization = function(req, res, next) {
 };
 
 wipeout = function(req, res, next) {
-	if(req.params.user_id === "1" || req.params.user_id === "2" || req.params.user_id === "5") {
+	if(req.params.user_id === "3") {
 		isAuthorized(req.params.user_id, function(error, status) {
 			if(error) {
 				handleError(res, next, "Error authorizing user: ", error);
