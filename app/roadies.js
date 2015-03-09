@@ -401,7 +401,7 @@ checkOwner = function(userID, roadieID, callback) {
 
 readRoadieWithID = function(roadieID, callback) {
 	var sql;
-	sql = "SELECT roadies.id, roadie_types.roadie_type, about, currently, genres, experience, xp_years, tours, companies, bands, price_a, price_b, price_c, currency, address, postal_code, city, region, country, latitude, longitude, always_available, owner_id FROM roadies, roadie_types WHERE roadies.id=? AND roadie_types.id=roadies.roadie_type;";
+	sql = "SELECT roadies.id, roadie_types.roadie_type, users.name, users.surname, roadies.about, currently, genres, experience, xp_years, tours, companies, bands, price_a, price_b, price_c, roadies.currency, roadies.address, roadies.postal_code, roadies.city, roadies.region, roadies.country, roadies.latitude, roadies.longitude, always_available, owner_id FROM roadies, users, roadie_types WHERE roadies.id=? AND roadie_types.id=roadies.roadie_type AND users.id=roadies.owner_id;";
 	db.query(sql, [roadieID], function(error, rows) {
 		var roadie, roadieItem;
 		if(error) {
@@ -416,6 +416,8 @@ readRoadieWithID = function(roadieID, callback) {
 		roadie = {
 			id: roadieItem.id,
 			roadie_type: roadieItem.roadie_type,
+			name: roadieItem.name,
+			surname: roadieItem.surname,
 			about: roadieItem.about,
 			currently: roadieItem.currently,
 			genres: roadieItem.genres,
