@@ -1034,7 +1034,7 @@ createRoadieAvailability = function(req, res, next) {
 					});
 				};
 				if(result.always_available != req.params.alwaysFlag) { //if flag changed and availability is empty, set it
-					Roadies.setAlwaysFlag(req.params.van_id, req.params.alwaysFlag, function(error) {
+					Roadies.setAlwaysFlag(req.params.roadie_id, req.params.alwaysFlag, function(error) {
 						if(error) {
 							handleError(res, next, "Error setting always flag: ", error);
 							return;
