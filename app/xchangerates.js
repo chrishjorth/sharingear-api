@@ -64,7 +64,14 @@ getJSON = function(query, callback) {
 			buffer += chunk;
 		});
 		result.on("end", function() {
-			callback(null, JSON.parse(buffer));
+			var parsedData;
+			try {
+				parsedData = JSON.parse(buffer);
+				callback(null, parsedData);
+			}
+			catch(error) {
+				callback(error.message);
+			}
 		});
 		result.on("error", function(e) {
 			callback(e.message);
