@@ -5,7 +5,7 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, VanBooking, Payment, Notifications, Localization, SGDashboard,
+var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, VanBooking, Roadies, RoadieAvailability, RoadieBooking, Payment, Notifications, Localization, SGDashboard,
 
 	readFileSuccess,
 
@@ -46,6 +46,19 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	readVanRentalsFromUserWithID,
 	readVanReservationsFromUserWithID,
 
+	readRoadiesFromUserWithID,
+	createRoadieForUserWithID,
+	updateRoadieForUserWithID,
+	createRoadieAvailability,
+	readRoadieAvailability,
+	readRoadie,
+	readRoadieSearchResults,
+	createRoadieBooking,
+	readRoadieBooking,
+	updateRoadieBooking,
+	readRoadieRentalsFromUserWithID,
+	readRoadieReservationsFromUserWithID,
+
 	createCardObject,
 
 	readSGBalance,
@@ -74,6 +87,9 @@ GearBooking = require("./gear_booking");
 Vans = require("./vans");
 VanAvailability = require("./van_availability");
 VanBooking = require("./van_booking");
+Roadies = require("./roadies");
+RoadieAvailability = require("./roadie_availability");
+RoadieBooking = require("./roadie_booking");
 Payment = require("./payment");
 Notifications = require("./notifications");
 Localization = require("./localization");
@@ -168,13 +184,20 @@ readContentClassification = function(req, res, next) {
 				handleError("Error retrieving van classification: " + error);
 				return;
 			}
-			contentClassification = {
-				gearClassification: gearClassification.classification,
-				gearBrands: gearClassification.brands,
-				vanClassification: vanClassification
-			};
-			res.send(contentClassification);
-			next();
+			Roadies.getClassification(function(error, roadieClassification) {
+				if(error) {
+					handleError("Error retrieving roadie classification: " + error);
+					return;
+				}
+				contentClassification = {
+					gearClassification: gearClassification.classification,
+					gearBrands: gearClassification.brands,
+					vanClassification: vanClassification,
+					roadieClassification: roadieClassification
+				};
+				res.send(contentClassification);
+				next();
+			});
 		});
 	});
 };
@@ -925,6 +948,272 @@ readVanReservationsFromUserWithID = function(req, res, next) {
     });
 };
 
+readRoadiesFromUserWithID = function(req, res, next) {
+	Roadies.readRoadiesFromUser(req.params.user_id, function(error, roadies) {
+		if(error) {
+			handleError(res, next, "Error reading roadies for user: " + error);
+			return;
+		}
+		res.send(roadies);
+		next();
+	});
+};
+
+createRoadieForUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		Roadies.createRoadie(req.params.user_id, req.params, function(error, van) {
+			if(error) {
+				handleError(res, next, "Error creating roadie: ", error);
+				return;
+			}
+			res.send(van);
+			next();
+		});
+	});
+};
+
+updateRoadieForUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		Roadies.updateRoadieWithID(req.params.user_id, req.params.roadie_id, req.params, function(error, updatedVan) {
+			if(error) {
+				handleError(res, next, "Error updating roadie: ", error);
+				return;
+			}
+			res.send(updatedVan);
+			next();
+		});
+	});
+};
+
+createRoadieAvailability = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		var availability;
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		availability = JSON.parse(req.params.availability);
+		//Check that the user owns the gear
+		Roadies.checkOwner(req.params.user_id, req.params.roadie_id, function(error, data) {
+			if(error) {
+				handleError(res, next, "Error checking roadie ownership: ", error);
+				return;
+			}
+			if(data === false) {
+				handleError(res, next, "Error checking roadie ownership: ", "User " + req.params.user_id + " does not own roadie profile " + req.params.roadie_id);
+				return;
+			}
+			Roadies.getAlwaysFlag(req.params.roadie_id, function(error, result) {
+				var setAvailability;
+				if(error) {
+					handleError(res, next, "Error getting always flag: ", error);
+					return;
+				}
+				setAvailability = function() {
+					RoadieAvailability.set(req.params.roadie_id, availability, function(error) {
+						if(error) {
+							handleError(res, next, "Error setting roadie availability: ", error);
+							return;
+						}
+						res.send({});
+						next();
+					});
+				};
+				if(result.always_available != req.params.alwaysFlag) { //if flag changed and availability is empty, set it
+					Roadies.setAlwaysFlag(req.params.roadie_id, req.params.alwaysFlag, function(error) {
+						if(error) {
+							handleError(res, next, "Error setting always flag: ", error);
+							return;
+						}
+						setAvailability();
+					});
+				}
+				else {
+					setAvailability();
+				}
+			});
+		});
+	});
+};
+
+readRoadieAvailability = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		RoadieAvailability.get(req.params.roadie_id, function(error, availabilityArray) {
+			if(error) {
+				handleError(res, next, "Error getting roadie availability: ", error);
+				return;
+			}
+			Roadies.getAlwaysFlag(req.params.roadie_id, function(error, result) {
+				if(error) {
+					handleError(res, next, "Error getting alwaysFlag: ", error);
+					return;
+				}
+				res.send({
+					availabilityArray: availabilityArray,
+					alwaysFlag: result.always_available
+				});
+				next();
+			});
+		});
+	});
+};
+
+readRoadie = function(req, res, next) {
+	Roadies.readRoadieWithID(req.params.roadie_id, function(error, roadie) {
+		if(error) {
+			handleError(res, next, "Error retrieving roadie: ", error);
+			return;
+		}
+		res.send(roadie);
+		next();
+	});
+};
+
+readRoadieSearchResults = function(req, res, next) {
+	Roadies.search(req.params.location, req.params.roadie, function(error, results) {
+		if(error) {
+			res.send([]);
+			next();
+			return;
+		}
+		res.send(results);
+		next();
+	});
+};
+
+createRoadieBooking = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		RoadieBooking.create(req.params.user_id, req.params, function(error, booking) {
+			if(error) {
+				handleError(res, next, "Error creating booking: ", error);
+				return;
+			}
+			res.send(booking);
+			next();
+		});
+	});
+};
+
+readRoadieBooking = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		RoadieBooking.read(req.params.booking_id, function(error, booking) {
+			if(error) {
+				handleError(res, next, "Error reading booking: ", error);
+				return;
+			}
+			res.send(booking);
+			next();
+		});
+	});
+};
+
+updateRoadieBooking = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+		RoadieBooking.update(req.params, function(error) {
+			if(error) {
+				handleError(res, next, "Error updating booking: ", error);
+				return;
+			}
+			res.send({});
+			next();
+		});
+	});
+};
+
+readRoadieRentalsFromUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+    	RoadieBooking.readRentalsForUser(req.params.user_id, function (error, rentals) {
+        	if (error) {
+            	handleError(res,next,"Error reading rentals for user: ",error);
+            	return;
+        	}
+        	res.send(rentals);
+        	next();
+    	});
+    });
+};
+
+readRoadieReservationsFromUserWithID = function(req, res, next) {
+	isAuthorized(req.params.user_id, function(error, status) {
+		if(error) {
+			handleError(res, next, "Error authorizing user: ", error);
+			return;
+		}
+		if(status === false) {
+			handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+			return;
+		}
+    	RoadieBooking.readReservationsForUser(req.params.user_id, function (error, reservations) {
+        	if (error) {
+            	handleError(res,next,"Error reading reservations for user: ",error);
+            	return;
+        	}
+        	res.send(reservations);
+        	next();
+    	});
+    });
+};
+
 createCardObject = function(req, res, next) {
 	isAuthorized(req.params.user_id, function(error, status) {
 		if(error) {
@@ -1025,7 +1314,7 @@ readSGPreauthorization = function(req, res, next) {
 };
 
 wipeout = function(req, res, next) {
-	if(req.params.user_id === "1" || req.params.user_id === "2" || req.params.user_id === "5") {
+	if(req.params.user_id === "1") {
 		isAuthorized(req.params.user_id, function(error, status) {
 			if(error) {
 				handleError(res, next, "Error authorizing user: ", error);
@@ -1101,14 +1390,12 @@ server.get("/", healthCheck);
 
 //405 debug
 server.on("MethodNotAllowed", function(req, res) {
-	console.log("---- Method not allowed in standard server");
-	console.log(JSON.stringify(req));
+	console.log("---- Method " + req.method + " on URI " + req.url + " not allowed in standard server");
 	return res.send(new restify.MethodNotAllowedError());
 });
 
 secureServer.on("MethodNotAllowed", function(req, res) {
-	console.log("---- Method not allowed in secure server");
-	console.log(JSON.stringify(req));
+	console.log("---- Method " + req.method + " on URI " + req.url + " not allowed in secure server");
 	return res.send(new restify.MethodNotAllowedError());
 });
 
@@ -1149,6 +1436,19 @@ secureServer.get("/users/:user_id/vans/:van_id/bookings/:booking_id", readVanBoo
 secureServer.put("/users/:user_id/vans/:van_id/bookings/:booking_id", updateVanBooking);
 secureServer.get("/users/:user_id/vanrentals", readVanRentalsFromUserWithID);
 secureServer.get("/users/:user_id/vanreservations", readVanReservationsFromUserWithID);
+
+secureServer.get("/users/:user_id/roadies", readRoadiesFromUserWithID);
+secureServer.post("/users/:user_id/roadies", createRoadieForUserWithID);
+secureServer.put("/users/:user_id/roadies/:roadie_id", updateRoadieForUserWithID);
+secureServer.post("/users/:user_id/roadies/:roadie_id/availability", createRoadieAvailability);
+secureServer.get("/users/:user_id/roadies/:roadie_id/availability", readRoadieAvailability);
+secureServer.get("/roadies/:roadie_id", readRoadie);
+secureServer.get("/roadies/search/:location/:roadie/:daterange", readRoadieSearchResults);
+secureServer.post("/users/:user_id/roadies/:roadie_id/bookings", createRoadieBooking);
+secureServer.get("/users/:user_id/roadies/:roadie_id/bookings/:booking_id", readRoadieBooking);
+secureServer.put("/users/:user_id/roadies/:roadie_id/bookings/:booking_id", updateRoadieBooking);
+secureServer.get("/users/:user_id/roadierentals", readRoadieRentalsFromUserWithID);
+secureServer.get("/users/:user_id/roadiereservations", readRoadieReservationsFromUserWithID);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
 

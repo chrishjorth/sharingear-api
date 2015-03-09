@@ -25,7 +25,11 @@ wipeout = function(callback) {
 	sql += " TRUNCATE gear;";
 	sql += " TRUNCATE van_has_accessories;";
 	sql += " TRUNCATE van_availability;";
+	sql += " TRUNCATE van_bookings;";
 	sql += " TRUNCATE vans;";
+	sql += " TRUNCATE roadies;";
+	sql += " TRUNCATE roadie_availability;";
+	sql += " TRUNCATE roadie_bookings;";
 	sql += " TRUNCATE wallets;";
 	sql += " TRUNCATE users;";
 	db.query(sql, [], function(error, result) {
