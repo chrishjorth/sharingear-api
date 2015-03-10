@@ -11,12 +11,13 @@
 var https = require("https"),
 	currencies = {},
 	getRate,
+	getYahooRate,
+	getFixerRate,
 	getJSON;
 
 getRate = function(fromCurrency, toCurrency, callback) {
-	var key, timeDifference,  query, code;
-	
-	code = fromCurrency + toCurrency;
+	var code = fromCurrency + toCurrency,
+		key, timeDifference;
 	for(key in currencies) {
 		if(key === code) {
 			timeDifference = Date.now - currencies[key].timestamp;
@@ -26,33 +27,75 @@ getRate = function(fromCurrency, toCurrency, callback) {
 			}			
 		}
 	}
+
+	getYahooRate(fromCurrency, toCurrency, function(error, yahooRate) {
+		if(error) {
+			getFixerRate(fromCurrency, toCurrency, function(error, fixerRate) {
+				if(error) {
+					callback(error);
+					return;
+				}
+				currencies[code] = {
+					rate: fixerRate,
+					timestamp: Date.now
+				};
+				callback(null, fixerRate);
+			});
+		}
+		else {
+			currencies[code] = {
+				rate: yahooRate,
+				timestamp: Date.now
+			};
+			callback(null, yahooRate);
+		}
+	});
+};
+
+getYahooRate = function(fromCurrency, toCurrency, callback) {
+	var code = fromCurrency + toCurrency,
+		query, path;
+
+	callback("blaaaah");
+	return;
 	
 	query = "select * from yahoo.finance.xchange where pair in (\"";
 	query += code;
 	query += "\")&format=json&env=store://datatables.org/alltableswithkeys&callback=";
-	getJSON(query, function(error, data) {
+
+	path = "/v1/public/yql?q=" + encodeURI(query);
+
+	getJSON("query.yahooapis.com", path, function(error, data) {
 		var rate;
 		if(error) {
 			callback("Error retrieving exchange rate: " + error);
 			return;
 		}
 		rate = parseFloat(data.query.results.rate.Rate);
-		currencies[code] = {
-			rate: rate,
-			timestamp: Date.now
-		};
 		callback(null, rate);
 	});
 };
 
-getJSON = function(query, callback) {
-	var buffer = "",
-		options, request, path;
+getFixerRate = function(fromCurrency, toCurrency, callback) {
+	var query = "/latest?symbols=" + fromCurrency + "," + toCurrency;
+	getJSON("api.fixer.io", query, function(error, data) {
+		var rate;
+		if(error) {
+			callback("Error retrieving exchange rate: " + error);
+			return;
+		}
+		console.log("BOOM!");
+		rate = parseFloat(data.rates[toCurrency]);
+		callback(null, rate);
+	});
+};
 
-	path = "/v1/public/yql?q=" + encodeURI(query);
+getJSON = function(host, path, callback) {
+	var buffer = "",
+		options, request;
 
 	options = {
-		host: "query.yahooapis.com",
+		host: host,
 		port: 443,
 		path: path,
 		method: "GET"
@@ -84,5 +127,7 @@ getJSON = function(query, callback) {
 };
 
 module.exports = {
-	getRate: getRate
+	getRate: getRate,
+	getYahooRate: getYahooRate,
+	getFixerRate: getFixerRate
 };
