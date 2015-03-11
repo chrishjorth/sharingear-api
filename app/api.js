@@ -5,7 +5,7 @@
 /*jslint node: true */
 "use strict";
 
-var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, VanBooking, Roadies, RoadieAvailability, RoadieBooking, Payment, Notifications, Localization, SGDashboard,
+var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Vans, VanAvailability, VanBooking, Roadies, RoadieAvailability, RoadieBooking, Payment, Notifications, Localization, XChangeRates, SGDashboard,
 
 	readFileSuccess,
 
@@ -60,6 +60,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 	readRoadieReservationsFromUserWithID,
 
 	createCardObject,
+	getExchangeRate,
 
 	readSGBalance,
 	readSGTransactions,
@@ -93,6 +94,7 @@ RoadieBooking = require("./roadie_booking");
 Payment = require("./payment");
 Notifications = require("./notifications");
 Localization = require("./localization");
+XChangeRates = require("./xchangerates");
 SGDashboard = require("./sgdashboard");
 
 readFileSuccess = true;
@@ -1235,6 +1237,17 @@ createCardObject = function(req, res, next) {
 	});
 };
 
+getExchangeRate = function(req, res, next) {
+	XChangeRates.getRate(req.params.from_currency, req.params.to_currency, function(error, rate) {
+		if(error) {
+			handleError(res, next, "Error getting exchange rate: ", error);
+			return;
+		}
+		res.send({rate: rate});
+		next();
+	});
+};
+
 readSGBalance = function(req, res, next) {
 	if(req.params.user_id === "1" || req.params.user_id === "2") {
 		isAuthorized(req.params.user_id, function(error, status) {
@@ -1451,6 +1464,8 @@ secureServer.get("/users/:user_id/roadierentals", readRoadieRentalsFromUserWithI
 secureServer.get("/users/:user_id/roadiereservations", readRoadieReservationsFromUserWithID);
 
 secureServer.get("/users/:user_id/cardobject", createCardObject);
+
+secureServer.get("/exchangerates/:from_currency/:to_currency", getExchangeRate);
 
 secureServer.get("/users/:user_id/dashboard/balance", readSGBalance);
 secureServer.get("/users/:user_id/dashboard/transactions", readSGTransactions);
