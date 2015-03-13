@@ -252,7 +252,7 @@ updateUser = function(mangopay_id, user, callback) {
 	}
 };
 
-registerBankAccountForUser = function(user, iban, swift, callback) {
+registerBankAccountForUser = function(user, bankDetails, callback) {
 	//Check if user has a bank account, if different then update
 	gatewayGet("/users/" + user.mangopay_id + "/bankaccounts", function(error, data) {
 		var postData, accounts, i;
@@ -263,9 +263,17 @@ registerBankAccountForUser = function(user, iban, swift, callback) {
 		accounts = JSON.parse(data);
 		i = 0;
 		while(i < accounts.length) {
-			if(accounts[i].IBAN === iban && accounts[i].BIC === swift) {
-				callback(null, accounts[i].Id); //Is already registered so we ignore the request
-				return;
+			if(user.country === "US") {
+				if(accounts[i].AccountNumber === bankDetails.accountNumber && accounts[i].ABA === bankDetails.aba) {
+					callback(null, accounts[i].Id); //Is already registered so we ignore the request
+					return;
+				}
+			}
+			else {
+				if(accounts[i].IBAN === bankDetails.iban && accounts[i].BIC === bankDetails.swift) {
+					callback(null, accounts[i].Id); //Is already registered so we ignore the request
+					return;
+				}
 			}
 			i++;
 		}
@@ -273,13 +281,21 @@ registerBankAccountForUser = function(user, iban, swift, callback) {
 		postData = {
 			OwnerName: user.name + " " + user.surname,
 			UserId: user.id,
-			Type: "IBAN",
-			OwnerAddress: user.address,
-			IBAN: iban,
-			BIC: swift
+			OwnerAddress: user.address
 		};
+
+		if(user.country === "US") {
+			postData.Type = "US";
+			postData.AccountNumber = bankDetails.accountNumber;
+			postData.ABA = bankDetails.aba;
+		}
+		else {
+			postData.Type = "IBAN";
+			postData.IBAN = bankDetails.iban;
+			postData.BIC = bankDetails.swift;
+		}
 		
-		gatewayPost("/users/" + user.mangopay_id + "/bankaccounts/IBAN", postData, function(error, data) {
+		gatewayPost("/users/" + user.mangopay_id + "/bankaccounts/" + postData.Type, postData, function(error, data) {
 			var parsedData;
 			if(error) {
 				callback("Error registering bank details: " + error);
