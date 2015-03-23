@@ -301,7 +301,7 @@ update = function(userID, updatedInfo, callback) {
 };
 
 updateBankDetails = function(userID, bankDetails, callback) {
-	db.query("SELECT id, mangopay_id, name, surname, address, bank_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, mangopay_id, name, surname, address, country, bank_id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
@@ -317,7 +317,7 @@ updateBankDetails = function(userID, bankDetails, callback) {
 			return;
 		}
 
-		Payment.registerBankAccountForUser(rows[0], bankDetails.iban, bankDetails.swift, function(error, bank_id) {
+		Payment.registerBankAccountForUser(rows[0], bankDetails, function(error, bank_id) {
 			if(error) {
 				callback(error);
 				return;
