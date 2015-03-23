@@ -1094,8 +1094,27 @@ readRoadie = function(req, res, next) {
 			handleError(res, next, "Error retrieving roadie: ", error);
 			return;
 		}
-		res.send(roadie);
-		next();
+
+		Roadies.readRoadiesFromUser(roadie.owner_id,function(error,roadies){
+			if(error) {
+				handleError(res, next, "Error retrieving roadies: ", error);
+				return;
+			}
+
+			//We are excluding the current roadie from the list here, so that it's not shown on the same page
+			roadie.techprofilelist = [];
+			roadies.forEach(function(entry){
+				if (entry.id !==roadie.id) {
+					roadie.techprofilelist.push({	
+						id: entry.id, 
+						roadie_type:entry.roadie_type
+					});
+				}
+			});
+			res.send(roadie);
+			next();
+		});
+
 	});
 };
 
