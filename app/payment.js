@@ -998,7 +998,7 @@ createSharingearUser = function(callback) {
 registerSharingearBankDetails = function(mangopay_id, callback) {
 	var iban = "DK1073120001003930",
 		swift = "JYBADKKK",
-		user;
+		user, bankDetails;
 	user = {
 		mangopay_id: mangopay_id,
 		name: "Mircea Gabriel",
@@ -1006,7 +1006,11 @@ registerSharingearBankDetails = function(mangopay_id, callback) {
 		id: "sharingear",
 		address: "Danneskiold-Samsøes Allé 41, 1, 1434 København K, Denmark"
 	};
-	registerBankAccountForUser(user, iban, swift, function(error) {
+	bankDetails = {
+		iban: iban,
+		swift: swift
+	};
+	registerBankAccountForUser(user, bankDetails, function(error) {
 		callback(error);
 	});
 };
