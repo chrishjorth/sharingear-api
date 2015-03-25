@@ -64,6 +64,7 @@ readRoadiesFromUser = function(userID, callback) {
 			roadieItem = rows[i];
 			roadieItem.latitude = roadieItem.latitude * 180 / Math.PI;
 			roadieItem.longitude = roadieItem.longitude * 180 / Math.PI;	
+
 			roadies.push({
 				id: roadieItem.id,
 				roadie_type: roadieItem.roadie_type,
@@ -87,6 +88,7 @@ readRoadiesFromUser = function(userID, callback) {
 				latitude: roadieItem.latitude,
 				longitude: roadieItem.longitude,
 				owner_id: roadieItem.owner_id,
+				techprofilelist: roadieItem.techprofilelist,
 			});
 		}
 		callback(null, roadies);
@@ -413,6 +415,7 @@ readRoadieWithID = function(roadieID, callback) {
 			return;
 		}
 		roadieItem = rows[0];
+
 		roadie = {
 			id: roadieItem.id,
 			roadie_type: roadieItem.roadie_type,
@@ -437,7 +440,8 @@ readRoadieWithID = function(roadieID, callback) {
 			country: roadieItem.country,
 			latitude: roadieItem.latitude * 180 / Math.PI,
 			longitude: roadieItem.longitude * 180 / Math.PI,
-			owner_id: roadieItem.owner_id
+			owner_id: roadieItem.owner_id,
+			techprofilelist: roadieItem.techprofilelist
 		};
 		callback(null, roadie);
 	});

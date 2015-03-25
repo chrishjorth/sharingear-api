@@ -59,6 +59,7 @@ getClassification = function(callback) {
 		};
 		classification = gearClassification.classification;
 
+		//Merge accessories into array for each subtype
 		//Assertion: the query returns rows sorted
 		for(i = 0; i < rows.length; i++) {
 			if(rows[i].subtype === currentSubtype) {
