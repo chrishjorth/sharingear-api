@@ -13,7 +13,6 @@ var https = require("https"),
 	currencies = {},
 	getRate,
 	getYahooRate,
-	getFixerRate,
 	getECBRate,
 	getData;
 
@@ -77,27 +76,11 @@ getYahooRate = function(fromCurrency, toCurrency, callback) {
 			callback(error.message);
 			return;
 		}
+		if(!parsedData.query.results || parsedData.query.results === null) {
+			callback("Yahoo did not return any results.");
+			return;
+		}
 		rate = parseFloat(parsedData.query.results.rate.Rate);
-		callback(null, rate);
-	});
-};
-
-getFixerRate = function(fromCurrency, toCurrency, callback) {
-	var query = "/latest?symbols=" + fromCurrency + "," + toCurrency;
-	getData("api.fixer.io", query, function(error, data) {
-		var rate, parsedData;
-		if(error) {
-			callback("Error retrieving exchange rate: " + error);
-			return;
-		}
-		try {
-			parsedData = JSON.parse(data);
-		}
-		catch(error) {
-			callback(error.message);
-			return;
-		}
-		rate = parseFloat(parsedData.rates[toCurrency]);
 		callback(null, rate);
 	});
 };
@@ -187,6 +170,5 @@ getData = function(host, path, callback) {
 
 module.exports = {
 	getRate: getRate,
-	getYahooRate: getYahooRate,
-	getFixerRate: getFixerRate
+	getYahooRate: getYahooRate
 };
