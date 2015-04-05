@@ -539,7 +539,7 @@ readVanWithID = function(vanID, callback) {
 
 search = function(location, van, callback) {
 	//Do a full text search on vans, then narrow down by location, because location search is slower.
-	db.search("SELECT id, van_type, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM vans_main, vans_delta WHERE MATCH(?) LIMIT 100", [van], function(error, rows) {
+	db.search("SELECT id, van_type, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM vans_main, vans_delta WHERE MATCH(?) ORDER BY id DESC LIMIT 100", [van], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
 			console.log("Error searching for match: " + JSON.stringify(error));
@@ -569,7 +569,7 @@ search = function(location, van, callback) {
 			sql += rows[i].id + ",";
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
-		sql += ") AND distance <= ?.0  ORDER BY distance ASC LIMIT 100";
+		sql += ") AND distance <= ?.0  ORDER BY distance ASC, id DESC LIMIT 100";
 		db.search(sql, [lat, lng, Config.SEARCH_RADIUS], function(error, rows) {
 			var i;
 			if(error) {
