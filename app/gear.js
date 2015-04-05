@@ -667,7 +667,7 @@ search = function(location, gear, callback) {
 			sql += rows[i].id + ",";
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
-		sql += ") AND distance <= ?.0  ORDER BY distance ASC LIMIT 100";
+		sql += ") AND distance <= ?.0  ORDER BY distance ASC, id DESC LIMIT 100";
 		db.search(sql, [lat, lng, Config.SEARCH_RADIUS], function(error, rows) {
 			var i;
 			if(error) {
