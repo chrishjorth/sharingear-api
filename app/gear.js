@@ -637,7 +637,7 @@ readGearWithID = function(gearID, callback) {
  */
 search = function(location, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
-	db.search("SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM gear_main, gear_delta WHERE MATCH(?) ORDER BY id ASC LIMIT 100", [gear], function(error, rows) {
+	db.search("SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM gear_main, gear_delta WHERE MATCH(?) ORDER BY id DESC LIMIT 100", [gear], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
 			console.log("Error searching for match: " + JSON.stringify(error));
