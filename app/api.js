@@ -183,12 +183,12 @@ readContentClassification = function(req, res, next) {
 		}
 		Vans.getClassification(function(error, vanClassification) {
 			if(error) {
-				handleError("Error retrieving van classification: " + error);
+				handleError(res, next, "Error retrieving van classification: " + error);
 				return;
 			}
 			Roadies.getClassification(function(error, roadieClassification) {
 				if(error) {
-					handleError("Error retrieving roadie classification: " + error);
+					handleError(res, next, "Error retrieving roadie classification: " + error);
 					return;
 				}
 				contentClassification = {
