@@ -113,7 +113,7 @@ createUserFromFacebookInfo = function(userInfo, callback) {
  */
 setServerAccessToken = function(fbid, longToken, callback) {
 	db.query("UPDATE users SET fb_token=? WHERE fbid=? LIMIT 1", [longToken, fbid], function(error, result) {
-		if(result.affectedRows <= 0) {
+		if(result.affectedRows && result.affectedRows <= 0) {
 			callback("No user updated.");
 			return;
 		}
