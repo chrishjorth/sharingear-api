@@ -366,13 +366,17 @@ updateToAccepted = function(booking, callback) {
 					return;
 				}
 				User.readUser(booking.owner_id, function(error, owner) {
-					var startTime, endTime;
+					var startTime, endTime, renterTotalPrice, renterFee, paymentTime;
 					if(error) {
 						console.log("Error sending notifications on booking update to accepted. Unable to get owner data.");
 						return;
 					}
 					startTime = new Moment(booking.start_time, "YYYY-MM-DD HH:mm:ss");
 					endTime = new Moment(booking.end_time, "YYYY-MM-DD HH:mm:ss");
+
+					renterTotalPrice = booking.renter_price + (booking.renter_price * 10 / 100);
+                    renterFee = booking.renter_price * 10 / 100;
+                    paymentTime = new Moment();
 					
 					Notifications.send(Notifications.BOOKING_ACCEPTED_RENTER, {
 						name: renter.name,
@@ -414,6 +418,21 @@ updateToAccepted = function(booking, callback) {
 						dropoff_time: endTime.format("HH:mm"),
 						dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanrentals"
 					}, owner.email);
+
+					Notifications.send(Notifications.RECEIPT_RENTER, {
+                        name: renter.name,
+                        item_name: booking.item_name,
+                        price: booking.renter_price,
+                        fee: renterFee,
+                        total_price: renterTotalPrice,
+                        currency: booking.renter_currency,
+                        payment_date: paymentTime.format("DD/MM/YYYY"),
+                        payment_time: paymentTime.format("HH:mm"),
+                        date_from: startTime.format("DD/MM/YYYY"),
+                        time_from: startTime.format("HH:mm"),
+                        date_to: endTime.format("DD/MM/YYYY"),
+                        time_to: endTime.format("HH:mm")
+                    }, renter.email);
 				});
 			});
 		});
