@@ -348,11 +348,13 @@ createUserSession = function(req, res, next) {
 							handleError(res, next, "Error creating user: ", error);
 							return;
 						}
+						user.new_user = true;
 						createSession(user, longToken);
 					});
 				});
 			}
 			else {
+				user.new_user = false;
 				createSession(user, longToken);
 			}
 		});
