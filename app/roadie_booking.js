@@ -384,7 +384,7 @@ updateToAccepted = function(booking, callback) {
 						item_name: booking.name + " " + booking.surname,
 						price: booking.renter_price,
 						fee: booking.renter_price * 10 / 100,
-						total_price: booking.renter_price - (booking.renter_price * 10 / 100),
+						total_price: booking.renter_price + (booking.renter_price * 10 / 100),
 						currency: booking.renter_currency,
 						street: booking.pickup_street,
 						postal_code: booking.pickup_postal_code,
