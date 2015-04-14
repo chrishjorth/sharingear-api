@@ -566,7 +566,7 @@ chargePreAuthorization = function(seller, buyer, bookingData, callback) {
 			PreauthorizationId: bookingData.preauth_id
 		};
 		gatewayPost("/payins/PreAuthorized/direct", postData, function(error, data) {
-			var parsedData, startTime, endTime, paymentTime;
+			var parsedData;
 			if(error) {
 				callback("Error charging preauthorized booking: " + error);
 				return;
@@ -580,25 +580,6 @@ chargePreAuthorization = function(seller, buyer, bookingData, callback) {
 			}
 			console.log("charged successfully");
 			callback(null);
-
-			startTime = new Moment(bookingData.start_time, "YYYY-MM-DD HH:mm:ss");
-			endTime = new Moment(bookingData.end_time, "YYYY-MM-DD HH:mm:ss");
-			paymentTime = new Moment();
-
-			Notifications.send(Notifications.RECEIPT_RENTER,{
-				name: buyer.name,
-				item_name: bookingData.item_name,
-				price: price,
-				fee: buyerFee,
-				total_price: amount,
-				currency: bookingData.owner_currency,
-				payment_date: paymentTime.format("DD/MM/YYYY"),
-				payment_time: paymentTime.format("HH:mm"),
-				date_from: startTime.format("DD/MM/YYYY"),
-				time_from: startTime.format("HH:mm"),
-				date_to: endTime.format("DD/MM/YYYY"),
-				time_to: endTime.format("HH:mm")
-			}, buyer.email);
 		});
 	});
 };
