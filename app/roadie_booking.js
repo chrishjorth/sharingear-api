@@ -51,57 +51,82 @@ create = function(renterID, bookingData, callback) {
             callback(error);
             return;
         }
-        User.readUser(renterID, function(error, renterData) {
+        User.readCompleteUsers([renterID, roadie.owner_id], function(error, users) {
+            var renterData, ownerData;
             if (error) {
                 callback(error);
                 return;
             }
-            User.readUser(roadie.owner_id, function(error, ownerData) {
-                var renter_currency;
+            renterData = users[0];
+            ownerData = users[1];
+
+            Localization.convertPrices([roadie.price_a, roadie.price_b, roadie.price_c], roadie.currency, renterData.currency, function(error, convertedPrices) {
+                var renter_price, owner_price;
                 if (error) {
                     callback(error);
                     return;
                 }
-                renter_currency = Localization.getCurrency(renterData.country);
-                Localization.convertPrices([roadie.price_a, roadie.price_b, roadie.price_c], roadie.currency, renter_currency, function(error, convertedPrices) {
-                    var renter_price /*, owner_currency*/ ;
+                renter_price = Roadies.getPrice(Math.ceil(convertedPrices[0]), Math.ceil(convertedPrices[1]), Math.ceil(convertedPrices[2]), bookingData.start_time, bookingData.end_time);
+                owner_price = Roadies.getPrice(roadie.price_a, roadie.price_b, roadie.price_c, bookingData.start_time, bookingData.end_time);
+
+                Payment.getUserWalletsForCurrency([renterData.mangopay_id, ownerData.mangopay_id], renterData.currency, function(error, wallets) {
                     if (error) {
                         callback(error);
                         return;
                     }
-                    renter_price = Roadies.getPrice(Math.ceil(convertedPrices[0]), Math.ceil(convertedPrices[1]), Math.ceil(convertedPrices[2]), bookingData.start_time, bookingData.end_time);
-                    //owner_currency = Localization.getCurrency(ownerData.country);
-                    //Localization.convertPrices([gear.price_a, gear.price_b, gear.price_c], "EUR", owner_currency, function(error, convertedPrices) {
-                    var owner_price;
-                    /*if(error) {
-							callback(error);
-							return;
-						}*/
-                    owner_price = Roadies.getPrice(roadie.price_a, roadie.price_b, roadie.price_c, bookingData.start_time, bookingData.end_time);
+
                     bookingData = {
                         roadie_id: roadie.id,
+                        roadie_type: roadie.roadie_type,
+                        roadie_name: ownerData.name + " " + ownerData.surname,
+                        price_a: roadie.price_a,
+                        price_b: roadie.price_b,
+                        price_c: roadie.price_c,
                         start_time: bookingData.start_time,
                         end_time: bookingData.end_time,
-                        renter_id: renterData.id,
                         owner_id: roadie.owner_id,
-                        renter_email: renterData.email,
+                        owner_name: ownerData.name + " " + ownerData.surname,
                         owner_email: ownerData.email,
-                        renter_price: renter_price,
-                        renter_currency: renter_currency,
+                        owner_phone: ownerData.phone,
+                        owner_address: ownerData.address,
+                        owner_city: ownerData.city,
+                        owner_postal_code: ownerData.postal_code,
+                        owner_country: ownerData.country,
+                        owner_vatnum: "",
+                        owner_pp_id: ownerData.mangopay_id,
+                        owner_bank_id: ownerData.bank_id,
+                        renter_id: renterData.id,
+                        renter_name: renterData.name + " " + renterData.surname,
+                        renter_email: renterData.email,
+                        renter_phone: renterData.phone,
+                        renter_address: renterData.address,
+                        renter_city: renterData.city,
+                        renter_postal_code: renterData.postal_code,
+                        renter_country: renterData.country,
+                        renter_vatnum: "",
+                        renter_pp_id: renterData.mangopay_id,
+                        owner_currency: ownerData.currency,
+                        owner_wallet_id: wallets[1].wallet_id,
                         owner_price: owner_price,
-                        owner_currency: roadie.currency,
+                        owner_price_vat: 0, //TODO: Change this when VAT is implemented
+                        owner_fee: owner_price / 100 * parseFloat(ownerData.seller_fee),
+                        owner_fee_vat: 0, //TODO: Change this when VAT is implemented
+                        //owner_pp_transaction_id: null,
+                        renter_currency: renterData.currency,
+                        renter_wallet_id: wallets[0].wallet_id,
+                        renter_price: renter_price,
+                        renter_price_vat: 0, //TODO: Change this when VAT is implemented
+                        renter_fee: renter_price / 100 * parseFloat(renterData.buyer_fee),
+                        renter_fee_vat: 0, //TODO: Change this when VAT is implemented
+                        //renter_pp_transaction_id: null,
+                        pickup_address: ownerData.address,
+                        pickup_postal_code: ownerData.postal_code,
+                        pickup_city: ownerData.city,
+                        pickup_country: ownerData.country,
                         cardId: bookingData.cardId,
-                        roadie_type: roadie.roadie_type,
-                        roadie_name: roadie.name,
-                        roadie_surname: roadie.surname,
-                        pickup_street: roadie.address,
-                        pickup_postal_code: roadie.postal_code,
-                        pickup_city: roadie.city,
-                        pickup_country: roadie.country,
                         returnURL: bookingData.returnURL
                     };
                     _insertBooking(bookingData, callback);
-                    //});
                 });
             });
         });
@@ -109,30 +134,68 @@ create = function(renterID, bookingData, callback) {
 };
 
 _insertBooking = function(bookingData, callback) {
-    var booking;
+    var booking, sql;
     booking = [
         bookingData.roadie_id,
-        bookingData.start_time,
-        bookingData.end_time,
-        bookingData.renter_id,
-        bookingData.owner_id,
-        bookingData.renter_price,
-        bookingData.renter_currency,
-        bookingData.owner_price,
-        bookingData.owner_currency,
         bookingData.roadie_type,
         bookingData.roadie_name,
-        bookingData.roadie_surname,
-        bookingData.pickup_street,
+        bookingData.price_a,
+        bookingData.price_b,
+        bookingData.price_c,
+        bookingData.start_time,
+        bookingData.end_time,
+        bookingData.owner_id,
+        bookingData.owner_name,
+        bookingData.owner_email,
+        bookingData.owner_phone,
+        bookingData.owner_address,
+        bookingData.owner_postal_code,
+        bookingData.owner_city,
+        bookingData.owner_country,
+        bookingData.owner_vatnum,
+        bookingData.owner_pp_id,
+        bookingData.owner_bank_id,
+        bookingData.renter_id,
+        bookingData.renter_name,
+        bookingData.renter_email,
+        bookingData.renter_phone,
+        bookingData.renter_address,
+        bookingData.renter_postal_code,
+        bookingData.renter_city,
+        bookingData.renter_country,
+        bookingData.renter_vatnum,
+        bookingData.renter_pp_id,
+        bookingData.owner_currency,
+        bookingData.owner_wallet_id,
+        bookingData.owner_price,
+        bookingData.owner_price_vat,
+        bookingData.owner_fee,
+        bookingData.owner_fee_vat,
+        bookingData.renter_currency,
+        bookingData.renter_wallet_id,
+        bookingData.renter_price,
+        bookingData.renter_price_vat,
+        bookingData.renter_fee,
+        bookingData.renter_fee_vat,
+        bookingData.pickup_address,
         bookingData.pickup_postal_code,
         bookingData.pickup_city,
-        bookingData.pickup_country,
-        bookingData.renter_email,
-        bookingData.owner_email
+        bookingData.pickup_country
     ];
 
+    sql = "INSERT INTO roadie_bookings(roadie_id, roadie_type, roadie_name, price_a, price_b, price_c, start_time, end_time, ";
+    sql += "owner_id, owner_name, owner_email, owner_phone, owner_address, owner_postal_code, owner_city, owner_country, owner_vatnum, owner_pp_id, owner_bank_id, ";
+    sql += "renter_id, renter_name, renter_email, renter_phone, renter_address, renter_postal_code, renter_city, renter_country, renter_vatnum, renter_pp_id, ";
+    sql += "owner_currency, owner_wallet_id, owner_price, owner_price_vat, owner_fee, owner_fee_vat, renter_currency, renter_wallet_id, renter_price, renter_price_vat, renter_fee, renter_fee_vat, ";
+    sql += "pickup_address, pickup_postal_code, pickup_city, pickup_country, request_time) VALUES ";
+    sql += "(?, ?, ?, ?, ?, ?, ?, ?, ";
+    sql += "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ";
+    sql += "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ";
+    sql += "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ";
+    sql += "?, ?, ?, ?, NOW())";
+
     //We have to insert before the preauthorization to get the booking id
-    db.query("INSERT INTO roadie_bookings(roadie_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, roadie_type, roadie_name, roadie_surname, pickup_street, pickup_postal_code, pickup_city, pickup_country, renter_email, owner_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", booking, function(error, result) {
+    db.query(sql, booking, function(error, result) {
         var url, queryIndex;
         if (error) {
             callback("Error inserting booking: " + error);
@@ -167,7 +230,7 @@ _insertBooking = function(bookingData, callback) {
 };
 
 read = function(bookingID, callback) {
-    db.query("SELECT id, roadie_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, payment_timestamp, payin_time, payout_time, preauth_id, booking_status, roadie_type, pickup_street, pickup_postal_code, pickup_city, pickup_country, renter_email, owner_email FROM roadie_bookings WHERE id=?", [bookingID], function(error, rows) {
+    db.query("SELECT id, roadie_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, payment_timestamp, payout_time, preauth_id, booking_status, roadie_type, pickup_address, pickup_postal_code, pickup_city, pickup_country, renter_email, owner_email FROM roadie_bookings WHERE id=?", [bookingID], function(error, rows) {
         if (error) {
             callback(error);
             return;
@@ -247,6 +310,9 @@ update = function(bookingData, callback) {
     });
 };
 
+/**
+ * Money has been preauthorized successfully and we are waiting for the owner to accept.
+ */
 updateToPending = function(booking, callback) {
     console.log(JSON.stringify(booking));
     //Check that the preauthorization status is waiting
@@ -280,6 +346,7 @@ updateToPending = function(booking, callback) {
                     }
                     startTime = new Moment(booking.start_time, "YYYY-MM-DD HH:mm:ss");
                     endTime = new Moment(booking.end_time, "YYYY-MM-DD HH:mm:ss");
+
                     Notifications.send(Notifications.BOOKING_PENDING_OWNER, {
                         name: owner.name,
                         image_url: renter.image_url,
@@ -289,7 +356,7 @@ updateToPending = function(booking, callback) {
                         fee: "-" + (booking.owner_price * 10 / 100),
                         total_price: booking.owner_price - (booking.owner_price * 10 / 100),
                         currency: booking.owner_currency,
-                        street: booking.pickup_street,
+                        street: booking.pickup_address,
                         postal_code: booking.pickup_postal_code,
                         city: booking.pickup_city,
                         country: booking.pickup_country,
@@ -309,7 +376,7 @@ updateToPending = function(booking, callback) {
                         fee: booking.renter_price * 10 / 100,
                         total_price: booking.renter_price + (booking.renter_price * 10 / 100),
                         currency: booking.renter_currency,
-                        street: booking.pickup_street,
+                        street: booking.pickup_address,
                         postal_code: booking.pickup_postal_code,
                         city: booking.pickup_city,
                         country: booking.pickup_country,
@@ -325,8 +392,11 @@ updateToPending = function(booking, callback) {
     });
 };
 
+/**
+ * The owner denied the rental request.
+ */
 updateToDenied = function(booking, callback) {
-    db.query("UPDATE roadie_bookings SET booking_status='denied' WHERE id=? LIMIT 1", [booking.id], function(error) {
+    db.query("UPDATE roadie_bookings SET booking_status='denied', owner_response_time=NOW() WHERE id=? LIMIT 1", [booking.id], function(error) {
         if (error) {
             callback("Error updating booking status: " + error);
             return;
@@ -345,6 +415,9 @@ updateToDenied = function(booking, callback) {
     });
 };
 
+/**
+ * The owner accepted the rental request.
+ */
 updateToAccepted = function(booking, callback) {
     chargePreAuthorization(booking, function(error) {
         if (error) {
@@ -352,7 +425,7 @@ updateToAccepted = function(booking, callback) {
             return;
         }
         console.log("preauth charged");
-        db.query("UPDATE roadie_bookings SET booking_status='accepted', payment_timestamp=NOW() WHERE id=? LIMIT 1", [booking.id], function(error) {
+        db.query("UPDATE roadie_bookings SET booking_status='accepted', owner_response_time=NOW(), payment_timestamp=NOW() WHERE id=? LIMIT 1", [booking.id], function(error) {
             if (error) {
                 callback(error);
                 return;
@@ -386,7 +459,7 @@ updateToAccepted = function(booking, callback) {
                         fee: booking.renter_price * 10 / 100,
                         total_price: booking.renter_price + (booking.renter_price * 10 / 100),
                         currency: booking.renter_currency,
-                        street: booking.pickup_street,
+                        street: booking.pickup_address,
                         postal_code: booking.pickup_postal_code,
                         city: booking.pickup_city,
                         country: booking.pickup_country,
@@ -407,7 +480,7 @@ updateToAccepted = function(booking, callback) {
                         fee: "-" + (booking.owner_price * 10 / 100),
                         total_price: booking.owner_price - (booking.owner_price * 10 / 100),
                         currency: booking.owner_currency,
-                        street: booking.pickup_street,
+                        street: booking.pickup_address,
                         postal_code: booking.pickup_postal_code,
                         city: booking.pickup_city,
                         country: booking.pickup_country,
@@ -439,7 +512,7 @@ updateToAccepted = function(booking, callback) {
 };
 
 updateToEndedDenied = function(booking, callback) {
-    db.query("UPDATE roadie_bookings SET booking_status='ended-denied' WHERE id=? LIMIT 1", [booking.id], function(error) {
+    db.query("UPDATE roadie_bookings SET booking_status='ended-denied', renter_ended_time=NOW(), owner_ended_time=NOW() WHERE id=? LIMIT 1", [booking.id], function(error) {
         if (error) {
             callback("Error updating booking status: " + error);
             return;
@@ -452,7 +525,14 @@ updateToRenterReturned = function(booking, callback) {
     var completeUpdate;
 
     completeUpdate = function(status) {
-        db.query("UPDATE roadie_bookings SET booking_status=? WHERE id=? LIMIT 1", [status, booking.id], function(error) {
+        var sql = "UPDATE roadie_bookings SET booking_status=?, ";
+        if (status === "ended") {
+            sql += "renter_ended_time=NOW(), owner_ended_time=NOW() ";
+        } else {
+            sql += "renter_ended_time=NOW() ";
+        }
+        sql += "WHERE id=? LIMIT 1";
+        db.query(sql, [status, booking.id], function(error) {
             if (error) {
                 callback("Error updating booking status: " + error);
                 return;
@@ -496,7 +576,14 @@ updateToOwnerReturned = function(booking, callback) {
     var completeUpdate;
 
     completeUpdate = function(status) {
-        db.query("UPDATE roadie_bookings SET booking_status=? WHERE id=? LIMIT 1", [status, booking.id], function(error) {
+        var sql = "UPDATE roadie_bookings SET booking_status=?, ";
+        if (status === "ended") {
+            sql += "renter_ended_time=NOW(), owner_ended_time=NOW() ";
+        } else {
+            sql += "owner_ended_time=NOW() ";
+        }
+        sql += "WHERE id=? LIMIT 1";
+        db.query(sql, [status, booking.id], function(error) {
             if (error) {
                 callback("Error updating booking status: " + error);
                 return;
@@ -583,7 +670,13 @@ endBooking = function(bookingData, callback) {
                 return;
             }
 
-            callback(null);
+            db.query("UPDATE roadie_bookings SET payout_time=NOW() WHERE id=? LIMIT 1", [bookingData.id], function() {
+                if (error) {
+                    callback(error);
+                    return;
+                }
+                callback(null);
+            });
 
             Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, bookingData.owner_email);
             Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, bookingData.renter_email);

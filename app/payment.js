@@ -24,6 +24,7 @@ var https = require("https"),
     createWalletsForUser,
     getWallets,
     getWalletForCurrency,
+    getUserWalletsForCurrency,
     getCardObject,
     preAuthorize,
     getPreauthorizationStatus,
@@ -407,6 +408,30 @@ getWalletForCurrency = function(mangopay_id, currency, callback) {
     });
 };
 
+getUserWalletsForCurrency = function(mangoPayIDs, currency, callback) {
+    var sql, i;
+    if (mangoPayIDs.length <= 0) {
+        callback(null, []);
+        return;
+    }
+    sql = "SELECT wallet_id FROM wallets WHERE mangopay_id IN(";
+    for (i = 0; i < mangoPayIDs.length - 1; i++) {
+        sql += "?, ";
+    }
+    sql += "?) LIMIT " + mangoPayIDs.length + ";";
+    db.query(sql, mangoPayIDs, function(error, rows) {
+        if (error) {
+            callback(error);
+            return;
+        }
+        if (rows.length < mangoPayIDs.length) {
+            callback("No wallets found for all provided mangopay IDs.");
+            return;
+        }
+        callback(null, rows);
+    });
+};
+
 getCardObject = function(mangopay_id, callback) {
     var postData = {
         UserId: mangopay_id,
@@ -441,18 +466,18 @@ preAuthorize = function(sellerMangoPayData, buyerMangoPayData, bookingData, call
 
     //View Sharingear transaction model document for explanation
     /*sellerFee = price / 100 * parseFloat(sellerMangoPayData.seller_fee);
-	sellerFeeVAT = sellerFee / 100 * sg_user.vat;
-	sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * sellerMangoPayData.vat;
-	buyerFee = price / 100 * parseFloat(buyerMangoPayData.buyer_fee);
-	buyerFeeVAT = buyerFee / 100 * sg_user.vat;
-	amount = price + sellerVAT + buyerFee + buyerFeeVAT;
-	
-	console.log("--- PREAUTH:");
-	console.log("price: " + price);
-	console.log("sellerVAT: " + sellerVAT);
-	console.log("buyerFee: " + buyerFee);
-	console.log("buyerFeeVAT: " + buyerFeeVAT);
-	console.log("amount: " + amount);*/
+    sellerFeeVAT = sellerFee / 100 * sg_user.vat;
+    sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * sellerMangoPayData.vat;
+    buyerFee = price / 100 * parseFloat(buyerMangoPayData.buyer_fee);
+    buyerFeeVAT = buyerFee / 100 * sg_user.vat;
+    amount = price + sellerVAT + buyerFee + buyerFeeVAT;
+    
+    console.log("--- PREAUTH:");
+    console.log("price: " + price);
+    console.log("sellerVAT: " + sellerVAT);
+    console.log("buyerFee: " + buyerFee);
+    console.log("buyerFeeVAT: " + buyerFeeVAT);
+    console.log("amount: " + amount);*/
 
     buyerFee = price / 100 * parseFloat(buyerMangoPayData.buyer_fee);
     amount = price + buyerFee;
@@ -519,18 +544,18 @@ chargePreAuthorization = function(seller, buyer, bookingData, callback) {
 
         //View Sharingear transaction model document for explanation
         /*sellerFee = price / 100 * parseFloat(seller.seller_fee);
-		sellerFeeVAT = sellerFee / 100 * sg_user.vat;
-		sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
-		buyerFee = price / 100 * parseFloat(buyer.buyer_fee);
-		buyerFeeVAT = buyerFee / 100 * sg_user.vat;
-		amount = price + sellerVAT + buyerFee + buyerFeeVAT;
-	
-		console.log("--- CHARGE:");
-		console.log("price: " + price);
-		console.log("sellerVAT: " + sellerVAT);
-		console.log("buyerFee: " + buyerFee);
-		console.log("buyerFeeVAT: " + buyerFeeVAT);
-		console.log("amount: " + amount);*/
+        sellerFeeVAT = sellerFee / 100 * sg_user.vat;
+        sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
+        buyerFee = price / 100 * parseFloat(buyer.buyer_fee);
+        buyerFeeVAT = buyerFee / 100 * sg_user.vat;
+        amount = price + sellerVAT + buyerFee + buyerFeeVAT;
+    
+        console.log("--- CHARGE:");
+        console.log("price: " + price);
+        console.log("sellerVAT: " + sellerVAT);
+        console.log("buyerFee: " + buyerFee);
+        console.log("buyerFeeVAT: " + buyerFeeVAT);
+        console.log("amount: " + amount);*/
 
         buyerFee = price / 100 * parseFloat(buyer.buyer_fee);
         amount = price + buyerFee;
@@ -594,16 +619,16 @@ payOutSeller = function(seller, bookingData, callback) {
             price = parseInt(bookingData.owner_price, 10);
 
             /*sellerFee = price / 100 * parseFloat(seller.seller_fee);
-			sellerFeeVAT = sellerFee / 100 * sg_user.vat;
-			sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
-			amount = price + sellerVAT;
+            sellerFeeVAT = sellerFee / 100 * sg_user.vat;
+            sellerVAT = (price - sellerFee - sellerFeeVAT) / 100 * seller.vat;
+            amount = price + sellerVAT;
 
-			console.log("--- PAY OWNER:");
-			console.log("price: " + price);
-			console.log("sellerFee: " + sellerFee);
-			console.log("sellerFeeVAT: " + sellerFeeVAT);
-			console.log("sellerVAT: " + sellerVAT);
-			console.log("amount: " + amount);*/
+            console.log("--- PAY OWNER:");
+            console.log("price: " + price);
+            console.log("sellerFee: " + sellerFee);
+            console.log("sellerFeeVAT: " + sellerFeeVAT);
+            console.log("sellerVAT: " + sellerVAT);
+            console.log("amount: " + amount);*/
 
             sellerFee = price / 100 * parseFloat(seller.seller_fee);
             amount = price;
@@ -684,7 +709,7 @@ payOutSeller = function(seller, bookingData, callback) {
                         total_price: price - sellerFee,
                         currency: bookingData.owner_currency,
 
-                        //These are for later use		
+                        //These are for later use       
                         payment_date: paymentTime.format("DD/MM/YYYY"),
                         payment_time: paymentTime.format("HH:mm"),
 
@@ -942,10 +967,10 @@ createSharingearUser = function(callback) {
         LegalRepresentativeNationality: "DK",
         LegalRepresentativeCountryOfResidence: "DK"
             /*,
-            		Statute: "",
-            		ProofOfRegistration: "",
-            		ShareholderDeclaration: "",
-            		*/
+                    Statute: "",
+                    ProofOfRegistration: "",
+                    ShareholderDeclaration: "",
+                    */
     };
     gatewayPost("/users/legal", postData, function(error, data) {
         var parsedData;
@@ -993,6 +1018,7 @@ module.exports = {
     createWalletsForUser: createWalletsForUser,
     getWallets: getWallets,
     getWalletForCurrency: getWalletForCurrency,
+    getUserWalletsForCurrency: getUserWalletsForCurrency,
     getCardObject: getCardObject,
 
     preAuthorize: preAuthorize,
