@@ -74,6 +74,10 @@ getYahooRate = function(fromCurrency, toCurrency, callback) {
             callback(error.message);
             return;
         }
+        if (!parsedData.query) {
+            callback("Yahoo did not return any results.");
+            return;
+        }
         if (!parsedData.query.results || parsedData.query.results === null) {
             callback("Yahoo did not return any results.");
             return;
