@@ -11,11 +11,7 @@ var fs = require("fs"),
     SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
     FROM_ADDRESS = "service@sharingear.com",
 
-    /*BOOKING_PENDING_OWNER = 0,
-    bookingPendingOwnerEmailSubject,
-    bookingPendingOwnerEmailTextTemplate,
-    bookingPendingOwnerEmailHTMLTemplate,*/
-    BOOKING_PENDING_RENTER = 1,
+    BOOKING_PENDING_RENTER = 3,
     bookingPendingRenterEmailSubject,
     bookingPendingRenterEmailTextTemplate,
     bookingPendingRenterEmailHTMLTemplate,
@@ -23,10 +19,10 @@ var fs = require("fs"),
     bookingAcceptedRenterEmailSubject,
     bookingAcceptedRenterEmailTextTemplate,
     bookingAcceptedRenterEmailHTMLTemplate,
-    BOOKING_ACCEPTED_OWNER = 3,
+    /*BOOKING_ACCEPTED_OWNER = 1,
     bookingAcceptedOwnerEmailSubject,
     bookingAcceptedOwnerEmailTextTemplate,
-    bookingAcceptedOwnerEmailHTMLTemplate,
+    bookingAcceptedOwnerEmailHTMLTemplate,*/
     BOOKING_DENIED = 4,
     bookingDeniedEmail,
     BOOKING_OWNER_RETURNED = 5,
@@ -54,6 +50,10 @@ var fs = require("fs"),
     owner1RequestEmailSubject,
     owner1RequestEmailHTMLTemplate,
     owner1RequestEmailTextTemplate,
+    OWNER_2_ACCEPT = 1,
+    owner2AcceptEmailSubject,
+    owner2AcceptEmailHTMLTemplate,
+    owner2AcceptEmailTextTemplate,
 
     send;
 
@@ -67,17 +67,18 @@ owner1RequestEmailSubject = "Someone wants to rent your gear, response needed �
 owner1RequestEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_1_request.html", "utf8"));
 owner1RequestEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_1_request.txt", "utf8"));
 
+owner2AcceptEmailSubject = "You accepted gear request – step 2 of 3";
+owner2AcceptEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/acceptance_owner.html", "utf8"));
+owner2AcceptEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/acceptance_owner.txt", "utf8"));
+
+
 bookingPendingRenterEmailSubject = "You have requested gear – step 1 of 3 ";
-bookingPendingRenterEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/reservation_email_renter.txt", "utf8"));
 bookingPendingRenterEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/reservation_email_renter.html", "utf8"));
+bookingPendingRenterEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/reservation_email_renter.txt", "utf8"));
 
 bookingAcceptedRenterEmailSubject = "Your gear request was accepted – step 2 of 3";
 bookingAcceptedRenterEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/acceptance_renter.txt", "utf8"));
 bookingAcceptedRenterEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/acceptance_renter.html", "utf8"));
-
-bookingAcceptedOwnerEmailSubject = "You accepted gear request – wait for payment confirmation – step 2 of 3";
-bookingAcceptedOwnerEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/acceptance_owner.txt", "utf8"));
-bookingAcceptedOwnerEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/acceptance_owner.html", "utf8"));
 
 //Defines an email to the renter of gear, sent on the event that the owner denied the booking
 bookingDeniedEmail = {
@@ -137,18 +138,18 @@ send = function(notificationType, notificationParameters, recipientEmail) {
             break;
         case BOOKING_PENDING_RENTER:
             emailParams.subject = bookingPendingRenterEmailSubject;
-            emailParams.text = bookingPendingRenterEmailTextTemplate(notificationParameters);
             emailParams.html = bookingPendingRenterEmailHTMLTemplate(notificationParameters);
+            emailParams.text = bookingPendingRenterEmailTextTemplate(notificationParameters);
             break;
         case BOOKING_ACCEPTED_RENTER:
             emailParams.subject = bookingAcceptedRenterEmailSubject;
             emailParams.text = bookingAcceptedRenterEmailTextTemplate(notificationParameters);
             emailParams.html = bookingAcceptedRenterEmailHTMLTemplate(notificationParameters);
             break;
-        case BOOKING_ACCEPTED_OWNER:
-            emailParams.subject = bookingAcceptedOwnerEmailSubject;
-            emailParams.text = bookingAcceptedOwnerEmailTextTemplate(notificationParameters);
-            emailParams.html = bookingAcceptedOwnerEmailHTMLTemplate(notificationParameters);
+        case OWNER_2_ACCEPT:
+            emailParams.subject = owner2AcceptEmailSubject;
+            emailParams.html = owner2AcceptEmailHTMLTemplate(notificationParameters);
+            emailParams.text = owner2AcceptEmailTextTemplate(notificationParameters);
             break;
         case BOOKING_DENIED:
             emailParams = bookingDeniedEmail;
@@ -210,9 +211,10 @@ send = function(notificationType, notificationParameters, recipientEmail) {
 
 module.exports = {
     OWNER_1_REQUEST: OWNER_1_REQUEST,
+    OWNER_2_ACCEPT: OWNER_2_ACCEPT,
+
     BOOKING_PENDING_RENTER: BOOKING_PENDING_RENTER,
     BOOKING_ACCEPTED_RENTER: BOOKING_ACCEPTED_RENTER,
-    BOOKING_ACCEPTED_OWNER: BOOKING_ACCEPTED_OWNER,
     BOOKING_DENIED: BOOKING_DENIED,
     BOOKING_OWNER_RETURNED: BOOKING_OWNER_RETURNED,
     BOOKING_RENTER_RETURNED: BOOKING_RENTER_RETURNED,
