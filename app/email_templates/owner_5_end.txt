@@ -1,0 +1,7 @@
+Hi {{name}},\n\n
+You have received your gear, and in order to receive payment you must rate the renter and end the booking session.\n\n
+See your Dashboard on www.sharingear.com to end this booking.\n\n
+Best regards,\n
+Sharingear Team\n\n
+-------\n\n
+Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsoes Allé 41, 1., 1434 Copenhagen K, Denmark\n
