@@ -21,10 +21,10 @@ var fs = require("fs"),
     bookingAcceptedRenterEmailHTMLTemplate,
     BOOKING_DENIED = 41,
     bookingDeniedEmail,
-    BOOKING_OWNER_RETURNED = 5,
+    /*BOOKING_OWNER_RETURNED = 5,
     bookingOwnerReturnedEmailSubject,
     bookingOwnerReturnedEmailTextTemplate,
-    bookingOwnerReturnedEmailHTMLTemplate,
+    bookingOwnerReturnedEmailHTMLTemplate,*/
     BOOKING_RENTER_RETURNED = 6,
     bookingRenterReturnedEmailSubject,
     bookingRenterReturnedEmailTextTemplate,
@@ -50,14 +50,18 @@ var fs = require("fs"),
     owner2AcceptEmailSubject,
     owner2AcceptEmailHTMLTemplate,
     owner2AcceptEmailTextTemplate,
-    OWNER_3_PICKUPREMINDER = 3,
+    OWNER_3_PICKUPREMINDER = 2,
     owner3PickupReminderEmailSubject,
     owner3PickupReminderEmailHTMLTemplate,
     owner3PickupReminderEmailTextTemplate,
-    OWNER_4_DELIVERYREMINDER = 4,
+    OWNER_4_DELIVERYREMINDER = 3,
     owner4DeliveryReminderEmailSubject,
     owner4DeliveryReminderEmailHTMLTemplate,
     owner4DeliveryReminderEmailTextTemplate,
+    OWNER_5_END = 4,
+    owner5EndEmailSubject,
+    owner5EndEmailHTMLTemplate,
+    owner5EndEmailTextTemplate,
 
     send;
 
@@ -83,6 +87,9 @@ owner4DeliveryReminderEmailSubject = "You have a delivery coming up";
 owner4DeliveryReminderEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_4_deliveryreminder.html", "utf8"));
 owner4DeliveryReminderEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_4_deliveryreminder.txt", "utf8"));
 
+owner5EndEmailSubject = "End booking and get paid - step 3 of 3";
+owner5EndEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_5_end.html", "utf8"));
+owner5EndEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_5_end.txt", "utf8"));
 
 
 bookingPendingRenterEmailSubject = "You have requested gear – step 1 of 3 ";
@@ -100,10 +107,6 @@ bookingDeniedEmail = {
     subject: "Sharingear - your booking got denied",
     text: "Hi,\n\nunfortunately your booking got denied by the owner of the gear.\n\nSearch for other gear https://www.sharingear.com.\n\nHope you have more luck next time,\n\n- Sharingear"
 };
-
-bookingOwnerReturnedEmailSubject = "End booking and get paid - step 3 of 3";
-bookingOwnerReturnedEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/end_booking_owner.txt", "utf8"));
-bookingOwnerReturnedEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/end_booking_owner.html", "utf8"));
 
 bookingRenterReturnedEmailSubject = "End booking and collect your deposit - step 3 of 3";
 bookingRenterReturnedEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/end_booking_renter.txt", "utf8"));
@@ -174,13 +177,13 @@ send = function(notificationType, notificationParameters, recipientEmail) {
             emailParams.html = owner4DeliveryReminderEmailHTMLTemplate;
             emailParams.text = owner4DeliveryReminderEmailTextTemplate;
             break;
+        case OWNER_5_END:
+            emailParams.subject = owner5EndEmailSubject;
+            emailParams.html = owner5EndEmailHTMLTemplate;
+            emailParams.text = owner5EndEmailTextTemplate;
+            break;
         case BOOKING_DENIED:
             emailParams = bookingDeniedEmail;
-            break;
-        case BOOKING_OWNER_RETURNED:
-            emailParams.subject = bookingOwnerReturnedEmailSubject;
-            emailParams.text = bookingOwnerReturnedEmailTextTemplate(notificationParameters);
-            emailParams.html = bookingOwnerReturnedEmailHTMLTemplate(notificationParameters);
             break;
         case BOOKING_RENTER_RETURNED:
             emailParams.subject = bookingRenterReturnedEmailSubject;
@@ -235,11 +238,13 @@ send = function(notificationType, notificationParameters, recipientEmail) {
 module.exports = {
     OWNER_1_REQUEST: OWNER_1_REQUEST,
     OWNER_2_ACCEPT: OWNER_2_ACCEPT,
+    OWNER_3_PICKUPREMINDER: OWNER_3_PICKUPREMINDER,
+    OWNER_4_DELIVERYREMINDER: OWNER_4_DELIVERYREMINDER,
+    OWNER_5_END: OWNER_5_END,
 
     BOOKING_PENDING_RENTER: BOOKING_PENDING_RENTER,
     BOOKING_ACCEPTED_RENTER: BOOKING_ACCEPTED_RENTER,
     BOOKING_DENIED: BOOKING_DENIED,
-    BOOKING_OWNER_RETURNED: BOOKING_OWNER_RETURNED,
     BOOKING_RENTER_RETURNED: BOOKING_RENTER_RETURNED,
     BOOKING_ENDED_OWNER: BOOKING_ENDED_OWNER,
     BOOKING_ENDED_RENTER: BOOKING_ENDED_RENTER,

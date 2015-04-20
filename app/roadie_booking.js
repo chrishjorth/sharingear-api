@@ -553,17 +553,16 @@ updateToRenterReturned = function(booking, callback) {
                 console.log("Error getting owner for notification to renter on booking update to renter-returned: " + error);
                 return;
             }
-            User.readUser(booking.renter_id, function(error, renter) {
+            /*User.readUser(booking.renter_id, function(error, renter) {
                 if (error) {
                     console.log("Error getting renter for notification to renter on booking update to renter-returned: " + error);
                     return;
-                }
-                Notifications.send(Notifications.BOOKING_OWNER_RETURNED, {
+                }*/
+                Notifications.send(Notifications.OWNER_5_END, {
                     name: owner.name,
-                    username_renter: renter.name + " " + renter.surname,
                     dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadierentals"
                 }, owner.email);
-            });
+            //});
         });
     }
 };
