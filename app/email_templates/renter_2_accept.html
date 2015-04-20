@@ -3,20 +3,17 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 </style>
 <div style="width:80%;background-color:#f6f6f6;font-family:Helvetica Neue, Arial, sans-serif;font-size:12px;line-height:18px;padding-top:20px;padding-right:10%;padding-bottom:20px;padding-left:10%;margin:0;">
 	<div style="padding:10px;background-color:#ffffff;">
-		<div>
-			<div style="width:50%;">
-				<img src="https://dev.sharingear.com/images/email_templates/logotop@2x.png" alt="Sharingear logo" style="width:183px;float:left"/>
-			</div>
-			<div style="widt:50%;text-align:right;">
-				<h1 style="color:#00adff;margin:0;font-size:14px;line-height:36px;">RESERVATION</h1>
-			</div>
+		<div style="margin-bottom:20px;">
+			<img src="https://dev.sharingear.com/images/email_templates/logotop@2x.png" alt="Sharingear logo" style="width:183px;"/>
 		</div>
 		
 		<hr style="border:0;height:0;border-top-width:2px;border-style:solid;width:100%;color:#dddddd;">
 		
 		<p style="font-weight:bold;">Hi {{renter_name}},</p>
 		<div style="width:80%;display:inline-block;line-height:60px;">
-			<p style="margin:0;">You submitted a reservation to <span style="font-weight:bold;">{{owner_name}} {{owner_surname}}</span>.</p>
+			<p style="margin:0;line-height: 24px;">
+				<span style="font-weight:bold;">{{owner_name}} {{owner_surname}}</span> <span style="color:#00adff;font-weight:bold;">has accepted your reservation and awaits for you, to come and pick up the {{item_type}}.</span>
+			</p>
 		</div>
 		
 		<div style="width:19%;display:inline-block;text-align:center;">
@@ -24,10 +21,8 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 		</div>
 
 		<div style="width:100%;text-align:center;margin-top:20px;margin-bottom:20px;">
-			<img src="https://dev.sharingear.com/images/email_templates/timeline_step01@2x.png" style="width:540px;height:100px;max-width:100%;">
+			<img src="https://dev.sharingear.com/images/email_templates/timeline_step02@2x.png" style="width:540px;height:100px;max-width:100%;">
 		</div>
-
-		<div style="color:#c6c6c6;text-align:center;">Awaiting for owner to accept to request.</div>
 
 		<div style="width:100%;margin-top:20px;">
 			<div style="display:inline-block;width:40%;">
@@ -56,7 +51,7 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 			</tr>
 			<tr>
 				<td style="padding:10px;text-align:center;font-weight:bold;background-color:#ededed;border-width:1px;border-style:solid;border-color:#ededed;margin:0;">Pick up location</td>
-				<td style="padding:10px;text-align:center;border-width:1px;border-style:solid;border-color:#ededed;">{{pickup_postal_code}} {{pickup_city}}, {{pickup_country}}</td>
+				<td style="padding:10px;text-align:center;border-width:1px;border-style:solid;border-color:#ededed;color:#00adff;font-weight:bold;">{{pickup_address}}</td>
 			</tr>
 		</table>
 

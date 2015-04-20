@@ -1,10 +1,9 @@
 Hi {{renter_name}},\n\n
-You submitted a reservation to {{owner_name}} {{owner_surname}}.\n\n
-Awaiting for owner to accept to request.\n\n
+{{owner_name}} {{owner_surname}} has accepted your reservation and awaits for you, to come and pick up the {{item_type}}.\n\n
 Pickup: {{pickup_date}} {{pickup_time}}\n\n
 Delivery: {{delivery_date}} {{delivery_time}}\n\n
 {{item_type}}: {{item_name}}\n\n
-Pick up location: {{pickup_postal_code}} {{pickup_city}}, {{pickup_country}}\n\n
+Pick up location: {{pickup_address}}\n\n
 Your price: {{price}} {{currency}}\n\n
 Our service fee: {{fee}} {{currency}}\n\n
 Total: {{total}} {{currency}}\n\n
