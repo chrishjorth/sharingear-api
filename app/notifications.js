@@ -9,7 +9,6 @@
 var fs = require("fs"),
     _ = require("underscore"),
     SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
-    // User = require("./user"),
     FROM_ADDRESS = "service@sharingear.com",
 
     BOOKING_PENDING_OWNER = 0,
@@ -50,6 +49,11 @@ var fs = require("fs"),
     receiptOwnerEmailSubject,
     receiptOwnerEmailTextTemplate,
     receiptOwnerEmailHTMLTemplate,
+
+    OWNER_REQUEST = 11,
+    ownerRequestEmailSubject,
+    ownerRequestEmailHTMLTemplate,
+    ownerRequestEmailTextTemplate,
 
     send;
 
@@ -116,6 +120,10 @@ bookingEndedRenterEmail = {
     text: "Hi,\n\nyour rental of gear has been completed. We hope you enjoyed the experience.\n\n See you soon,\n\n- Sharingear"
 };
 
+ownerRequestEmailSubject = "Someone wants to rent your gear, response needed – step 1 of 3";
+ownerRequestEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_1_request.html", "utf8"));
+ownerRequestEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_1_request.txt", "utf8"));
+
 send = function(notificationType, notificationParameters, recipientEmail) {
     var emailParams,
         textTemplate,
@@ -174,6 +182,12 @@ send = function(notificationType, notificationParameters, recipientEmail) {
             emailParams.subject = receiptRenterEmailSubject;
             emailParams.text = receiptRenterEmailTextTemplate(notificationParameters);
             emailParams.html = receiptRenterEmailHTMLTemplate(notificationParameters);
+            break;
+
+        case OWNER_REQUEST:
+            emailParams.subject = ownerRequestEmailSubject;
+            emailParams.html = ownerRequestEmailHTMLTemplate(notificationParameters);
+            emailParams.txt = ownerRequestEmailTextTemplate(notificationParameters);
             break;
         default:
             return;
