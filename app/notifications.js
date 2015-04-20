@@ -11,10 +11,10 @@ var fs = require("fs"),
     SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
     FROM_ADDRESS = "service@sharingear.com",
 
-    BOOKING_PENDING_OWNER = 0,
+    /*BOOKING_PENDING_OWNER = 0,
     bookingPendingOwnerEmailSubject,
     bookingPendingOwnerEmailTextTemplate,
-    bookingPendingOwnerEmailHTMLTemplate,
+    bookingPendingOwnerEmailHTMLTemplate,*/
     BOOKING_PENDING_RENTER = 1,
     bookingPendingRenterEmailSubject,
     bookingPendingRenterEmailTextTemplate,
@@ -50,10 +50,10 @@ var fs = require("fs"),
     receiptOwnerEmailTextTemplate,
     receiptOwnerEmailHTMLTemplate,
 
-    OWNER_REQUEST = 11,
-    ownerRequestEmailSubject,
-    ownerRequestEmailHTMLTemplate,
-    ownerRequestEmailTextTemplate,
+    OWNER_1_REQUEST = 0,
+    owner1RequestEmailSubject,
+    owner1RequestEmailHTMLTemplate,
+    owner1RequestEmailTextTemplate,
 
     send;
 
@@ -63,9 +63,9 @@ _.templateSettings = {
     escape: /\{\{-(.+?)\}\}/g
 };
 
-bookingPendingOwnerEmailSubject = "Someone wants to rent your gear, response needed – step 1 of 3";
-bookingPendingOwnerEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/reservation_email_owner.txt", "utf8"));
-bookingPendingOwnerEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/reservation_email_owner.html", "utf8"));
+owner1RequestEmailSubject = "Someone wants to rent your gear, response needed – step 1 of 3";
+owner1RequestEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_1_request.html", "utf8"));
+owner1RequestEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_1_request.txt", "utf8"));
 
 bookingPendingRenterEmailSubject = "You have requested gear – step 1 of 3 ";
 bookingPendingRenterEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/reservation_email_renter.txt", "utf8"));
@@ -120,10 +120,6 @@ bookingEndedRenterEmail = {
     text: "Hi,\n\nyour rental of gear has been completed. We hope you enjoyed the experience.\n\n See you soon,\n\n- Sharingear"
 };
 
-ownerRequestEmailSubject = "Someone wants to rent your gear, response needed – step 1 of 3";
-ownerRequestEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_1_request.html", "utf8"));
-ownerRequestEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_1_request.txt", "utf8"));
-
 send = function(notificationType, notificationParameters, recipientEmail) {
     var emailParams,
         textTemplate,
@@ -134,10 +130,10 @@ send = function(notificationType, notificationParameters, recipientEmail) {
     };
 
     switch (notificationType) {
-        case BOOKING_PENDING_OWNER:
-            emailParams.subject = bookingPendingOwnerEmailSubject;
-            emailParams.text = bookingPendingOwnerEmailTextTemplate(notificationParameters);
-            emailParams.html = bookingPendingOwnerEmailHTMLTemplate(notificationParameters);
+        case OWNER_1_REQUEST:
+            emailParams.subject = owner1RequestEmailSubject;
+            emailParams.html = owner1RequestEmailHTMLTemplate(notificationParameters);
+            emailParams.text = owner1RequestEmailTextTemplate(notificationParameters);
             break;
         case BOOKING_PENDING_RENTER:
             emailParams.subject = bookingPendingRenterEmailSubject;
@@ -183,12 +179,6 @@ send = function(notificationType, notificationParameters, recipientEmail) {
             emailParams.text = receiptRenterEmailTextTemplate(notificationParameters);
             emailParams.html = receiptRenterEmailHTMLTemplate(notificationParameters);
             break;
-
-        case OWNER_REQUEST:
-            emailParams.subject = ownerRequestEmailSubject;
-            emailParams.html = ownerRequestEmailHTMLTemplate(notificationParameters);
-            emailParams.txt = ownerRequestEmailTextTemplate(notificationParameters);
-            break;
         default:
             return;
     }
@@ -219,7 +209,7 @@ send = function(notificationType, notificationParameters, recipientEmail) {
 };
 
 module.exports = {
-    BOOKING_PENDING_OWNER: BOOKING_PENDING_OWNER,
+    OWNER_1_REQUEST: OWNER_1_REQUEST,
     BOOKING_PENDING_RENTER: BOOKING_PENDING_RENTER,
     BOOKING_ACCEPTED_RENTER: BOOKING_ACCEPTED_RENTER,
     BOOKING_ACCEPTED_OWNER: BOOKING_ACCEPTED_OWNER,
