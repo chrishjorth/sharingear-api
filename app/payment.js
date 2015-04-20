@@ -679,7 +679,9 @@ payOutSeller = function(seller, bookingData, callback) {
                     BankWireRef: "Sharingear rental"
                 };
                 gatewayPost("/payouts/bankwire", postData, function(error, data) {
-                    var parsedData, startTime, endTime, paymentTime;
+                    var item_type = "",
+                        item_name = "",
+                        parsedData, startTime, endTime;
                     if (error) {
                         callback("Error wiring from wallet: " + error);
                         return;
@@ -692,31 +694,43 @@ payOutSeller = function(seller, bookingData, callback) {
                     console.log("payout successful");
                     callback(null);
 
-                    startTime = new Moment(bookingData.start_time, "YYYY-MM-DD HH:mm:ss");
-                    endTime = new Moment(bookingData.end_time, "YYYY-MM-DD HH:mm:ss");
-                    paymentTime = new Moment();
+                    if(bookingData.gear_type) {
+                        item_type = bookingData.gear_type;
+                        item_name = bookingData.gear_brand + " " + bookingData.gear_model + " " + bookingData.gear_subtype;
+                    }
+                    else if(bookingData.roadie_type) {
+                        item_type = bookingData.roadie_type;
+                        item_name = bookingData.name + " " + bookingData.surname;
+                    }
+                    else if(bookingData.van_type) {
+                        item_type = bookingData.van_type;
+                        item_name = bookingData.van_model;
+                    }
+                    else {
+                        console.error("Could not detect booking type for owner receipt creation.");
+                        return;
+                    }
 
-                    Notifications.send(Notifications.RECEIPT_OWNER, {
-                        name: seller.name,
-                        surname: seller.surname,
-                        street: seller.street,
-                        postal_code: seller.postal_code,
-                        city: seller.city,
-                        country: seller.country,
-                        item_name: bookingData.item_name,
-                        price: price,
-                        fee: "-" + sellerFee,
-                        total_price: price - sellerFee,
+                    startTime = new Moment.tz(bookingData.start_time, "YYYY-MM-DD HH:mm:ss", seller.time_zone);
+                    endTime = new Moment.tz(bookingData.end_time, "YYYY-MM-DD HH:mm:ss", seller.time_zone);
+
+                    Notifications.send(Notifications.OWNER_6_RECEIPT, {
+                        name: bookingData.owner_name,
+                        surname: bookingData.owner_surname,
+                        item_type: item_type,
+                        item_name: item_name,
+                        pickup_date: startTime.format("DD/MM/YYYY"),
+                        pickup_time: startTime.format("HH:mm"),
+                        delivery_date: endTime.format("DD/MM/YYYY"),
+                        delivery_time: endTime.format("HH:mm"),
+                        price: bookingData.owner_price,
+                        fee: "-" + bookingData.owner_fee,
+                        total: bookingData.owner_price - (bookingData.owner_price * 100 / bookingData.owner_fee),
                         currency: bookingData.owner_currency,
-
-                        //These are for later use       
-                        payment_date: paymentTime.format("DD/MM/YYYY"),
-                        payment_time: paymentTime.format("HH:mm"),
-
-                        date_from: startTime.format("DD/MM/YYYY"),
-                        time_from: startTime.format("HH:mm"),
-                        date_to: endTime.format("DD/MM/YYYY"),
-                        time_to: endTime.format("HH:mm")
+                        address: bookingData.owner_address,
+                        postal_code: bookingData.postal_code,
+                        city: bookingData.city,
+                        country: bookingData.country
                     }, seller.email);
                 });
             });

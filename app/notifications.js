@@ -15,7 +15,7 @@ var fs = require("fs"),
     bookingPendingRenterEmailSubject,
     bookingPendingRenterEmailTextTemplate,
     bookingPendingRenterEmailHTMLTemplate,
-    BOOKING_ACCEPTED_RENTER = 2,
+    BOOKING_ACCEPTED_RENTER = 21,
     bookingAcceptedRenterEmailSubject,
     bookingAcceptedRenterEmailTextTemplate,
     bookingAcceptedRenterEmailHTMLTemplate,
@@ -37,10 +37,6 @@ var fs = require("fs"),
     receiptRenterEmailSubject,
     receiptRenterEmailTextTemplate,
     receiptRenterEmailHTMLTemplate,
-    RECEIPT_OWNER = 10,
-    receiptOwnerEmailSubject,
-    receiptOwnerEmailTextTemplate,
-    receiptOwnerEmailHTMLTemplate,
 
     OWNER_1_REQUEST = 0,
     owner1RequestEmailSubject,
@@ -62,6 +58,10 @@ var fs = require("fs"),
     owner5EndEmailSubject,
     owner5EndEmailHTMLTemplate,
     owner5EndEmailTextTemplate,
+    OWNER_6_RECEIPT = 5,
+    owner6ReceiptEmailSubject,
+    owner6ReceiptEmailHTMLTemplate,
+    owner6ReceiptEmailTextTemplate,
 
     send;
 
@@ -91,6 +91,11 @@ owner5EndEmailSubject = "End booking and get paid - step 3 of 3";
 owner5EndEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_5_end.html", "utf8"));
 owner5EndEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_5_end.txt", "utf8"));
 
+owner6ReceiptEmailSubject = "Sharingear Booking Receipt";
+owner6ReceiptEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_6_receipt.html", "utf8"));
+owner6ReceiptEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_6_receipt.txt", "utf8"));
+
+
 
 bookingPendingRenterEmailSubject = "You have requested gear – step 1 of 3 ";
 bookingPendingRenterEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/reservation_email_renter.html", "utf8"));
@@ -115,10 +120,6 @@ bookingRenterReturnedEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + 
 receiptRenterEmailSubject = "Sharingear Booking Receipt";
 receiptRenterEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/receipt_renter.txt", "utf8"));
 receiptRenterEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/receipt_renter.html", "utf8"));
-
-receiptOwnerEmailSubject = "Sharingear Booking Invoice";
-receiptOwnerEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/receipt_owner.txt", "utf8"));
-receiptOwnerEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/receipt_owner.html", "utf8"));
 
 
 //Defines an email to the owner of gear, sent on the event that the rental has ended successfully.
@@ -182,6 +183,11 @@ send = function(notificationType, notificationParameters, recipientEmail) {
             emailParams.html = owner5EndEmailHTMLTemplate;
             emailParams.text = owner5EndEmailTextTemplate;
             break;
+        case OWNER_6_RECEIPT:
+            emailParams.subject = owner6ReceiptEmailSubject;
+            emailParams.html = owner6ReceiptEmailHTMLTemplate;
+            emailParams.text = owner6ReceiptEmailTextTemplate;
+            break;
         case BOOKING_DENIED:
             emailParams = bookingDeniedEmail;
             break;
@@ -195,11 +201,6 @@ send = function(notificationType, notificationParameters, recipientEmail) {
             break;
         case BOOKING_ENDED_RENTER:
             emailParams = bookingEndedRenterEmail;
-            break;
-        case RECEIPT_OWNER:
-            emailParams.subject = receiptOwnerEmailSubject;
-            emailParams.text = receiptOwnerEmailTextTemplate(notificationParameters);
-            emailParams.html = receiptOwnerEmailHTMLTemplate(notificationParameters);
             break;
         case RECEIPT_RENTER:
             emailParams.subject = receiptRenterEmailSubject;
@@ -241,6 +242,7 @@ module.exports = {
     OWNER_3_PICKUPREMINDER: OWNER_3_PICKUPREMINDER,
     OWNER_4_DELIVERYREMINDER: OWNER_4_DELIVERYREMINDER,
     OWNER_5_END: OWNER_5_END,
+    OWNER_6_RECEIPT: OWNER_6_RECEIPT,
 
     BOOKING_PENDING_RENTER: BOOKING_PENDING_RENTER,
     BOOKING_ACCEPTED_RENTER: BOOKING_ACCEPTED_RENTER,
@@ -248,7 +250,6 @@ module.exports = {
     BOOKING_RENTER_RETURNED: BOOKING_RENTER_RETURNED,
     BOOKING_ENDED_OWNER: BOOKING_ENDED_OWNER,
     BOOKING_ENDED_RENTER: BOOKING_ENDED_RENTER,
-    RECEIPT_OWNER: RECEIPT_OWNER,
     RECEIPT_RENTER: RECEIPT_RENTER,
 
     send: send
