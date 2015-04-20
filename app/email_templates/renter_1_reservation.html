@@ -14,16 +14,22 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 		
 		<hr style="border:0;height:0;border-top-width:2px;border-style:solid;width:100%;color:#dddddd;">
 		
-		<p style="font-weight:bold;">Hi {{name}},</p>
+		<p style="font-weight:bold;">Hi {{renter_name}},</p>
 		<div style="width:80%;display:inline-block;line-height:60px;">
-			<p style="margin:0;">Someone has sent you a reservation request!</p>
+			<p style="margin:0;">You submitted a reservation to <span style="font-weight:bold;">{{owner_name}} {{owner_surname}}</span></p>
 		</div>
 		
 		<div style="width:19%;display:inline-block;text-align:center;">
 			<div style="display:inline-block;background-image:url('{{renter_image_url}}');height:60px;width:60px;border-radius:30px;"></div>
 		</div>
 
-		<div style="width:100%;">
+		<div style="width:100%;text-align:center;margin-top:20px;margin-bottom:20px;">
+			<img src="https://dev.sharingear.com/images/email_templates/timeline_step01@2x.png" style="width:540px;height:100px;max-width:100%;">
+		</div>
+
+		<div style="color:#c6c6c6;text-align:center;">Awaiting for owner to accept to request.</div>
+
+		<div style="width:100%;margin-top:20px;">
 			<div style="display:inline-block;width:40%;">
 				<div style="width:50%;padding-left:24%;">
 					<div style="font-weight:bold;">Pickup</div>
@@ -73,12 +79,8 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 			</tr>
 		</table>
 
-		<div style="width:100%;text-align:center;margin-top:20px;margin-bottom:20px;">
-			<img src="https://dev.sharingear.com/images/email_templates/timeline_step01@2x.png" style="width:540px;height:100px;max-width:100%;">
-		</div>
-
-		<div style="width:100%;text-align:center;">
-			<a href="{{dashboard_link}}" style="display:inline-block;text-decoration:none;background-color:#00adff;color:#ffffff;font-size:18px;font-weight:bold;border:0;padding:20px;">See your Dashboard to Accept or Deny this booking</a>
+		<div style="width:100%;text-align:center;margin-top:20px;">
+			<a href="{{dashboard_link}}" style="display:inline-block;text-decoration:none;background-color:#00adff;color:#ffffff;font-size:18px;font-weight:bold;border:0;padding:20px;">Manage this reservation through your Dashboard</a>
 		</div>
 
 		<p style="margin-top:20px;margin-bottom:20px;line-height:24px;">
