@@ -11,7 +11,7 @@ var fs = require("fs"),
     SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
     FROM_ADDRESS = "service@sharingear.com",
 
-    BOOKING_PENDING_RENTER = 3,
+    BOOKING_PENDING_RENTER = 31,
     bookingPendingRenterEmailSubject,
     bookingPendingRenterEmailTextTemplate,
     bookingPendingRenterEmailHTMLTemplate,
@@ -19,11 +19,7 @@ var fs = require("fs"),
     bookingAcceptedRenterEmailSubject,
     bookingAcceptedRenterEmailTextTemplate,
     bookingAcceptedRenterEmailHTMLTemplate,
-    /*BOOKING_ACCEPTED_OWNER = 1,
-    bookingAcceptedOwnerEmailSubject,
-    bookingAcceptedOwnerEmailTextTemplate,
-    bookingAcceptedOwnerEmailHTMLTemplate,*/
-    BOOKING_DENIED = 4,
+    BOOKING_DENIED = 41,
     bookingDeniedEmail,
     BOOKING_OWNER_RETURNED = 5,
     bookingOwnerReturnedEmailSubject,
@@ -54,6 +50,14 @@ var fs = require("fs"),
     owner2AcceptEmailSubject,
     owner2AcceptEmailHTMLTemplate,
     owner2AcceptEmailTextTemplate,
+    OWNER_3_PICKUPREMINDER = 3,
+    owner3PickupReminderEmailSubject,
+    owner3PickupReminderEmailHTMLTemplate,
+    owner3PickupReminderEmailTextTemplate,
+    OWNER_4_DELIVERYREMINDER = 4,
+    owner4DeliveryReminderEmailSubject,
+    owner4DeliveryReminderEmailHTMLTemplate,
+    owner4DeliveryReminderEmailTextTemplate,
 
     send;
 
@@ -68,8 +72,17 @@ owner1RequestEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_
 owner1RequestEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_1_request.txt", "utf8"));
 
 owner2AcceptEmailSubject = "You accepted gear request – step 2 of 3";
-owner2AcceptEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/acceptance_owner.html", "utf8"));
-owner2AcceptEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/acceptance_owner.txt", "utf8"));
+owner2AcceptEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_2_accept.html", "utf8"));
+owner2AcceptEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_2_accept.txt", "utf8"));
+
+owner3PickupReminderEmailSubject = "You have a rental coming up";
+owner3PickupReminderEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_3_pickupreminder.html", "utf8"));
+owner3PickupReminderEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_3_pickupreminder.txt", "utf8"));
+
+owner4DeliveryReminderEmailSubject = "You have a delivery coming up";
+owner4DeliveryReminderEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_4_deliveryreminder.html", "utf8"));
+owner4DeliveryReminderEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_4_deliveryreminder.txt", "utf8"));
+
 
 
 bookingPendingRenterEmailSubject = "You have requested gear – step 1 of 3 ";
@@ -150,6 +163,16 @@ send = function(notificationType, notificationParameters, recipientEmail) {
             emailParams.subject = owner2AcceptEmailSubject;
             emailParams.html = owner2AcceptEmailHTMLTemplate(notificationParameters);
             emailParams.text = owner2AcceptEmailTextTemplate(notificationParameters);
+            break;
+        case OWNER_3_PICKUPREMINDER:
+            emailParams.subject = owner3PickupReminderEmailSubject;
+            emailParams.html = owner3PickupReminderEmailHTMLTemplate;
+            emailParams.text = owner3PickupReminderEmailTextTemplate;
+            break;
+        case OWNER_4_DELIVERYREMINDER:
+            emailParams.subject = owner4DeliveryReminderEmailSubject;
+            emailParams.html = owner4DeliveryReminderEmailHTMLTemplate;
+            emailParams.text = owner4DeliveryReminderEmailTextTemplate;
             break;
         case BOOKING_DENIED:
             emailParams = bookingDeniedEmail;
