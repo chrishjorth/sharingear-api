@@ -1,26 +1,14 @@
-Hi {{name}},
-
-Someone has sent you a reservation request!
-
-{{item_type}}: {{item_name}}
-
-Pick up location: {{pickup_address}}
-
-Pickup: {{pickup_date}} {{pickup_time}}
-
-Delivery: {{delivery_date}} {{delivery_time}}
-
-Your price: {{price}} {{currency}}
-
-Our service fee: {{fee}} {{currency}}
-
-Total: {{total}} {{currency}}
-
-See your Dashboard on www.sharingear.com to Accept or Deny this booking.
-
-Best regards,
-Sharingear Team
-
--------
-
-Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsoes Allé 41, 1., 1434 Copenhagen K, Denmark
+Hi {{name}},\n\n
+Someone has sent you a reservation request!\n\n
+{{item_type}}: {{item_name}}\n\n
+Pick up location: {{pickup_address}}\n\n
+Pickup: {{pickup_date}} {{pickup_time}}\n\n
+Delivery: {{delivery_date}} {{delivery_time}}\n\n
+Your price: {{price}} {{currency}}\n\n
+Our service fee: {{fee}} {{currency}}\n\n
+Total: {{total}} {{currency}}\n\n
+See your Dashboard on www.sharingear.com to Accept or Deny this booking.\n\n
+Best regards,\n
+Sharingear Team\n\n
+-------\n\n
+Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsoes Allé 41, 1., 1434 Copenhagen K, Denmark\n

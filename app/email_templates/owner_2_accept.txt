@@ -1,0 +1,13 @@
+Hi {{name}},\n\n
+You just accepted a reservation and your address has been sent to the renter - await for pickup!\n\n
+{{item_type}}: {{item_name}}\n\n
+Pick up location: {{pickup_address}}\n\n
+Pickup: {{pickup_date}} {{pickup_time}}\n\n
+Delivery: {{delivery_date}} {{delivery_time}}\n\n
+Your price: {{price}} {{currency}}\n\n
+Our service fee: {{fee}} {{currency}}\n\n
+Total: {{total}} {{currency}}\n\n
+Best regards,\n
+Sharingear Team\n\n
+-------\n\n
+Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsoes Allé 41, 1., 1434 Copenhagen K, Denmark\n
