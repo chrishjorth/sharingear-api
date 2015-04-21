@@ -1,0 +1,8 @@
+Hi {{owner_name}},\n\n
+This is a reminder to let you know that you have to deliver a {{item_type}} to {{renter_name}} tomorrow.\n\n
+Pickup: {{pickup_date}} {{pickup_time}}\n\n
+Delivery: {{delivery_date}} {{delivery_time}}\n\n
+Best regards,\n
+Sharingear Team\n\n
+--------\n
+Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsoes Allé 41, 1., 1434 Copenhagen K, Denmark\n
