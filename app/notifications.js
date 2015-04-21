@@ -58,10 +58,10 @@ var fs = require("fs"),
     owner5EndEmailSubject,
     owner5EndEmailHTMLTemplate,
     owner5EndEmailTextTemplate,
-    OWNER_6_RECEIPT = 5,
-    owner6ReceiptEmailSubject,
-    owner6ReceiptEmailHTMLTemplate,
-    owner6ReceiptEmailTextTemplate,
+    OWNER_RECEIPT = 5,
+    ownerReceiptEmailSubject,
+    ownerReceiptEmailHTMLTemplate,
+    ownerReceiptEmailTextTemplate,
 
     send;
 
@@ -91,9 +91,9 @@ owner5EndEmailSubject = "End booking and get paid - step 3 of 3";
 owner5EndEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_5_end.html", "utf8"));
 owner5EndEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_5_end.txt", "utf8"));
 
-owner6ReceiptEmailSubject = "Sharingear Booking Receipt";
-owner6ReceiptEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_6_receipt.html", "utf8"));
-owner6ReceiptEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_6_receipt.txt", "utf8"));
+ownerReceiptEmailSubject = "Sharingear Booking Receipt";
+ownerReceiptEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_receipt.html", "utf8"));
+ownerReceiptEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/owner_receipt.txt", "utf8"));
 
 
 
@@ -183,10 +183,10 @@ send = function(notificationType, notificationParameters, recipientEmail) {
             emailParams.html = owner5EndEmailHTMLTemplate;
             emailParams.text = owner5EndEmailTextTemplate;
             break;
-        case OWNER_6_RECEIPT:
-            emailParams.subject = owner6ReceiptEmailSubject;
-            emailParams.html = owner6ReceiptEmailHTMLTemplate;
-            emailParams.text = owner6ReceiptEmailTextTemplate;
+        case OWNER_RECEIPT:
+            emailParams.subject = ownerReceiptEmailSubject;
+            emailParams.html = ownerReceiptEmailHTMLTemplate;
+            emailParams.text = ownerReceiptEmailTextTemplate;
             break;
         case BOOKING_DENIED:
             emailParams = bookingDeniedEmail;
@@ -242,7 +242,7 @@ module.exports = {
     OWNER_3_PICKUPREMINDER: OWNER_3_PICKUPREMINDER,
     OWNER_4_DELIVERYREMINDER: OWNER_4_DELIVERYREMINDER,
     OWNER_5_END: OWNER_5_END,
-    OWNER_6_RECEIPT: OWNER_6_RECEIPT,
+    OWNER_RECEIPT: OWNER_RECEIPT,
 
     BOOKING_PENDING_RENTER: BOOKING_PENDING_RENTER,
     BOOKING_ACCEPTED_RENTER: BOOKING_ACCEPTED_RENTER,

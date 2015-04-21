@@ -16,7 +16,7 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 		
 		<p style="font-weight:bold;">Hi {{owner_name}},</p>
 		<div style="width:80%;display:inline-block;line-height:60px;">
-			<p style="margin:0;">This is a reminder to let you know that you have a {{item_type}} to pick up from <span style="font-weight:bold;">{{renter_name}}</span> tomorrow.</p>
+			<p style="margin:0;">This is a reminder to let you know that you have a {{item_type}} reservation from <span style="font-weight:bold;">{{renter_name}}</span> that starts tomorrow.</p>
 		</div>
 		
 		<div style="width:19%;display:inline-block;text-align:center;">
@@ -30,7 +30,7 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 		<div style="width:100%;margin-bottom:40px;">
 			<div style="display:inline-block;width:40%;">
 				<div style="width:50%;padding-left:24%;">
-					<div style="font-weight:bold;">Pickup</div>
+					<div style="font-weight:bold;">From</div>
 					<div style="font-weight:bold;font-size:14px;line-height:28px;">{{pickup_date}}</div>
 					<div style="color:#868686;font-size:10px;line-height:30px;font-weight:bold;"><img src="https://dev.sharingear.com/images/email_templates/clock@2x.png" style="width:22px;height:22px;vertical-align:middle;"> {{pickup_time}}</div>
 				</div>
@@ -40,7 +40,7 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 			</div>
 			<div style="display:inline-block;width:40%;">
 				<div style="width:50%;padding-left:24%;">
-					<div style="font-weight:bold;">Delivery</div>
+					<div style="font-weight:bold;">To</div>
 					<div style="font-weight:bold;font-size:14px;line-height:28px;">{{delivery_date}}</div>
 					<div style="color:#868686;font-size:10px;line-height:30px;font-weight:bold;"><img src="https://dev.sharingear.com/images/email_templates/clock@2x.png" style="width:22px;height:22px;vertical-align:middle;"> {{delivery_time}}</div>
 				</div>
