@@ -727,7 +727,6 @@ getImageURL = function(gearID, callback) {
 			return;
 		}
 		images = rows[0].images.split(",");
-		console.log(images[0]);
 		callback(null, images[0]);
 	});
 };
