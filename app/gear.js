@@ -28,7 +28,8 @@ var db = require("./database"),
 	readGearWithID,
 	search,
 	getPrice,
-	getOwner;
+	getOwner,
+	getImageURL;
 
 /**
  * @returns fx {
@@ -711,6 +712,25 @@ getOwner = function(gearID, callback) {
 	});
 };
 
+/**
+ * @return: the URL for the main image of a specific gear item. If the gear has no images an empty string is returned.
+ */
+getImageURL = function(gearID, callback) {
+	db.query("SELECT images FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
+		var images;
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, "");
+			return;
+		}
+		images = rows[0].images.split(",");
+		callback(null, images[0]);
+	});
+};
+
 module.exports = {
 	getClassification: getClassification,
 	checkTypes: checkTypes,
@@ -730,6 +750,7 @@ module.exports = {
 	readGearWithID: readGearWithID,
 	search: search,
 	getPrice: getPrice,
-	getOwner: getOwner
+	getOwner: getOwner,
+	getImageURL: getImageURL
 };
 

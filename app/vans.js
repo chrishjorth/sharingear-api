@@ -25,7 +25,8 @@ var db = require("./database"),
 	checkOwner,
 	readVanWithID,
 	search,
-	getPrice;
+	getPrice,
+	getImageURL;
 
 getClassification = function(callback) {
 	var sql = "SELECT van_types.van_type, van_types.price_a_suggestion, van_types.price_b_suggestion, van_types.price_c_suggestion, accessories.accessory FROM  van_types";
@@ -600,6 +601,25 @@ getPrice = function(priceA, priceB, priceC, startTime, endTime) {
 	return price;
 };
 
+/**
+ * @return: the URL for the main image of a specific gear item. If the gear has no images an empty string is returned.
+ */
+getImageURL = function(vanID, callback) {
+	db.query("SELECT images FROM vans WHERE id=? LIMIT 1", [vanID], function(error, rows) {
+		var images;
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, "");
+			return;
+		}
+		images = rows[0].images.split(",");
+		callback(null, images[0]);
+	});
+};
+
 module.exports = {
 	getClassification: getClassification,
 	readVansFromUser: readVansFromUser,
@@ -614,5 +634,6 @@ module.exports = {
 	checkOwner: checkOwner,
 	readVanWithID: readVanWithID,
 	search: search,
-	getPrice: getPrice
+	getPrice: getPrice,
+	getImageURL: getImageURL
 };

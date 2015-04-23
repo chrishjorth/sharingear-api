@@ -9,22 +9,12 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 		
 		<hr style="border:0;height:0;border-top-width:2px;border-style:solid;width:100%;color:#dddddd;">
 		
-		<p style="font-weight:bold;">Hi {{renter_name}},</p>
-		<div style="width:80%;display:inline-block;line-height:60px;">
-			<p style="margin:0;line-height: 24px;">
-				<span style="font-weight:bold;">{{owner_name}} {{owner_surname}}</span> <span style="color:#00adff;font-weight:bold;"> has accepted your reservation. The {{item_type}} awaits for you at the specified location.</span>
-			</p>
-		</div>
-		
-		<div style="width:19%;display:inline-block;text-align:center;">
-			<div style="display:inline-block;background-image:url('{{renter_image_url}}');height:60px;width:60px;border-radius:30px;"></div>
+		<p style="font-weight:bold;">Hi {{name}},</p>
+		<div style="width:100%;display:inline-block;line-height:60px;">
+			<p style="margin:0;color:#00adff;font-weight:bold;font-size:14px;">You have just denied a reservation request for the following items:</p>
 		</div>
 
-		<div style="width:100%;text-align:center;margin-top:20px;margin-bottom:20px;">
-			<img src="https://dev.sharingear.com/images/email_templates/timeline_step02@2x.png" style="width:540px;height:100px;max-width:100%;">
-		</div>
-
-		<div style="width:100%;margin-top:20px;">
+		<div style="width:100%;">
 			<div style="display:inline-block;width:40%;">
 				<div style="width:50%;padding-left:24%;">
 					<div style="font-weight:bold;">From</div>
@@ -51,7 +41,7 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 			</tr>
 			<tr>
 				<td style="padding:10px;text-align:center;font-weight:bold;background-color:#ededed;border-width:1px;border-style:solid;border-color:#ededed;margin:0;">Location</td>
-				<td style="padding:10px;text-align:center;border-width:1px;border-style:solid;border-color:#ededed;color:#00adff;font-weight:bold;">{{pickup_address}}</td>
+				<td style="padding:10px;text-align:center;border-width:1px;border-style:solid;border-color:#ededed;">{{pickup_address}}</td>
 			</tr>
 		</table>
 
@@ -73,10 +63,6 @@ div, p, a, li, td { -webkit-text-size-adjust:none; }
 				<td style="padding:10px;border-style:solid;border-color:#f0f0f0;border-width:1px;border-left-width:0;font-weight:bold;text-align:right;">{{total}} {{currency}}</td>
 			</tr>
 		</table>
-
-		<div style="width:100%;text-align:center;margin-top:20px;">
-			<a href="{{dashboard_link}}" style="display:inline-block;text-decoration:none;background-color:#00adff;color:#ffffff;font-size:18px;font-weight:bold;border:0;padding:20px;">Manage this reservation through your Dashboard</a>
-		</div>
 
 		<p style="margin-top:20px;margin-bottom:20px;line-height:24px;">
 			Best regards,<br>

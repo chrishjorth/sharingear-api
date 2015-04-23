@@ -332,59 +332,59 @@ updateToPending = function(booking, callback) {
             booking.booking_status = "pending";
             callback(null, booking);
 
-            User.readUser(booking.owner_id, function(error, owner) {
+            User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
+                var owner, renter, ownerStartTime, ownerEndTime, renterStartTime, renterEndTime;
                 if (error) {
                     console.log("Error sending notification on booking update to pending. Unable to get owner data.");
                     return;
                 }
-                User.readUser(booking.renter_id, function(error, renter) {
-                    var ownerStartTime, ownerEndTime, renterStartTime, renterEndTime;
-                    if (error) {
-                        console.log("Error sending notification on booking update to pending. Unable to get renter data.");
-                        return;
-                    }
-                    ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                    ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                    renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
-                    renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                owner = users[0];
+                renter = users[1];
 
-                    Notifications.send(Notifications.OWNER_1_REQUEST, {
-                        name: owner.name,
-                        renter_image_url: renter.image_url,
-                        item_type: booking.roadie_type,
-                        item_name: booking.name + " " + booking.surname,
-                        pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
-                        pickup_date: ownerStartTime.format("DD/MM/YYYY"),
-                        pickup_time: ownerStartTime.format("HH:mm"),
-                        delivery_date: ownerEndTime.format("DD/MM/YYYY"),
-                        delivery_time: ownerEndTime.format("HH:mm"),
-                        price: booking.owner_price,
-                        fee: booking.owner_fee,
-                        total: booking.owner_price - (booking.owner_price * 100 / booking.owner_fee),
-                        currency: booking.owner_currency,
-                        dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadierentals"
-                    }, owner.email);
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
 
-                    Notifications.send(Notifications.BOOKING_PENDING_RENTER, {
-                        name: renter.name,
-                        image_url: owner.image_url,
-                        item_type: booking.roadie_type,
-                        item_name: booking.name + " " + booking.surname,
-                        price: booking.renter_price,
-                        fee: booking.renter_price * 10 / 100,
-                        total_price: booking.renter_price + (booking.renter_price * 10 / 100),
-                        currency: booking.renter_currency,
-                        street: booking.pickup_address,
-                        postal_code: booking.pickup_postal_code,
-                        city: booking.pickup_city,
-                        country: booking.pickup_country,
-                        pickup_date: renterStartTime.format("DD/MM/YYYY"),
-                        pickup_time: renterStartTime.format("HH:mm"),
-                        dropoff_date: renterEndTime.format("DD/MM/YYYY"),
-                        dropoff_time: renterEndTime.format("HH:mm"),
-                        dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadiereservations"
-                    }, renter.email);
-                });
+                Notifications.send(Notifications.OWNER_1_REQUEST, {
+                    name: owner.name,
+                    renter_image_url: renter.image_url,
+                    item_type: booking.roadie_type,
+                    item_name: booking.name + " " + booking.surname,
+                    pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
+                    pickup_date: ownerStartTime.format("DD/MM/YYYY"),
+                    pickup_time: ownerStartTime.format("HH:mm"),
+                    delivery_date: ownerEndTime.format("DD/MM/YYYY"),
+                    delivery_time: ownerEndTime.format("HH:mm"),
+                    item_image_url: owner.image_url,
+                    price: booking.owner_price,
+                    fee: booking.owner_fee,
+                    total: booking.owner_price - (booking.owner_price * 100 / booking.owner_fee),
+                    currency: booking.owner_currency,
+                    dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadierentals"
+                }, owner.email);
+
+                Notifications.send(Notifications.RENTER_1_RESERVATION, {
+                    renter_name: renter.name,
+                    owner_name: owner.name,
+                    owner_surname: owner.surname,
+                    owner_image_url: owner.image_url,
+                    pickup_date: renterStartTime.format("DD/MM/YYYY"),
+                    pickup_time: renterStartTime.format("HH:mm"),
+                    delivery_date: renterEndTime.format("DD/MM/YYYY"),
+                    delivery_time: renterEndTime.format("HH:mm"),
+                    item_type: booking.roadie_type,
+                    item_name: booking.name + " " + booking.surname,
+                    pickup_postal_code: booking.pickup_postal_code,
+                    pickup_city: booking.pickup_city,
+                    pickup_country: booking.pickup_country,
+                    item_image_url: owner.image_url,
+                    price: booking.owner_price,
+                    fee: booking.renter_fee,
+                    total: booking.owner_price + (booking.owner_price * 100 / booking.renter_fee),
+                    currency: booking.owner_currency,
+                    dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadiereservations"
+                }, renter.email);
             });
         });
     });
@@ -401,14 +401,56 @@ updateToDenied = function(booking, callback) {
         }
         callback(null, booking);
 
-        User.readUser(booking.renter_id, function(error, renter) {
+        User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
+            var owner, renter, ownerStartTime, ownerEndTime, renterStartTime, renterEndTime;
             if (error) {
-                console.log("Error sending notification to renter on booking update to denied.");
+                console.log("Error sending notification on booking update to pending. Unable to get owner data.");
                 return;
             }
-            Notifications.send(Notifications.BOOKING_DENIED, {
+            owner = users[0];
+            renter = users[1];
 
-            }, renter.email);
+            ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
+            ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
+            renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+            renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+
+            Notifications.send(Notifications.OWNER_DENIED, {
+                name: booking.owner_name,
+                pickup_date: ownerStartTime.format("DD/MM/YYYY"),
+                pickup_time: ownerStartTime.format("HH:mm"),
+                delivery_date: ownerEndTime.format("DD/MM/YYYY"),
+                delivery_time: ownerEndTime.format("HH:mm"),
+                item_type: booking.roadie_type,
+                item_name: booking.name + " " + booking.surname,
+                pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
+                item_image_url: owner.image_url,
+                price: booking.owner_price,
+                fee: "-" + booking.owner_fee,
+                total: booking.owner_price - (booking.owner_price * 100 / booking.owner_fee),
+                currency: booking.owner_currency
+            }, booking.owner_email);
+
+            Notifications.send(Notifications.RENTER_DENIED, {
+                renter_name: booking.renter_name,
+                owner_name: booking.owner_name,
+                owner_surname: booking.owner_surname,
+                owner_image_url: owner.image_url,
+                pickup_date: renterStartTime.format("DD/MM/YYYY"),
+                pickup_time: renterStartTime.format("HH:mm"),
+                delivery_date: renterEndTime.format("DD/MM/YYYY"),
+                delivery_time: renterEndTime.format("HH:mm"),
+                item_type: booking.roadie_type,
+                item_name: booking.name + " " + booking.surname,
+                pickup_postal_code: booking.pickup_postal_code,
+                pickup_city: booking.pickup_city,
+                pickup_country: booking.pickup_country,
+                item_image_url: owner.image_url,
+                price: booking.owner_price,
+                fee: booking.renter_fee,
+                total: booking.owner_price + (booking.owner_price * 100 / booking.renter_fee),
+                currency: booking.owner_currency
+            }, booking.renter_email);
         });
     });
 };
@@ -430,78 +472,80 @@ updateToAccepted = function(booking, callback) {
             }
             callback(null, booking);
 
-            User.readUser(booking.renter_id, function(error, renter) {
+            User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
+                var owner, renter, ownerStartTime, ownerEndTime, renterStartTime, renterEndTime, paymentTime;
                 if (error) {
                     console.log("Error sending notifications on booking update to accepted. Unable to get renter data.");
                     return;
                 }
-                User.readUser(booking.owner_id, function(error, owner) {
-                    var ownerStartTime, ownerEndTime, renterStartTime, renterEndTime, renterTotalPrice, renterFee, paymentTime;
-                    if (error) {
-                        console.log("Error sending notifications on booking update to accepted. Unable to get owner data.");
-                        return;
-                    }
-                    ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                    ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                    renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
-                    renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                owner = users[0];
+                renter = users[1];
 
-                    renterTotalPrice = booking.renter_price + (booking.renter_price * 10 / 100);
-                    renterFee = booking.renter_price * 10 / 100;
-                    paymentTime = new Moment();
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
 
-                    Notifications.send(Notifications.BOOKING_ACCEPTED_RENTER, {
-                        name: renter.name,
-                        image_url: owner.image_url,
-                        item_type: booking.roadie_type,
-                        item_name: booking.name + " " + booking.surname,
-                        price: booking.renter_price,
-                        fee: booking.renter_price * 10 / 100,
-                        total_price: booking.renter_price + (booking.renter_price * 10 / 100),
-                        currency: booking.renter_currency,
-                        street: booking.pickup_address,
-                        postal_code: booking.pickup_postal_code,
-                        city: booking.pickup_city,
-                        country: booking.pickup_country,
-                        pickup_date: renterStartTime.format("DD/MM/YYYY"),
-                        pickup_time: renterStartTime.format("HH:mm"),
-                        dropoff_date: renterEndTime.format("DD/MM/YYYY"),
-                        dropoff_time: renterEndTime.format("HH:mm"),
-                        username_owner: owner.name,
-                        dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadiereservations"
-                    }, renter.email);
+                paymentTime = new Moment.tz(renter.time_zone);
 
-                    Notifications.send(Notifications.OWNER_2_ACCEPT, {
-                        name: owner.name,
-                        item_type: booking.roadie_type,
-                        item_name: booking.name + " " + booking.surname,
-                        pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
-                        pickup_date: ownerStartTime.format("DD/MM/YYYY"),
-                        pickup_time: ownerStartTime.format("HH:mm"),
-                        delivery_date: ownerEndTime.format("DD/MM/YYYY"),
-                        delivery_time: ownerEndTime.format("HH:mm"),
-                        price: booking.owner_price,
-                        fee: "-" + booking.owner_fee,
-                        total: booking.owner_price - (booking.owner_price * 100 / booking.owner_fee),
-                        currency: booking.owner_currency,
-                        dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadierentals"
-                    }, owner.email);
+                Notifications.send(Notifications.RENTER_2_ACCEPTANCE, {
+                    renter_name: booking.renter_name,
+                    owner_name: booking.owner_name,
+                    owner_surname: booking.owner_surname,
+                    item_type: booking.roadie_type,
+                    item_name: booking.owner_name + " " + booking.owner_surname,
+                    owner_image_url: owner.image_url,
+                    pickup_date: renterStartTime.format("DD/MM/YYYY"),
+                    pickup_time: renterStartTime.format("HH:mm"),
+                    delivery_date: renterEndTime.format("DD/MM/YYYY"),
+                    delivery_time: renterEndTime.format("HH:mm"),
+                    pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
+                    item_image_url: owner.image_url,
+                    price: booking.owner_price,
+                    fee: booking.renter_fee,
+                    total: booking.owner_price + (booking.owner_price * 100 / booking.renter_fee),
+                    currency: booking.renter_currency,
+                    dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadiereservations"
+                }, renter.email);
 
-                    Notifications.send(Notifications.RECEIPT_RENTER, {
-                        name: renter.name,
-                        item_name: booking.item_name,
-                        price: booking.renter_price,
-                        fee: renterFee,
-                        total_price: renterTotalPrice,
-                        currency: booking.renter_currency,
-                        payment_date: paymentTime.format("DD/MM/YYYY"),
-                        payment_time: paymentTime.format("HH:mm"),
-                        date_from: renterStartTime.format("DD/MM/YYYY"),
-                        time_from: renterStartTime.format("HH:mm"),
-                        date_to: renterEndTime.format("DD/MM/YYYY"),
-                        time_to: renterEndTime.format("HH:mm")
-                    }, renter.email);
-                });
+                Notifications.send(Notifications.OWNER_2_ACCEPTANCE, {
+                    owner_name: owner.name,
+                    renter_name: renter.name,
+                    item_type: booking.roadie_type,
+                    item_name: booking.owner_name + " " + booking.owner_surname,
+                    pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
+                    pickup_date: ownerStartTime.format("DD/MM/YYYY"),
+                    pickup_time: ownerStartTime.format("HH:mm"),
+                    delivery_date: ownerEndTime.format("DD/MM/YYYY"),
+                    delivery_time: ownerEndTime.format("HH:mm"),
+                    item_image_url: owner.image_url,
+                    price: booking.owner_price,
+                    fee: "-" + booking.owner_fee,
+                    total: booking.owner_price - (booking.owner_price * 100 / booking.owner_fee),
+                    currency: booking.owner_currency,
+                    dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadierentals"
+                }, owner.email);
+
+                Notifications.send(Notifications.RENTER_RECEIPT, {
+                    name: renter.name,
+                    item_type: booking.roadie_type,
+                    item_name: booking.owner_name + " " + booking.owner_surname,
+                    pickup_date: renterStartTime.format("DD/MM/YYYY"),
+                    pickup_time: renterStartTime.format("HH:mm"),
+                    delivery_date: renterEndTime.format("DD/MM/YYYY"),
+                    delivery_time: renterEndTime.format("HH:mm"),
+                    pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
+                    price: booking.owner_price,
+                    fee: booking.renter_fee,
+                    total: booking.owner_price + (booking.owner_price * 100 / booking.renter_fee),
+                    currency: booking.renter_currency,
+                    surname: booking.renter_surname,
+                    address: booking.renter_address,
+                    postal_code: booking.renter_postal_code,
+                    city: booking.renter_city,
+                    country: booking.renter_country,
+                    payment_date: paymentTime.format("DD/MM/YYYY HH:mm")
+                }, renter.email);
             });
         });
     });
@@ -547,23 +591,6 @@ updateToRenterReturned = function(booking, callback) {
         });
     } else {
         completeUpdate("renter-returned");
-
-        User.readUser(booking.owner_id, function(error, owner) {
-            if (error) {
-                console.log("Error getting owner for notification to renter on booking update to renter-returned: " + error);
-                return;
-            }
-            /*User.readUser(booking.renter_id, function(error, renter) {
-                if (error) {
-                    console.log("Error getting renter for notification to renter on booking update to renter-returned: " + error);
-                    return;
-                }*/
-                Notifications.send(Notifications.OWNER_5_END, {
-                    name: owner.name,
-                    dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadierentals"
-                }, owner.email);
-            //});
-        });
     }
 };
 
@@ -597,25 +624,6 @@ updateToOwnerReturned = function(booking, callback) {
         });
     } else {
         completeUpdate("owner-returned");
-
-        User.readUser(booking.renter_id, function(error, renter) {
-            if (error) {
-                console.log("Error getting renter for notification to owner on booking update to owner-returned: " + error);
-                return;
-            }
-            User.readUser(booking.owner_id, function(error, owner) {
-                if (error) {
-                    console.log("Error getting owner for notification to owner on booking update to owner-returned: " + error);
-                    return;
-                }
-
-                Notifications.send(Notifications.BOOKING_RENTER_RETURNED, {
-                    name: renter.name,
-                    username_owner: owner.name + " " + owner.surname,
-                    dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourroadiereservations"
-                }, renter.email);
-            });
-        });
     }
 };
 
@@ -672,9 +680,6 @@ endBooking = function(bookingData, callback) {
                 }
                 callback(null);
             });
-
-            Notifications.send(Notifications.BOOKING_ENDED_OWNER, {}, bookingData.owner_email);
-            Notifications.send(Notifications.BOOKING_ENDED_RENTER, {}, bookingData.renter_email);
         });
     });
 };
