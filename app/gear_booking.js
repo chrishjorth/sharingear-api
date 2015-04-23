@@ -87,7 +87,8 @@ create = function(renterID, bookingData, callback) {
                         start_time: bookingData.start_time,
                         end_time: bookingData.end_time,
                         owner_id: gear.owner_id,
-                        owner_name: ownerData.name + " " + ownerData.surname,
+                        owner_name: ownerData.name,
+                        owner_surname: ownerData.surname,
                         owner_email: ownerData.email,
                         owner_phone: ownerData.phone,
                         owner_address: ownerData.address,
@@ -98,7 +99,8 @@ create = function(renterID, bookingData, callback) {
                         owner_pp_id: ownerData.mangopay_id,
                         owner_bank_id: ownerData.bank_id,
                         renter_id: renterData.id,
-                        renter_name: renterData.name + " " + renterData.surname,
+                        renter_name: renterData.name,
+                        renter_surname: renterData.surname,
                         renter_email: renterData.email,
                         renter_phone: renterData.phone,
                         renter_address: renterData.address,
@@ -150,6 +152,7 @@ _insertBooking = function(bookingData, callback) {
         bookingData.end_time,
         bookingData.owner_id,
         bookingData.owner_name,
+        bookingData.owner_surname,
         bookingData.owner_email,
         bookingData.owner_phone,
         bookingData.owner_address,
@@ -161,6 +164,7 @@ _insertBooking = function(bookingData, callback) {
         bookingData.owner_bank_id,
         bookingData.renter_id,
         bookingData.renter_name,
+        bookingData.renter_surname,
         bookingData.renter_email,
         bookingData.renter_phone,
         bookingData.renter_address,
@@ -188,13 +192,13 @@ _insertBooking = function(bookingData, callback) {
     ];
 
     sql = "INSERT INTO gear_bookings(gear_id, gear_type, gear_subtype, gear_brand, gear_model, price_a, price_b, price_c, start_time, end_time, ";
-    sql += "owner_id, owner_name, owner_email, owner_phone, owner_address, owner_postal_code, owner_city, owner_country, owner_vatnum, owner_pp_id, owner_bank_id, ";
-    sql += "renter_id, renter_name, renter_email, renter_phone, renter_address, renter_postal_code, renter_city, renter_country, renter_vatnum, renter_pp_id, ";
+    sql += "owner_id, owner_name, owner_surname, owner_email, owner_phone, owner_address, owner_postal_code, owner_city, owner_country, owner_vatnum, owner_pp_id, owner_bank_id, ";
+    sql += "renter_id, renter_name, renter_surname, renter_email, renter_phone, renter_address, renter_postal_code, renter_city, renter_country, renter_vatnum, renter_pp_id, ";
     sql += "owner_currency, owner_wallet_id, owner_price, owner_price_vat, owner_fee, owner_fee_vat, renter_currency, renter_wallet_id, renter_price, renter_price_vat, renter_fee, renter_fee_vat, ";
     sql += "pickup_address, pickup_postal_code, pickup_city, pickup_country, request_time) VALUES ";
     sql += "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ";
+    sql += "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ";
     sql += "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ";
-    sql += "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ";
     sql += "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ";
     sql += "?, ?, ?, ?, NOW())";
 
@@ -234,7 +238,7 @@ _insertBooking = function(bookingData, callback) {
 };
 
 read = function(bookingID, callback) {
-    db.query("SELECT id, gear_id, start_time, end_time, renter_id, owner_id, renter_price, renter_currency, owner_price, owner_currency, payment_timestamp, payout_time, preauth_id, booking_status, gear_type, gear_subtype, gear_model, gear_brand, pickup_address, pickup_postal_code, pickup_city, pickup_country, renter_email, owner_email FROM gear_bookings WHERE id=?", [bookingID], function(error, rows) {
+    db.query("SELECT id, gear_id, gear_type, gear_subtype, gear_brand, gear_model, price_a, price_b, price_c, start_time, end_time, owner_id, owner_name, owner_surname, owner_email, owner_phone, owner_address, owner_city, owner_postal_code, owner_country, owner_vatnum, renter_id, renter_name, renter_surname, renter_email, renter_phone, renter_address, renter_city, renter_postal_code, renter_country, renter_vatnum, owner_currency, owner_price, owner_price_vat, owner_fee, owner_fee_vat, renter_currency, renter_price, renter_price_vat, renter_fee, renter_fee_vat, pickup_address, pickup_city, pickup_postal_code, pickup_country, booking_status FROM gear_bookings WHERE id=?", [bookingID], function(error, rows) {
         if (error) {
             callback(error);
             return;
@@ -368,8 +372,8 @@ updateToPending = function(booking, callback) {
                         delivery_time: ownerEndTime.format("HH:mm"),
                         item_image_url: imageURL,
                         price: booking.owner_price,
-                        fee: "-" + booking.owner_fee,
-                        total: booking.owner_price - (booking.owner_price * 100 / booking.owner_fee),
+                        fee: "-" + (booking.owner_price / 100 * booking.owner_fee),
+                        total: booking.owner_price - (booking.owner_price / 100 * booking.owner_fee),
                         currency: booking.owner_currency,
                         dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourgearrentals"
                     }, owner.email);
@@ -390,8 +394,8 @@ updateToPending = function(booking, callback) {
                         pickup_country: booking.pickup_country,
                         item_image_url: imageURL,
                         price: booking.owner_price,
-                        fee: booking.renter_fee,
-                        total: booking.owner_price + (booking.owner_price * 100 / booking.renter_fee),
+                        fee: (booking.owner_price / 100 * booking.renter_fee),
+                        total: booking.owner_price + (booking.owner_price / 100 * booking.renter_fee),
                         currency: booking.owner_currency,
                         dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourgearreservations"
                     }, renter.email);
@@ -443,8 +447,8 @@ updateToDenied = function(booking, callback) {
                     pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
                     item_image_url: imageURL,
                     price: booking.owner_price,
-                    fee: "-" + booking.owner_fee,
-                    total: booking.owner_price - (booking.owner_price * 100 / booking.owner_fee),
+                    fee: "-" + (booking.owner_price / 100 * booking.owner_fee),
+                    total: booking.owner_price - (booking.owner_price / 100 * booking.owner_fee),
                     currency: booking.owner_currency
                 }, booking.owner_email);
 
@@ -464,8 +468,8 @@ updateToDenied = function(booking, callback) {
                     pickup_country: booking.pickup_country,
                     item_image_url: imageURL,
                     price: booking.owner_price,
-                    fee: booking.renter_fee,
-                    total: booking.owner_price + (booking.owner_price * 100 / booking.renter_fee),
+                    fee: (booking.owner_price / 100 * booking.renter_fee),
+                    total: booking.owner_price + (booking.owner_price / 100 * booking.renter_fee),
                     currency: booking.owner_currency
                 }, booking.renter_email);
             });
@@ -526,8 +530,8 @@ updateToAccepted = function(booking, callback) {
                         pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
                         item_image_url: imageURL,
                         price: booking.owner_price,
-                        fee: booking.renter_fee,
-                        total: booking.owner_price + (booking.owner_price * 100 / booking.renter_fee),
+                        fee: (booking.owner_price / 100 * booking.renter_fee),
+                        total: booking.owner_price + (booking.owner_price / 100 * booking.renter_fee),
                         currency: booking.renter_currency,
                         dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourgearreservations"
                     }, renter.email);
@@ -544,8 +548,8 @@ updateToAccepted = function(booking, callback) {
                         delivery_time: ownerEndTime.format("HH:mm"),
                         item_image_url: imageURL,
                         price: booking.owner_price,
-                        fee: "-" + booking.owner_fee,
-                        total: booking.owner_price - (booking.owner_price * 100 / booking.owner_fee),
+                        fee: "-" + (booking.owner_price / 100 * booking.owner_fee),
+                        total: booking.owner_price - (booking.owner_price / 100 * booking.owner_fee),
                         currency: booking.owner_currency,
                         dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourgearrentals"
                     }, owner.email);
@@ -560,8 +564,8 @@ updateToAccepted = function(booking, callback) {
                         delivery_time: renterEndTime.format("HH:mm"),
                         pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
                         price: booking.owner_price,
-                        fee: booking.renter_fee,
-                        total: booking.owner_price + (booking.owner_price * 100 / booking.renter_fee),
+                        fee: (booking.owner_price / 100 * booking.renter_fee),
+                        total: booking.owner_price + (booking.owner_price / 100 * booking.renter_fee),
                         currency: booking.renter_currency,
                         surname: booking.renter_surname,
                         address: booking.renter_address,
