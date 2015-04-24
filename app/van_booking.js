@@ -356,7 +356,7 @@ updateToPending = function(booking, callback) {
                     renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
                     renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
 
-                    Notifications.send(Notifications.OWNER_1_REQUEST, {
+                    Notifications.send(booking.id + "_OWNER_1_REQUEST", Notifications.OWNER_1_REQUEST, {
                         name: owner.name,
                         renter_image_url: renter.image_url,
                         item_type: booking.van_type,
@@ -374,7 +374,7 @@ updateToPending = function(booking, callback) {
                         dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanrentals"
                     }, owner.email);
 
-                    Notifications.send(Notifications.RENTER_1_RESERVATION, {
+                    Notifications.send(booking.id + "_RENTER_1_RESERVATION", Notifications.RENTER_1_RESERVATION, {
                         renter_name: renter.name,
                         owner_name: owner.name,
                         owner_surname: owner.surname,
@@ -432,7 +432,7 @@ updateToDenied = function(booking, callback) {
                 renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
                 renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
 
-                Notifications.send(Notifications.OWNER_DENIED, {
+                Notifications.send(booking.id + "_OWNER_DENIED", Notifications.OWNER_DENIED, {
                     name: booking.owner_name,
                     pickup_date: ownerStartTime.format("DD/MM/YYYY"),
                     pickup_time: ownerStartTime.format("HH:mm"),
@@ -448,7 +448,7 @@ updateToDenied = function(booking, callback) {
                     currency: booking.owner_currency
                 }, booking.owner_email);
 
-                Notifications.send(Notifications.RENTER_DENIED, {
+                Notifications.send(booking.id + "_RENTER_DENIED", Notifications.RENTER_DENIED, {
                     renter_name: booking.renter_name,
                     owner_name: booking.owner_name,
                     owner_surname: booking.owner_surname,
@@ -512,7 +512,7 @@ updateToAccepted = function(booking, callback) {
 
                     paymentTime = new Moment.tz(renter.time_zone);
 
-                    Notifications.send(Notifications.RENTER_2_ACCEPTANCE, {
+                    Notifications.send(booking.id + "_RENTER_2_ACCEPTANCE", Notifications.RENTER_2_ACCEPTANCE, {
                         renter_name: booking.renter_name,
                         owner_name: booking.owner_name,
                         owner_surname: booking.owner_surname,
@@ -532,7 +532,7 @@ updateToAccepted = function(booking, callback) {
                         dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanreservations"
                     }, renter.email);
 
-                    Notifications.send(Notifications.OWNER_2_ACCEPTANCE, {
+                    Notifications.send(booking.id + "_OWNER_2_ACCEPTANCE", Notifications.OWNER_2_ACCEPTANCE, {
                         name: owner.name,
                         item_type: booking.van_type,
                         item_name: booking.van_model,
@@ -549,7 +549,7 @@ updateToAccepted = function(booking, callback) {
                         dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanrentals"
                     }, owner.email);
 
-                    Notifications.send(Notifications.RENTER_RECEIPT, {
+                    Notifications.send(booking.id + "_RENTER_RECEIPT", Notifications.RENTER_RECEIPT, {
                         name: booking.renter_name,
                         item_type: booking.van_type,
                         item_name: booking.van_model,

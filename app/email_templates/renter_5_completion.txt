@@ -1,6 +1,6 @@
 Hi {{name}},\n\n
 The reservation of the {{item_type}} has ended and you need to complete the booking session as the last step.\n\n
-See your Dashboard on www.sharingear.com to end this booking.\n\n
+See your Dashboard on www.sharingear.com to end this booking. If you already have ended the booking in your dashboard please ignore this mail.\n\n
 Best regards,\n
 Sharingear Team\n\n
 -------\n\n

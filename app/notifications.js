@@ -9,6 +9,7 @@
 var fs = require("fs"),
     _ = require("underscore"),
     SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
+    db = require("./database"),
     FROM_ADDRESS = "service@sharingear.com",
 
     OWNER_1_REQUEST = 0,
@@ -71,6 +72,8 @@ var fs = require("fs"),
     renterDeniedEmailHTMLTemplate,
     renterDeniedEmailTextTemplate,
 
+    readEmailWithID,
+    writeEmailWithID,
     send;
 
 _.templateSettings = {
@@ -135,104 +138,148 @@ renterDeniedEmailSubject = "Your reservation got denied";
 renterDeniedEmailHTMLTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/renter_denied.html", "utf8"));
 renterDeniedEmailTextTemplate = _.template(fs.readFileSync(__dirname + "/email_templates/renter_denied.txt", "utf8"));
 
-send = function(notificationType, notificationParameters, recipientEmail) {
-    var emailParams,
-        textTemplate,
-        htmlTemplate,
-        email;
-    emailParams = {
-        from: FROM_ADDRESS
-    };
-
-    switch (notificationType) {
-        case OWNER_1_REQUEST:
-            emailParams.subject = owner1RequestEmailSubject;
-            emailParams.html = owner1RequestEmailHTMLTemplate(notificationParameters);
-            emailParams.text = owner1RequestEmailTextTemplate(notificationParameters);
-            break;
-        case OWNER_2_ACCEPTANCE:
-            emailParams.subject = owner2AcceptanceEmailSubject;
-            emailParams.html = owner2AcceptanceEmailHTMLTemplate(notificationParameters);
-            emailParams.text = owner2AcceptanceEmailTextTemplate(notificationParameters);
-            break;
-        case OWNER_3_START:
-            emailParams.subject = owner3StartEmailSubject;
-            emailParams.html = owner3StartEmailHTMLTemplate;
-            emailParams.text = owner3StartEmailTextTemplate;
-            break;
-        case OWNER_4_END:
-            emailParams.subject = owner4EndEmailSubject;
-            emailParams.html = owner4EndEmailHTMLTemplate;
-            emailParams.text = owner4EndEmailTextTemplate;
-            break;
-        case OWNER_5_COMPLETION:
-            emailParams.subject = owner5CompletionEmailSubject;
-            emailParams.html = owner5CompletionEmailHTMLTemplate;
-            emailParams.text = owner5CompletionEmailTextTemplate;
-            break;
-        case RENTER_1_RESERVATION:
-            emailParams.subject = renter1ReservationEmailSubject;
-            emailParams.html = renter1ReservationEmailHTMLTemplate(notificationParameters);
-            emailParams.text = renter1ReservationEmailTextTemplate(notificationParameters);
-            break;
-        case RENTER_2_ACCEPTANCE:
-            emailParams.subject = renter2AcceptanceEmailSubject;
-            emailParams.text = renter2AcceptanceEmailTextTemplate(notificationParameters);
-            emailParams.html = renter2AcceptanceEmailHTMLTemplate(notificationParameters);
-            break;
-        case RENTER_3_START:
-            emailParams.subject = renter3StartEmailSubject;
-            emailParams.text = renter3StartEmailHTMLTemplate(notificationParameters);
-            emailParams.html = renter3StartEmailTextTemplate(notificationParameters);
-            break;
-        case RENTER_4_END:
-            emailParams.subject = renter4EndEmailSubject;
-            emailParams.text = renter4EndEmailTextTemplate(notificationParameters);
-            emailParams.html = renter4EndEmailHTMLTemplate(notificationParameters);
-            break;
-        case RENTER_5_COMPLETION:
-            emailParams.subject = renter5CompletionEmailSubject;
-            emailParams.text = renter5CompletionEmailHTMLTemplate(notificationParameters);
-            emailParams.html = renter5CompletionEmailTextTemplate(notificationParameters);
-            break;
-        case OWNER_RECEIPT:
-            emailParams.subject = ownerReceiptEmailSubject;
-            emailParams.html = ownerReceiptEmailHTMLTemplate(notificationParameters);
-            emailParams.text = ownerReceiptEmailTextTemplate(notificationParameters);
-            break;
-        case RENTER_RECEIPT:
-            emailParams.subject = renterReceiptEmailSubject;
-            emailParams.html = renterReceiptEmailSubject(notificationParameters);
-            emailParams.text = renterReceiptEmailSubject(notificationParameters);
-            break;
-        case OWNER_DENIED:
-            emailParams.subject = ownerDeniedEmailSubject;
-            emailParams.html = ownerDeniedEmailHTMLTemplate(notificationParameters);
-            emailParams.text = ownerDeniedEmailTextTemplate(notificationParameters);
-            break;
-        case RENTER_DENIED:
-            emailParams.subject = renterDeniedEmailSubject;
-            emailParams.html = renterDeniedEmailHTMLTemplate(notificationParameters);
-            emailParams.text = renterDeniedEmailTextTemplate(notificationParameters);
-            break;
-        default:
-            return;
-    }
-
-    emailParams.to = recipientEmail;
-    textTemplate = _.template(emailParams.text);
-    emailParams.text = textTemplate(notificationParameters);
-    if (emailParams.html) {
-        htmlTemplate = _.template(emailParams.html);
-        emailParams.html = htmlTemplate(notificationParameters);
-    }
-    email = new SendGrid.Email(emailParams);
-
-    SendGrid.send(email, function(error) {
-        if (error) {
-            console.log("Error sending notification email: " + error);
+readEmailWithID = function(emailID, callback) {
+    db.query("SELECT email_id FROM emails WHERE email_id=? LIMIT 1", [emailID], function(error, rows) {
+        if(error) {
+            callback(error);
             return;
         }
+        if(rows.length <= 0) {
+            callback(null, null);
+        }
+        else {
+            callback(null, rows[0]);
+        }
+    });
+};
+
+writeEmailWithID = function(emailID, callback) {
+    db.query("INSERT INTO emails(email_id) VALUES email_id=?", [emailID], function(error) {
+        if(error) {
+            callback(error);
+            return;
+        }
+        callback(null);
+    });
+};
+
+send = function(emailID, notificationType, notificationParameters, recipientEmail) {
+    var emailParams,
+        textTemplate,
+        htmlTemplate;
+
+    this.readEmailWithID(emailID, function(error, email) {
+        if (error) {
+            console.error("Error reading email with ID " + emailID + ": " + error);
+            return;
+        }
+
+        if (email !== null) {
+            //The email has already been sent
+            return;
+        }
+
+        this.writeEmailWithID(emailID, function(error) {
+            if(error) {
+                console.error("Error writing email with ID " + emailID + ": " + error);
+                return;
+            }
+
+            emailParams = {
+                from: FROM_ADDRESS
+            };
+
+            switch (notificationType) {
+                case OWNER_1_REQUEST:
+                    emailParams.subject = owner1RequestEmailSubject;
+                    emailParams.html = owner1RequestEmailHTMLTemplate(notificationParameters);
+                    emailParams.text = owner1RequestEmailTextTemplate(notificationParameters);
+                    break;
+                case OWNER_2_ACCEPTANCE:
+                    emailParams.subject = owner2AcceptanceEmailSubject;
+                    emailParams.html = owner2AcceptanceEmailHTMLTemplate(notificationParameters);
+                    emailParams.text = owner2AcceptanceEmailTextTemplate(notificationParameters);
+                    break;
+                case OWNER_3_START:
+                    emailParams.subject = owner3StartEmailSubject;
+                    emailParams.html = owner3StartEmailHTMLTemplate;
+                    emailParams.text = owner3StartEmailTextTemplate;
+                    break;
+                case OWNER_4_END:
+                    emailParams.subject = owner4EndEmailSubject;
+                    emailParams.html = owner4EndEmailHTMLTemplate;
+                    emailParams.text = owner4EndEmailTextTemplate;
+                    break;
+                case OWNER_5_COMPLETION:
+                    emailParams.subject = owner5CompletionEmailSubject;
+                    emailParams.html = owner5CompletionEmailHTMLTemplate;
+                    emailParams.text = owner5CompletionEmailTextTemplate;
+                    break;
+                case RENTER_1_RESERVATION:
+                    emailParams.subject = renter1ReservationEmailSubject;
+                    emailParams.html = renter1ReservationEmailHTMLTemplate(notificationParameters);
+                    emailParams.text = renter1ReservationEmailTextTemplate(notificationParameters);
+                    break;
+                case RENTER_2_ACCEPTANCE:
+                    emailParams.subject = renter2AcceptanceEmailSubject;
+                    emailParams.text = renter2AcceptanceEmailTextTemplate(notificationParameters);
+                    emailParams.html = renter2AcceptanceEmailHTMLTemplate(notificationParameters);
+                    break;
+                case RENTER_3_START:
+                    emailParams.subject = renter3StartEmailSubject;
+                    emailParams.text = renter3StartEmailHTMLTemplate(notificationParameters);
+                    emailParams.html = renter3StartEmailTextTemplate(notificationParameters);
+                    break;
+                case RENTER_4_END:
+                    emailParams.subject = renter4EndEmailSubject;
+                    emailParams.text = renter4EndEmailTextTemplate(notificationParameters);
+                    emailParams.html = renter4EndEmailHTMLTemplate(notificationParameters);
+                    break;
+                case RENTER_5_COMPLETION:
+                    emailParams.subject = renter5CompletionEmailSubject;
+                    emailParams.text = renter5CompletionEmailHTMLTemplate(notificationParameters);
+                    emailParams.html = renter5CompletionEmailTextTemplate(notificationParameters);
+                    break;
+                case OWNER_RECEIPT:
+                    emailParams.subject = ownerReceiptEmailSubject;
+                    emailParams.html = ownerReceiptEmailHTMLTemplate(notificationParameters);
+                    emailParams.text = ownerReceiptEmailTextTemplate(notificationParameters);
+                    break;
+                case RENTER_RECEIPT:
+                    emailParams.subject = renterReceiptEmailSubject;
+                    emailParams.html = renterReceiptEmailSubject(notificationParameters);
+                    emailParams.text = renterReceiptEmailSubject(notificationParameters);
+                    break;
+                case OWNER_DENIED:
+                    emailParams.subject = ownerDeniedEmailSubject;
+                    emailParams.html = ownerDeniedEmailHTMLTemplate(notificationParameters);
+                    emailParams.text = ownerDeniedEmailTextTemplate(notificationParameters);
+                    break;
+                case RENTER_DENIED:
+                    emailParams.subject = renterDeniedEmailSubject;
+                    emailParams.html = renterDeniedEmailHTMLTemplate(notificationParameters);
+                    emailParams.text = renterDeniedEmailTextTemplate(notificationParameters);
+                    break;
+                default:
+                    return;
+            }
+
+            emailParams.to = recipientEmail;
+            textTemplate = _.template(emailParams.text);
+            emailParams.text = textTemplate(notificationParameters);
+            if (emailParams.html) {
+                htmlTemplate = _.template(emailParams.html);
+                emailParams.html = htmlTemplate(notificationParameters);
+            }
+            email = new SendGrid.Email(emailParams);
+
+            SendGrid.send(email, function(error) {
+                if (error) {
+                    console.log("Error sending notification email: " + error);
+                    return;
+                }
+            });
+        });
     });
 };
 
@@ -252,5 +299,7 @@ module.exports = {
     OWNER_DENIED: OWNER_DENIED,
     RENTER_DENIED: RENTER_DENIED,
 
-    send: send
+    send: send,
+    readEmailWithID: readEmailWithID,
+    writeEmailWithID: writeEmailWithID
 };

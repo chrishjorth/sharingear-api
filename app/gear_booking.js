@@ -42,7 +42,11 @@ var Moment = require("moment-timezone"),
 
     preAuthorize,
     chargePreAuthorization,
-    endBooking;
+    endBooking,
+
+    checkBookingStatus,
+
+    GearBooking;
 
 create = function(renterID, bookingData, callback) {
     //We store gear data as static in the booking, so that future changes of the gear does not affect this booking
@@ -360,7 +364,7 @@ updateToPending = function(booking, callback) {
                     renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
                     renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
 
-                    Notifications.send(Notifications.OWNER_1_REQUEST, {
+                    Notifications.send(booking.id + "_OWNER_1_REQUEST", Notifications.OWNER_1_REQUEST, {
                         name: owner.name,
                         renter_image_url: renter.image_url,
                         item_type: booking.gear_type,
@@ -378,7 +382,7 @@ updateToPending = function(booking, callback) {
                         dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourgearrentals"
                     }, owner.email);
 
-                    Notifications.send(Notifications.RENTER_1_RESERVATION, {
+                    Notifications.send(booking.id + "_RENTER_1_RESERVATION", Notifications.RENTER_1_RESERVATION, {
                         renter_name: renter.name,
                         owner_name: owner.name,
                         owner_surname: owner.surname,
@@ -436,7 +440,7 @@ updateToDenied = function(booking, callback) {
                 renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
                 renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
 
-                Notifications.send(Notifications.OWNER_DENIED, {
+                Notifications.send(booking.id + "_OWNER_DENIED", Notifications.OWNER_DENIED, {
                     name: booking.owner_name,
                     pickup_date: ownerStartTime.format("DD/MM/YYYY"),
                     pickup_time: ownerStartTime.format("HH:mm"),
@@ -452,7 +456,7 @@ updateToDenied = function(booking, callback) {
                     currency: booking.owner_currency
                 }, booking.owner_email);
 
-                Notifications.send(Notifications.RENTER_DENIED, {
+                Notifications.send(booking.id + "_RENTER_DENIED", Notifications.RENTER_DENIED, {
                     renter_name: booking.renter_name,
                     owner_name: booking.owner_name,
                     owner_surname: booking.owner_surname,
@@ -516,7 +520,7 @@ updateToAccepted = function(booking, callback) {
 
                     paymentTime = new Moment.tz(renter.time_zone);
 
-                    Notifications.send(Notifications.RENTER_2_ACCEPTANCE, {
+                    Notifications.send(booking.id + "_RENTER_2_ACCEPTANCE", Notifications.RENTER_2_ACCEPTANCE, {
                         renter_name: booking.renter_name,
                         owner_name: booking.owner_name,
                         owner_surname: booking.owner_surname,
@@ -536,7 +540,7 @@ updateToAccepted = function(booking, callback) {
                         dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourgearreservations"
                     }, renter.email);
 
-                    Notifications.send(Notifications.OWNER_2_ACCEPTANCE, {
+                    Notifications.send(booking.id + "_OWNER_2_ACCEPTANCE", Notifications.OWNER_2_ACCEPTANCE, {
                         owner_name: owner.name,
                         renter_name: renter.name,
                         item_type: booking.gear_type,
@@ -554,7 +558,7 @@ updateToAccepted = function(booking, callback) {
                         dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourgearrentals"
                     }, owner.email);
 
-                    Notifications.send(Notifications.RENTER_RECEIPT, {
+                    Notifications.send(booking.id + "_RENTER_RECEIPT", Notifications.RENTER_RECEIPT, {
                         name: booking.renter_name,
                         item_type: booking.gear_type,
                         item_name: booking.gear_brand + " " + booking.gear_model + " " + booking.gear_subtype,
@@ -712,10 +716,140 @@ endBooking = function(bookingData, callback) {
     });
 };
 
-module.exports = {
+checkBookingStatus = function() {
+    //Read all gear bookings that are accepted and have not ended
+    db.query("SELECT id, start_time, end_time, request_time, booking_status FROM gear_bookings WHERE booking_status='accepted' OR booking_status='renter-returned' OR booking_status='owner_returned'", function(error, rows) {
+        var i, currentMoment, requestMoment, startMoment, startMomentWindow, endMoment, endMomentWindow,
+            sendStartMails, sendEndMails, sendCompletionMails;
+
+        if (error) {
+            console.error(error);
+            return;
+        }
+
+        currentMoment = new Moment();
+
+        sendStartMails = function(booking) {
+            User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
+                var owner, renter, ownerStartTime, ownerEndTime, renterStartTime, renterEndTime;
+                if (error) {
+                    console.error("Error reading users for sending start mails: " + error);
+                    return;
+                }
+                owner = users[0];
+                renter = users[1];
+
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+
+                Notifications.send(booking.id + "_OWNER_3_START", Notifications.OWNER_3_START, {
+                    owner_name: booking.owner_name,
+                    item_type: booking.gear_type,
+                    renter_name: booking.renter_name,
+                    renter_image_url: renter.image_url,
+                    pickup_date: ownerStartTime.format("DD/MM/YYYY"),
+                    pickup_time: ownerStartTime.format("HH:mm"),
+                    delivery_date: ownerEndTime.format("DD/MM/YYYY"),
+                    delivery_time: ownerEndTime.format("HH:mm"),
+                }, booking.owner_email);
+                Notifications.send(booking.id + "_RENTER_3_START", Notifications.RENTER_3_START, {
+                    renter_name: booking.renter_name,
+                    item_type: booking.gear_type,
+                    owner_name: booking.owner_name,
+                    owner_image_url: owner.image_url,
+                    pickup_date: renterStartTime.format("DD/MM/YYYY"),
+                    pickup_time: renterStartTime.format("HH:mm"),
+                    delivery_date: renterEndTime.format("DD/MM/YYYY"),
+                    delivery_time: renterEndTime.format("HH:mm"),
+                }, booking.renter_email);
+            });
+        };
+
+        sendEndMails = function(booking) {
+            User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
+                var owner, renter, ownerStartTime, ownerEndTime, renterStartTime, renterEndTime;
+                if (error) {
+                    console.error("Error reading users for sending start mails: " + error);
+                    return;
+                }
+                owner = users[0];
+                renter = users[1];
+
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+
+                Notifications.send(booking.id + "_OWNER_4_END", Notifications.OWNER_4_END, {
+                    owner_name: booking.owner_name,
+                    item_type: booking.gear_type,
+                    renter_name: booking.renter_name,
+                    renter_image_url: renter.image_url,
+                    pickup_date: ownerStartTime.format("DD/MM/YYYY"),
+                    pickup_time: ownerStartTime.format("HH:mm"),
+                    delivery_date: ownerEndTime.format("DD/MM/YYYY"),
+                    delivery_time: ownerEndTime.format("HH:mm"),
+                }, booking.owner_email);
+                Notifications.send(booking.id + "_RENTER_4_END", Notifications.RENTER_4_END, {
+                    renter_name: booking.renter_name,
+                    item_type: booking.gear_type,
+                    owner_name: booking.owner_name,
+                    owner_image_url: owner.image_url,
+                    pickup_date: renterStartTime.format("DD/MM/YYYY"),
+                    pickup_time: renterStartTime.format("HH:mm"),
+                    delivery_date: renterEndTime.format("DD/MM/YYYY"),
+                    delivery_time: renterEndTime.format("HH:mm"),
+                }, booking.renter_email);
+            });
+        };
+
+        sendCompletionMails = function(booking) {
+            Notifications.send(booking.id + "_OWNER_5_COMPLETION", Notifications.OWNER_5_COMPLETION, {
+                name: booking.owner_name,
+                item_type: booking.gear_type
+            }, booking.owner_email);
+            Notifications.send(booking.id + "_RENTER_5_COMPLETION", Notifications.RENTER_5_COMPLETION, {
+                name: booking.renter_name,
+                item_type: booking.gear_type
+            }, booking.renter_email);
+        };
+
+        for (i = 0; i < rows.length; i++) {
+            //If there are less than 24 hours to the start and the booking was not created within the last 24 VALID_IMAGE_HOSTours, send start mail
+            requestMoment = new Moment(rows[i].request_time, "YYYY-MM-DD HH:mm:ss");
+            requestMoment.add(24, "hours");
+            startMoment = new Moment(rows[i].start_time, "YYYY-MM-DD HH:mm:ss");
+            startMomentWindow = new Moment(startMoment);
+            startMomentWindow.subtract(24, "hours");
+            endMoment = new Moment(rows[i].end_time, "YYYY-MM-DD HH:mm:ss");
+            endMomentWindow = new Moment(endMoment);
+            endMomentWindow.subtract(24, "hours");
+            if (currentMoment.isAfter(startMomentWindow) === true && currentMoment.isBefore(startMoment) === true && requestMoment.isAfter(currentMoment) === false) {
+                sendStartMails(rows[i]);
+            }
+            //If there are less than 24 hours to the end and the booking was not created within the last 24 hours, send end email
+            if (currentMoment.isAfter(endMomentWindow) === true && currentMoment.isBefore(endMoment) === true && requestMoment.isAfter(currentMoment) === false) {
+                sendEndMails(rows[i]);
+            }
+            //If booking to time has passed, and the users have not ended the booking send completion mail
+            if (currentMoment.isAfter(endMoment) === true) {
+                sendCompletionMails(rows[i]);
+            }
+        }
+    });
+};
+
+GearBooking = {
     create: create,
     read: read,
     readRentalsForUser: readRentalsForUser,
     readReservationsForUser: readReservationsForUser,
-    update: update
+    update: update,
+    checkBookingStatus: checkBookingStatus
 };
+
+setInterval(GearBooking.checkBookingStatus, 3600000); //Each hour
+
+module.exports = GearBooking;
