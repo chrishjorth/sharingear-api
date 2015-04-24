@@ -154,7 +154,7 @@ readEmailWithID = function(emailID, callback) {
 };
 
 writeEmailWithID = function(emailID, callback) {
-    db.query("INSERT INTO emails(email_id) VALUES email_id=?", [emailID], function(error) {
+    db.query("INSERT INTO emails(email_id) VALUES (?);", [emailID], function(error) {
         if(error) {
             callback(error);
             return;
