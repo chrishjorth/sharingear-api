@@ -209,7 +209,8 @@ readUser = function(userID, callback) {
  * Returns full user records. Should not be passed through the API as some information must not reach the client.
  */
 readCompleteUsers = function(userIDs, callback) {
-	var sql, i;
+	var queryParameters = [],
+		sql, i;
 	if(userIDs.length <= 0) {
 		callback(null, []);
 		return;
@@ -217,10 +218,18 @@ readCompleteUsers = function(userIDs, callback) {
 	sql = "SELECT id, fbid, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, fb_token FROM users WHERE id IN(";
 	for(i = 0; i < userIDs.length - 1; i++) {
 		 sql += "?, ";
+		 queryParameters.push(userIDs[i]);
 	}
-	sql += "?) LIMIT " + userIDs.length + ";";
+	sql += "?) LIMIT " + userIDs.length + " ORDER BY FIELD(id,";
+	queryParameters.push(userIDs[userIDs.length - 1]);
+	for(i = 0; i < userIDs.length - 1; i++) {
+		sql += "?, ";
+		queryParameters.push(userIDs[i]);
+	}
+	sql += "?);";
+	queryParameters.push(userIDs[userIDs.length - 1]);
 	
-	db.query(sql, userIDs, function(error, rows) {
+	db.query(sql, queryParameters, function(error, rows) {
 		if(error) {
 			callback(error);
 			return;
