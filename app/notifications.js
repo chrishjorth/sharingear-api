@@ -164,7 +164,8 @@ writeEmailWithID = function(emailID, callback) {
 };
 
 send = function(emailID, notificationType, notificationParameters, recipientEmail) {
-    var emailParams,
+    var Notifications = this,
+        emailParams,
         textTemplate,
         htmlTemplate;
 
@@ -179,7 +180,7 @@ send = function(emailID, notificationType, notificationParameters, recipientEmai
             return;
         }
 
-        this.writeEmailWithID(emailID, function(error) {
+        Notifications.writeEmailWithID(emailID, function(error) {
             if(error) {
                 console.error("Error writing email with ID " + emailID + ": " + error);
                 return;
