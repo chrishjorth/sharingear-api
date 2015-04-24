@@ -220,13 +220,13 @@ readCompleteUsers = function(userIDs, callback) {
 		 sql += "?, ";
 		 queryParameters.push(userIDs[i]);
 	}
-	sql += "?) LIMIT " + userIDs.length + " ORDER BY FIELD(id,";
+	sql += "?) ORDER BY FIELD(id, ";
 	queryParameters.push(userIDs[userIDs.length - 1]);
 	for(i = 0; i < userIDs.length - 1; i++) {
 		sql += "?, ";
 		queryParameters.push(userIDs[i]);
 	}
-	sql += "?);";
+	sql += "?) LIMIT " + userIDs.length + ";";
 	queryParameters.push(userIDs[userIDs.length - 1]);
 	
 	db.query(sql, queryParameters, function(error, rows) {
