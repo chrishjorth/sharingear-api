@@ -1,7 +1,0 @@
-Hi {{name}},\n\n
-{{username_owner}} ended the booking!\n\n
-You have now finished renting an item. In order to complete the rental and confirm that you returned the item you have to end the booking as well.\n\n
-End Booking: {{dashboard_link}}\n\n
-Best Regards,\n
-- Sharingear Team\n\n
-Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsøes Allé 41, 1, 1434 Copenhagen K, Denmark.\n

@@ -1,0 +1,7 @@
+Hi {{name}},\n\n
+The rent of a {{item_type}} has ended, and in order to receive payment you must rate the renter and end the booking session.\n\n
+See your Dashboard on www.sharingear.com to end this booking. If you already have ended the booking in your dashboard please ignore this mail.\n\n
+Best regards,\n
+Sharingear Team\n\n
+-------\n\n
+Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsoes Allé 41, 1., 1434 Copenhagen K, Denmark\n

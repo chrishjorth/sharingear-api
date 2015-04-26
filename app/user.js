@@ -18,6 +18,7 @@ var db = require("./database"),
 	getToken,
 	readPublicUser,
 	readUser,
+	readCompleteUsers,
 	update,
 	updateBankDetails,
 	getCardObject,
@@ -73,7 +74,7 @@ createUserFromFacebookInfo = function(userInfo, callback) {
 		userInfo.last_name, //surname
 		null, //birthdate
 		null, //city
-		"https://graph.facebook.com/" + userInfo.id + "/picture?type=large" //image_url
+		"https://graph.facebook.com/" + userInfo.id + "/picture" //image_url
 	];
 	if(userInfo.middle_name && userInfo.middle_name.length > 0) {
 		user[2] += " " + userInfo.middle_name;
@@ -201,6 +202,46 @@ readUser = function(userID, callback) {
 		};
 		user.currency = Localization.getCurrency(user.country);
 		callback(null, user);
+	});
+};
+
+/**
+ * Returns full user records. Should not be passed through the API as some information must not reach the client.
+ */
+readCompleteUsers = function(userIDs, callback) {
+	var queryParameters = [],
+		sql, i;
+	if(userIDs.length <= 0) {
+		callback(null, []);
+		return;
+	}
+	sql = "SELECT id, fbid, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, fb_token FROM users WHERE id IN(";
+	for(i = 0; i < userIDs.length - 1; i++) {
+		 sql += "?, ";
+		 queryParameters.push(userIDs[i]);
+	}
+	sql += "?) ORDER BY FIELD(id, ";
+	queryParameters.push(userIDs[userIDs.length - 1]);
+	for(i = 0; i < userIDs.length - 1; i++) {
+		sql += "?, ";
+		queryParameters.push(userIDs[i]);
+	}
+	sql += "?) LIMIT " + userIDs.length + ";";
+	queryParameters.push(userIDs[userIDs.length - 1]);
+	
+	db.query(sql, queryParameters, function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length < userIDs.length) {
+			callback("No users found for all provided IDs.");
+			return;
+		}
+		for(i = 0; i < rows.length; i++) {
+			rows[i].currency = Localization.getCurrency(rows[i].country);
+		}
+		callback(null, rows);
 	});
 };
 
@@ -394,6 +435,7 @@ module.exports = {
 	getToken: getToken,
 	readPublicUser: readPublicUser,
 	readUser: readUser,
+	readCompleteUsers: readCompleteUsers,
 	update: update,
 	updateBankDetails: updateBankDetails,
 	getCardObject: getCardObject,

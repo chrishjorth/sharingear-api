@@ -1,7 +1,0 @@
-Hi {{name}},\n\n
-{{username_renter}} has finished renting your item, and wants you to end the booking period!\n\n
-Upon confirmation you are able to be payed for your rented item.\n\n
-Get Payment: {{dashboard_link}}\n\n
-Best Regards,\n
-- Sharingear Team\n\n
-Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsøes Allé 41, 1, 1434 Copenhagen K, Denmark.\n

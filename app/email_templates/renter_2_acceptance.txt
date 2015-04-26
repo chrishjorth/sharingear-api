@@ -1,0 +1,14 @@
+Hi {{renter_name}},\n\n
+{{owner_name}} {{owner_surname}} has accepted your reservation. The {{item_type}} awaits for you at the specified location.\n\n
+From: {{pickup_date}} {{pickup_time}}\n\n
+To: {{delivery_date}} {{delivery_time}}\n\n
+{{item_type}}: {{item_name}}\n\n
+Location: {{pickup_address}}\n\n
+Your price: {{price}} {{currency}}\n\n
+Our service fee: {{fee}} {{currency}}\n\n
+Total: {{total}} {{currency}}\n\n
+Manage this reservation through your Dashboard on www.sharingear.com.\n\n
+Best regards,\n
+Sharingear Team\n\n
+-------\n\n
+Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsoes Allé 41, 1., 1434 Copenhagen K, Denmark\n
