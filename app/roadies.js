@@ -449,7 +449,7 @@ readRoadieWithID = function(roadieID, callback) {
 
 search = function(location, roadie, callback) {
 	//Do a full text search on roadies, then narrow down by location, because location search is slower.
-	db.search("SELECT id, roadie_type, name, surname, image_url, city, country, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM roadies_main, roadies_delta WHERE MATCH(?) LIMIT 100", [roadie], function(error, rows) {
+	db.search("SELECT id, roadie_type, name, surname, image_url, city, country, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM roadies_main, roadies_delta WHERE MATCH(?) ORDER BY id DESC LIMIT 100", [roadie], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
 			console.log("Error searching for match: " + JSON.stringify(error));
@@ -479,7 +479,7 @@ search = function(location, roadie, callback) {
 			sql += rows[i].id + ",";
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
-		sql += ") AND distance <= ?.0  ORDER BY distance ASC LIMIT 100";
+		sql += ") AND distance <= ?.0  ORDER BY distance ASC, id DESC LIMIT 100";
 		db.search(sql, [lat, lng, Config.SEARCH_RADIUS], function(error, rows) {
 			var i;
 			if(error) {

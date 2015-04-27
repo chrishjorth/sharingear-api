@@ -28,7 +28,8 @@ var db = require("./database"),
 	readGearWithID,
 	search,
 	getPrice,
-	getOwner;
+	getOwner,
+	getImageURL;
 
 /**
  * @returns fx {
@@ -59,6 +60,7 @@ getClassification = function(callback) {
 		};
 		classification = gearClassification.classification;
 
+		//Merge accessories into array for each subtype
 		//Assertion: the query returns rows sorted
 		for(i = 0; i < rows.length; i++) {
 			if(rows[i].subtype === currentSubtype) {
@@ -636,7 +638,7 @@ readGearWithID = function(gearID, callback) {
  */
 search = function(location, gear, callback) {
 	//Do a full text search on gear, then narrow down by location, because location search is slower.
-	db.search("SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM gear_main, gear_delta WHERE MATCH(?) LIMIT 100", [gear], function(error, rows) {
+	db.search("SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM gear_main, gear_delta WHERE MATCH(?) ORDER BY id DESC LIMIT 100", [gear], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
 			console.log("Error searching for match: " + JSON.stringify(error));
@@ -666,7 +668,7 @@ search = function(location, gear, callback) {
 			sql += rows[i].id + ",";
 		}
 		sql += rows[rows.length - 1].id; //rows has at least one item
-		sql += ") AND distance <= ?.0  ORDER BY distance ASC LIMIT 100";
+		sql += ") AND distance <= ?.0  ORDER BY distance ASC, id DESC LIMIT 100";
 		db.search(sql, [lat, lng, Config.SEARCH_RADIUS], function(error, rows) {
 			var i;
 			if(error) {
@@ -710,6 +712,25 @@ getOwner = function(gearID, callback) {
 	});
 };
 
+/**
+ * @return: the URL for the main image of a specific gear item. If the gear has no images an empty string is returned.
+ */
+getImageURL = function(gearID, callback) {
+	db.query("SELECT images FROM gear WHERE id=? LIMIT 1", [gearID], function(error, rows) {
+		var images;
+		if(error) {
+			callback(error);
+			return;
+		}
+		if(rows.length <= 0) {
+			callback(null, "");
+			return;
+		}
+		images = rows[0].images.split(",");
+		callback(null, images[0]);
+	});
+};
+
 module.exports = {
 	getClassification: getClassification,
 	checkTypes: checkTypes,
@@ -729,6 +750,7 @@ module.exports = {
 	readGearWithID: readGearWithID,
 	search: search,
 	getPrice: getPrice,
-	getOwner: getOwner
+	getOwner: getOwner,
+	getImageURL: getImageURL
 };
 

@@ -1,0 +1,97 @@
+<style type="text/css">
+div, p, a, li, td { -webkit-text-size-adjust:none; }
+</style>
+<div style="width:80%;background-color:#f6f6f6;font-family:Helvetica Neue, Arial, sans-serif;font-size:12px;line-height:18px;padding-top:20px;padding-right:10%;padding-bottom:20px;padding-left:10%;margin:0;">
+	<div style="padding:20px;background-color:#ffffff;">
+		<div>
+			<div style="width:50%;">
+				<img src="https://dev.sharingear.com/images/email_templates/logotop@2x.png" alt="Sharingear logo" style="width:183px;float:left"/>
+			</div>
+			<div style="widt:50%;text-align:right;">
+				<h1 style="color:#00adff;margin:0;font-size:14px;line-height:36px;">RESERVATION</h1>
+			</div>
+		</div>
+		
+		<hr style="border:0;height:0;border-top-width:2px;border-style:solid;width:100%;color:#dddddd;">
+		
+		<p style="font-weight:bold;">Hi {{renter_name}},</p>
+		<div style="width:80%;display:inline-block;line-height:60px;">
+			<p style="margin:0;">You submitted a reservation to <span style="font-weight:bold;">{{owner_name}} {{owner_surname}}</span>.</p>
+		</div>
+		
+		<div style="width:19%;display:inline-block;text-align:center;">
+			<div style="display:inline-block;background-image:url('{{owner_image_url}}');height:60px;width:60px;border-radius:30px;background-size:auto 60px;background-position:center;"></div>
+		</div>
+
+		<div style="width:100%;text-align:center;margin-top:20px;margin-bottom:20px;">
+			<img src="https://dev.sharingear.com/images/email_templates/timeline_step01@2x.png" style="width:540px;height:100px;max-width:100%;">
+		</div>
+
+		<div style="color:#c6c6c6;text-align:center;">Awaiting for owner to accept your request.</div>
+
+		<div style="width:100%;margin-top:20px;">
+			<div style="display:inline-block;width:40%;">
+				<div style="width:50%;padding-left:24%;">
+					<div style="font-weight:bold;">From</div>
+					<div style="font-weight:bold;font-size:14px;line-height:28px;">{{pickup_date}}</div>
+					<div style="color:#868686;font-size:10px;line-height:30px;font-weight:bold;"><img src="https://dev.sharingear.com/images/email_templates/clock@2x.png" style="width:22px;height:22px;vertical-align:middle;"> {{pickup_time}}</div>
+				</div>
+			</div>
+			<div style="display:inline-block;width:18%;text-align:center;">
+				<img src="https://dev.sharingear.com/images/email_templates/left_arrow@2x.png" style="width:11px;height:22px;">
+			</div>
+			<div style="display:inline-block;width:40%;">
+				<div style="width:50%;padding-left:24%;">
+					<div style="font-weight:bold;">To</div>
+					<div style="font-weight:bold;font-size:14px;line-height:28px;">{{delivery_date}}</div>
+					<div style="color:#868686;font-size:10px;line-height:30px;font-weight:bold;"><img src="https://dev.sharingear.com/images/email_templates/clock@2x.png" style="width:22px;height:22px;vertical-align:middle;"> {{delivery_time}}</div>
+				</div>
+			</div>
+		</div>
+
+		<table style="width:100%;font-size:10px;line-height:16px;border-spacing:0 2px;margin-top:10px;margin-bottom:10px;">
+			<tr>
+				<td style="padding:10px;text-align:center;font-weight:bold;background-color:#ededed;border-width:1px;border-style:solid;border-color:#ededed;margin:0;">{{item_type}}</td>
+				<td style="padding:10px;text-align:center;border-width:1px;border-style:solid;border-color:#ededed;">{{item_name}}</td>
+			</tr>
+			<tr>
+				<td style="padding:10px;text-align:center;font-weight:bold;background-color:#ededed;border-width:1px;border-style:solid;border-color:#ededed;margin:0;">Location</td>
+				<td style="padding:10px;text-align:center;border-width:1px;border-style:solid;border-color:#ededed;">{{pickup_postal_code}} {{pickup_city}}, {{pickup_country}}</td>
+			</tr>
+		</table>
+
+		<div style="text-align:center;margin-top:20px;margin-bottom:20px;">
+			<img src="{{item_image_url}}" style="width:auto;max-width:100%;height:300px;">
+		</div>
+
+		<table style="width:100%;border-spacing:0;font-size:10px;line-height:16px;">
+			<tr>
+				<td style="padding:10px;border-style:solid;border-color:#f0f0f0;border-width:1px;border-right-width:0;border-bottom-width:0;background-color:#f2f2f2;">Your price:</td>
+				<td style="padding:10px;border-style:solid;border-color:#f0f0f0;border-width:1px;border-left-width:0;border-bottom-width:0;background-color:#f2f2f2;text-align:right;">{{price}} {{currency}}</td>
+			</tr>
+			<tr>
+				<td style="padding:10px;border-style:solid;border-color:#f0f0f0;border-width:1px;border-right-width:0;border-bottom-width:0;background-color:#f9f9f9;">Our service fee:</td>
+				<td style="padding:10px;border-style:solid;border-color:#f0f0f0;border-width:1px;border-left-width:0;border-bottom-width:0;background-color:#f9f9f9;text-align:right;">{{fee}} {{currency}}</td>
+			</tr>
+			<tr>
+				<td style="padding:10px;border-style:solid;border-color:#f0f0f0;border-width:1px;border-right-width:0;font-weight:bold;">Total:</td>
+				<td style="padding:10px;border-style:solid;border-color:#f0f0f0;border-width:1px;border-left-width:0;font-weight:bold;text-align:right;">{{total}} {{currency}}</td>
+			</tr>
+		</table>
+
+		<div style="width:100%;text-align:center;margin-top:20px;">
+			<a href="{{dashboard_link}}" style="display:inline-block;text-decoration:none;background-color:#00adff;color:#ffffff;font-size:18px;font-weight:bold;border:0;padding:20px;">Manage this reservation through your Dashboard</a>
+		</div>
+
+		<p style="margin-top:20px;margin-bottom:20px;line-height:24px;">
+			Best regards,<br>
+			Sharingear Team
+		</p>
+	</div>
+
+	<div style="width:100%;text-align:center;font-size:10px;line-height:20px;margin-top:10px;">Sent from Sharingear (VAT: DK35845186), Danneskiold-Samsoes Allé 41, 1., 1434 Copenhagen K, Denmark</div>
+	<div style="width:100%;text-align:center;font-size:10px;line-height:20px;">&copy; 2015 Sharingear</div>
+	<div style="width:100%;text-align:center;">
+		<a href="http://www.facebook.com/sharingear"><img src="https://dev.sharingear.com/images/email_templates/social_facebook@2x.png" style="width:40px;height:40px;margin:10px;"></a><a href="http://www.twitter.com/sharingear"><img src="https://dev.sharingear.com/images/email_templates/social_twitter@2x.png" style="width:40px;height:40px;margin:10px;"></a><a href="http://www.instagram.com/sharingear"><img src="https://dev.sharingear.com/images/email_templates/social_instagram@2x.png" style="width:40px;height:40px;margin:10px;"></a>
+	</div>
+</div>
