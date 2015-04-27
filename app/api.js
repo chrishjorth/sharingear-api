@@ -311,6 +311,7 @@ readGearSearchResults = function(req, res, next) {
 createUserSession = function(req, res, next) {
 	var createSession;
 	createSession = function(user, longToken) {
+		console.log("CREATE SESSION");
 		User.setServerAccessToken(user.fbid, longToken, function(error) {
 			if(error) {
 				handleError(res, next, "Error setting Access Token: ", error);
@@ -321,6 +322,7 @@ createUserSession = function(req, res, next) {
 		});
 	};
 
+	console.log("GET FB SERVER TOKEN...");
 	
 	fb.getServerSideToken(req.params.accesstoken, function(error, longToken) {
 		if(error) {
