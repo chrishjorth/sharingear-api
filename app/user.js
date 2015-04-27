@@ -26,7 +26,7 @@ var db = require("./database"),
 	checkLocales;
 
 getUserFromFacebookID = function(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, vatnum FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		var user;
 		if(error) {
 			callback(error);
@@ -55,7 +55,8 @@ getUserFromFacebookID = function(fbid, callback) {
 			bio: rows[0].bio,
 			hasBank: (rows[0].bank_id !== null),
 			buyer_fee: rows[0].buyer_fee,
-			seller_fee: rows[0].seller_fee
+			seller_fee: rows[0].seller_fee,
+			vatnum: rows[0].vatnum
 		};
 		user.currency = Localization.getCurrency(user.country);
 		callback(null, user);
@@ -169,7 +170,7 @@ readPublicUser = function(userID, callback) {
 };
 
 readUser = function(userID, callback) {
-	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, vatnum FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var user;
 		if(error) {
 			callback(error);
@@ -197,7 +198,8 @@ readUser = function(userID, callback) {
 			bio: rows[0].bio,
 			hasBank: (rows[0].bank_id !== null),
 			buyer_fee: rows[0].buyer_fee,
-			seller_fee: rows[0].seller_fee
+			seller_fee: rows[0].seller_fee,
+			vatnum: rows[0].vatnum
 		};
 		user.currency = Localization.getCurrency(user.country);
 		callback(null, user);
@@ -205,7 +207,7 @@ readUser = function(userID, callback) {
 };
 
 update = function(userID, updatedInfo, callback) {
-	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, vatnum FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var userInfo, updateUser, updatePaymentUser, newCurrency;
 		if(error) {
 			callback(error);
@@ -231,6 +233,7 @@ update = function(userID, updatedInfo, callback) {
 			phone: (updatedInfo.phone ? updatedInfo.phone : rows[0].phone),
 			image_url: (updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
 			bio: (updatedInfo.bio ? updatedInfo.bio : rows[0].bio),
+			vatnum: (updatedInfo.vatnum ? updatedInfo.vatnum : rows[0].vatnum),
 			hasBank: (rows[0].bank_id !== null),
 			id: userID
 		};
@@ -242,8 +245,8 @@ update = function(userID, updatedInfo, callback) {
 
 		updateUser = function(mangopay_id) {
 			var userInfoArray;
-			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.time_zone, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, userInfo.id];
-			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, time_zone=?, nationality=?, phone=?, image_url=?, bio=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
+			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.time_zone, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, userInfo.vatnum, userInfo.id];
+			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, time_zone=?, nationality=?, phone=?, image_url=?, bio=?, vatnum=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
 				if(error) {
 					callback(error);
 					return;
