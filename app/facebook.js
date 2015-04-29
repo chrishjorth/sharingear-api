@@ -28,11 +28,19 @@ getSecretProof = function(accessToken) {
 getServerSideToken = function(accessToken, callback) {
 	var apiPath = "/oauth/access_token?client_id=" + appID + "&client_secret=" + appSecret + "&grant_type=fb_exchange_token&fb_exchange_token=" + accessToken;
 	graphCall(apiPath, function(error, data) {
+		var parsedData;
 		if(error) {
 			callback(error);
 			return;
 		}
-		callback(null, data.substring(data.indexOf("=") + 1));
+		try {
+			parsedData = JSON.parse(data);
+		}
+		catch(error) {
+			callback(error);
+			return;
+		}
+		callback(null, parsedData.access_token);
 	});
 };
 
@@ -49,6 +57,10 @@ getUserInfo = function(longToken, callback) {
 		}
 		catch(error) {
 			callback(error);
+			return;
+		}
+		if(data.error) {
+			callback(parsedData.error);
 			return;
 		}
 		callback(null, parsedData);
