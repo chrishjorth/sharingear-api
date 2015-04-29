@@ -8,7 +8,7 @@
 
 var fs = require("fs"),
     _ = require("underscore"),
-    SendGrid = require("sendgrid")("sharingear", "Shar1ng3ar_"),
+    SendGrid = require("sendgrid")("sharingear", "Ge4rshar1ng34"),
     db = require("./database"),
     FROM_ADDRESS = "service@sharingear.com",
 
