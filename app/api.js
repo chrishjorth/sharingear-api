@@ -316,17 +316,22 @@ createUserSession = function(req, res, next) {
 				handleError(res, next, "Error setting Access Token: ", error);
 				return;
 			}
+			console.log("Session created.");
 			res.send(user);
 			next();
 		});
 	};
 
+	console.log("Create user session...");
 	
 	fb.getServerSideToken(req.params.accesstoken, function(error, longToken) {
 		if(error) {
 			handleError(res, next, "Error authenticating with facebook: ", error);
 			return;
 		}
+
+		console.log("Got server side token:");
+		console.log(longToken);
 
 		//Get user for facebook id, if not exists create user
 		User.getUserFromFacebookID(req.params.fbid, function(error, user) {
@@ -336,6 +341,7 @@ createUserSession = function(req, res, next) {
 			}
 
 			if(user === null) {
+				console.log("Create new user...");
 				//Create user
 				fb.getUserInfo(longToken, function(error, fbUserInfo) {
 					if(error) {
@@ -343,17 +349,22 @@ createUserSession = function(req, res, next) {
 						return;
 					}
 
+					console.log("Got FB user info");
+					console.log(JSON.stringify(fbUserInfo));
+
 					User.createUserFromFacebookInfo(fbUserInfo, function(error, user) {
 						if(error) {
 							handleError(res, next, "Error creating user: ", error);
 							return;
 						}
+						console.log("New user created.");
 						user.new_user = true;
 						createSession(user, longToken);
 					});
 				});
 			}
 			else {
+				console.log("Create session for existing user...");
 				user.new_user = false;
 				createSession(user, longToken);
 			}
