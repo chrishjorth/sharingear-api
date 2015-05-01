@@ -102,7 +102,7 @@ try {
 	key = fs.readFileSync("/home/chrishjorth/keys/server.key");
 }
 catch(error) {
-	console.log("Could not read key file");
+	console.error("Could not read key file");
 	readFileSuccess = false;
 }
 
@@ -110,7 +110,7 @@ try {
 	certificate = fs.readFileSync("/home/chrishjorth/keys/server.pem");
 }
 catch(error) {
-	console.log("Could not read certificate file.");
+	console.error("Could not read certificate file.");
 	readFileSuccess = false;
 }
 
@@ -130,7 +130,7 @@ else {
 }
 
 secureServer.on("uncaughtException", function(req, res, route, error) {
-	console.log(error.stack);
+	console.error(error.stack);
 	res.send(error);
 });
 
@@ -145,12 +145,12 @@ server = restify.createServer({
 console.log("Initializing API...");
 Localization.loadLocalization(function(error) {
 	if(error) {
-		console.log(error);
+		console.error(error);
 		return;
 	}
 	Payment.loadPayment(function(error) {
 		if(error) {
-			console.log(error);
+			console.error(error);
 			return;
 		}
 		//Tunnelblick uses 1337 apparently
@@ -1387,7 +1387,7 @@ wipeout = function(req, res, next) {
 
 /* UTILITIES */
 handleError = function(res, next, message, error) {
-	console.log(message + JSON.stringify(error));
+	console.error(message + JSON.stringify(error));
 	res.send({error: error});
 	next();
 };
@@ -1435,12 +1435,12 @@ server.get("/", healthCheck);
 
 //405 debug
 server.on("MethodNotAllowed", function(req, res) {
-	console.log("---- Method " + req.method + " on URI " + req.url + " not allowed in standard server");
+	console.error("---- Method " + req.method + " on URI " + req.url + " not allowed in standard server");
 	return res.send(new restify.MethodNotAllowedError());
 });
 
 secureServer.on("MethodNotAllowed", function(req, res) {
-	console.log("---- Method " + req.method + " on URI " + req.url + " not allowed in secure server");
+	console.error("---- Method " + req.method + " on URI " + req.url + " not allowed in secure server");
 	return res.send(new restify.MethodNotAllowedError());
 });
 

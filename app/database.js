@@ -41,13 +41,13 @@ sphinxPool = mysql.createPool({
 query = function(queryString, paramArray, callback) {
 	sharingearPool.getConnection(function(error, connection) {
 		if(error) {
-			console.log("Error opening database connection.");
+			console.error("Error opening database connection.");
 			callback(error);
 			return;
 		}
 		connection.query(queryString, paramArray, function(error, rows) {
 			if(error) {
-				console.log("Error running query: " + queryString + ". " + error.code);
+				console.error("Error running query: " + queryString + ". " + error.code);
 			}
 			callback(error, rows);
 			connection.destroy();

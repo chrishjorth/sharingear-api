@@ -101,8 +101,6 @@ graphCall = function(apiPath, callback) {
 			buffer += chunk;
 		});
 		result.on("end", function() {
-			//console.log("FB graph call ended. Buffer:");
-			//console.log(buffer);
 			callback(null, buffer);
 		});
 		result.on("error", function(e) {
@@ -110,7 +108,7 @@ graphCall = function(apiPath, callback) {
 		});
 	});
 	request.on("error", function(error) {
-		console.log("Graph call error: " + JSON.stringify(error));
+		console.error("Graph call error: " + JSON.stringify(error));
 	});
 
 	request.end();

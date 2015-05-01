@@ -543,7 +543,7 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 					}
 					Gear.addAccessories(gearID, accessoryIDs, function(error) {
 						if(error) {
-							console.log("Error adding accessories: " + error);
+							console.error("Error adding accessories: " + error);
 							return;
 						}
 						callback(null, updatedGearData);
@@ -555,7 +555,7 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
 
 	this.getGearType(gearID, function(error, typeID) {
 		if(error) {
-			console.log("Error retrieving gear type: " + error);
+			console.error("Error retrieving gear type: " + error);
 			return;
 		}
 		Gear.checkSubtype(updatedGearData.subtype, typeID, function(error, subtypeID) {
@@ -641,7 +641,7 @@ search = function(location, gear, callback) {
 	db.search("SELECT id, gear_type, subtype, brand, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM gear_main, gear_delta WHERE MATCH(?) ORDER BY id DESC LIMIT 100", [gear], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
-			console.log("Error searching for match: " + JSON.stringify(error));
+			console.error("Error searching for match: " + JSON.stringify(error));
 			callback(error);
 			return;
 		}
@@ -672,7 +672,7 @@ search = function(location, gear, callback) {
 		db.search(sql, [lat, lng, Config.SEARCH_RADIUS], function(error, rows) {
 			var i;
 			if(error) {
-				console.log("Error filtering by location: " + JSON.stringify(error));
+				console.error("Error filtering by location: " + JSON.stringify(error));
 				callback(error);
 				return;
 			}

@@ -323,12 +323,12 @@ createWalletsForUser = function(mangopay_id, currencies, callback) {
         gatewayPost("/wallets", postData, function(error, data) {
             var parsedData;
             if (error) {
-                console.log("Error creating wallet for user: " + error);
+                console.error("Error creating wallet for user: " + error);
                 return;
             }
             parsedData = JSON.parse(data);
             if (parsedData.errors) {
-                console.log("Error creating wallet for user: " + data);
+                console.error("Error creating wallet for user: " + data);
                 return;
             }
             callback(null, parsedData);
@@ -588,8 +588,8 @@ chargePreAuthorization = function(seller, buyer, bookingData, callback) {
             }
             parsedData = JSON.parse(data);
             if (parsedData.Status !== "SUCCEEDED") {
-                console.log("chargePreAuthorization response: ");
-                console.log(data);
+                console.error("chargePreAuthorization response: ");
+                console.error(data);
                 callback("Charging preauthorized booking failed.");
                 return;
             }
@@ -994,7 +994,7 @@ createSharingearUser = function(callback) {
         }
         parsedData = JSON.parse(data);
         if (parsedData.Type === "param_error") {
-            console.log(data);
+            console.error(data);
             callback("Parameter error.");
             return;
         }

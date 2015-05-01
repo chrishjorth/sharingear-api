@@ -18,34 +18,6 @@ var db = require("./database"),
     convertPrices,
     getSupportedCurrencies;
 
-/*alpha2Countries = {
-    "AD": "andorra",
-    "AT": "austria",
-    "BE": "belgium",
-    "DK": "denmark",
-    "EE": "estonia",
-    "FI": "finland",
-    "FR": "france",
-    "DE": "germany",
-    "GR": "greece",
-    "IE": "ireland",
-    "IT": "italy",
-    "LV": "latvia",
-    "LU": "luxembourg",
-    "MT": "malta",
-    "MC": "monaco",
-    "NL": "netherlands",
-    "NO": "norway",
-    "PT": "portugal",
-    "SM": "san marino",
-    "SK": "slovakia",
-    "SI": "slovenia",
-    "ES": "spain",
-    "SE": "sweden",
-    "GB": "united kingdom",
-    "US": "united states",
-};*/
-
 loadLocalization = function(callback) {
     db.query("SELECT code, name, vat, currency, EU FROM countries ORDER BY name", [], function(error, rows) {
         if(error) {
@@ -111,8 +83,6 @@ convertPrices = function(prices, fromCurrency, toCurrency, callback) {
             return;
         }
         for(i = 0; i < prices.length; i++) {
-            //console.log("original price: " + prices[i] + " " + fromCurrency);
-            //console.log("converted: " + (prices[i] * rate) + " " + toCurrency);
             convertedPrices.push(prices[i] * rate);
         }
         callback(null, convertedPrices);
