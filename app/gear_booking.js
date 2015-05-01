@@ -359,10 +359,10 @@ updateToPending = function(booking, callback) {
                         console.log("Error sending notification on booking update to pending. Unable to get renter data.");
                         return;
                     }
-                    ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                    ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                    renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
-                    renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                    ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                    ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                    renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                    renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
 
                     Notifications.send(booking.id + "_OWNER_1_REQUEST", Notifications.OWNER_1_REQUEST, {
                         name: owner.name,
@@ -370,10 +370,10 @@ updateToPending = function(booking, callback) {
                         item_type: booking.gear_type,
                         item_name: booking.gear_brand + " " + booking.gear_model + " " + booking.gear_subtype,
                         pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
-                        pickup_date: ownerStartTime.format("DD/MM/YYYY"),
-                        pickup_time: ownerStartTime.format("HH:mm"),
-                        delivery_date: ownerEndTime.format("DD/MM/YYYY"),
-                        delivery_time: ownerEndTime.format("HH:mm"),
+                        pickup_date: ownerStartTime.tz(owner.time_zone).format("DD/MM/YYYY"),
+                        pickup_time: ownerStartTime.tz(owner.time_zone).format("HH:mm"),
+                        delivery_date: ownerEndTime.tz(owner.time_zone).format("DD/MM/YYYY"),
+                        delivery_time: ownerEndTime.tz(owner.time_zone).format("HH:mm"),
                         item_image_url: imageURL,
                         price: booking.owner_price,
                         fee: "-" + (booking.owner_price / 100 * booking.owner_fee),
@@ -387,10 +387,10 @@ updateToPending = function(booking, callback) {
                         owner_name: owner.name,
                         owner_surname: owner.surname,
                         owner_image_url: owner.image_url,
-                        pickup_date: renterStartTime.format("DD/MM/YYYY"),
-                        pickup_time: renterStartTime.format("HH:mm"),
-                        delivery_date: renterEndTime.format("DD/MM/YYYY"),
-                        delivery_time: renterEndTime.format("HH:mm"),
+                        pickup_date: renterStartTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                        pickup_time: renterStartTime.tz(renter.time_zone).format("HH:mm"),
+                        delivery_date: renterEndTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                        delivery_time: renterEndTime.tz(renter.time_zone).format("HH:mm"),
                         item_type: booking.gear_type,
                         item_name: booking.gear_brand + " " + booking.gear_model + " " + booking.gear_subtype,
                         pickup_postal_code: booking.pickup_postal_code,
@@ -435,17 +435,17 @@ updateToDenied = function(booking, callback) {
                     console.log("Error sending notification to renter on booking update to denied.");
                     return;
                 }
-                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
-                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
 
                 Notifications.send(booking.id + "_OWNER_DENIED", Notifications.OWNER_DENIED, {
                     name: booking.owner_name,
-                    pickup_date: ownerStartTime.format("DD/MM/YYYY"),
-                    pickup_time: ownerStartTime.format("HH:mm"),
-                    delivery_date: ownerEndTime.format("DD/MM/YYYY"),
-                    delivery_time: ownerEndTime.format("HH:mm"),
+                    pickup_date: ownerStartTime.tz(owner.time_zone).format("DD/MM/YYYY"),
+                    pickup_time: ownerStartTime.tz(owner.time_zone).format("HH:mm"),
+                    delivery_date: ownerEndTime.tz(owner.time_zone).format("DD/MM/YYYY"),
+                    delivery_time: ownerEndTime.tz(owner.time_zone).format("HH:mm"),
                     item_type: booking.gear_type,
                     item_name: booking.gear_brand + " " + booking.gear_model + " " + booking.gear_subtype,
                     pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
@@ -461,10 +461,10 @@ updateToDenied = function(booking, callback) {
                     owner_name: booking.owner_name,
                     owner_surname: booking.owner_surname,
                     owner_image_url: owner.image_url,
-                    pickup_date: renterStartTime.format("DD/MM/YYYY"),
-                    pickup_time: renterStartTime.format("HH:mm"),
-                    delivery_date: renterEndTime.format("DD/MM/YYYY"),
-                    delivery_time: renterEndTime.format("HH:mm"),
+                    pickup_date: renterStartTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                    pickup_time: renterStartTime.tz(renter.time_zone).format("HH:mm"),
+                    delivery_date: renterEndTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                    delivery_time: renterEndTime.tz(renter.time_zone).format("HH:mm"),
                     item_type: booking.gear_type,
                     item_name: booking.gear_brand + " " + booking.gear_model + " " + booking.gear_subtype,
                     pickup_postal_code: booking.pickup_postal_code,
@@ -513,10 +513,10 @@ updateToAccepted = function(booking, callback) {
                         console.log("Error sending notifications on booking update to accepted. Unable to get owner data.");
                         return;
                     }
-                    ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                    ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                    renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
-                    renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                    ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                    ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                    renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                    renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
 
                     paymentTime = new Moment.tz(renter.time_zone);
 
@@ -527,10 +527,10 @@ updateToAccepted = function(booking, callback) {
                         item_type: booking.gear_type,
                         item_name: booking.gear_brand + " " + booking.gear_model + " " + booking.gear_subtype,
                         owner_image_url: owner.image_url,
-                        pickup_date: renterStartTime.format("DD/MM/YYYY"),
-                        pickup_time: renterStartTime.format("HH:mm"),
-                        delivery_date: renterEndTime.format("DD/MM/YYYY"),
-                        delivery_time: renterEndTime.format("HH:mm"),
+                        pickup_date: renterStartTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                        pickup_time: renterStartTime.tz(renter.time_zone).format("HH:mm"),
+                        delivery_date: renterEndTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                        delivery_time: renterEndTime.tz(renter.time_zone).format("HH:mm"),
                         pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
                         item_image_url: imageURL,
                         price: booking.owner_price,
@@ -546,10 +546,10 @@ updateToAccepted = function(booking, callback) {
                         item_type: booking.gear_type,
                         item_name: booking.gear_brand + " " + booking.gear_model + " " + booking.gear_subtype,
                         pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
-                        pickup_date: ownerStartTime.format("DD/MM/YYYY"),
-                        pickup_time: ownerStartTime.format("HH:mm"),
-                        delivery_date: ownerEndTime.format("DD/MM/YYYY"),
-                        delivery_time: ownerEndTime.format("HH:mm"),
+                        pickup_date: ownerStartTime.tz(owner.time_zone).format("DD/MM/YYYY"),
+                        pickup_time: ownerStartTime.tz(owner.time_zone).format("HH:mm"),
+                        delivery_date: ownerEndTime.tz(owner.time_zone).format("DD/MM/YYYY"),
+                        delivery_time: ownerEndTime.tz(owner.time_zone).format("HH:mm"),
                         item_image_url: imageURL,
                         price: booking.owner_price,
                         fee: "-" + (booking.owner_price / 100 * booking.owner_fee),
@@ -562,10 +562,10 @@ updateToAccepted = function(booking, callback) {
                         name: booking.renter_name,
                         item_type: booking.gear_type,
                         item_name: booking.gear_brand + " " + booking.gear_model + " " + booking.gear_subtype,
-                        pickup_date: renterStartTime.format("DD/MM/YYYY"),
-                        pickup_time: renterStartTime.format("HH:mm"),
-                        delivery_date: renterEndTime.format("DD/MM/YYYY"),
-                        delivery_time: renterEndTime.format("HH:mm"),
+                        pickup_date: renterStartTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                        pickup_time: renterStartTime.tz(renter.time_zone).format("HH:mm"),
+                        delivery_date: renterEndTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                        delivery_time: renterEndTime.tz(renter.time_zone).format("HH:mm"),
                         pickup_address: booking.pickup_address + ", " + booking.pickup_postal_code + " " + booking.pickup_city + ", " + booking.pickup_country,
                         price: booking.owner_price,
                         fee: (booking.owner_price / 100 * booking.renter_fee),
@@ -739,30 +739,30 @@ checkBookingStatus = function() {
                 owner = users[0];
                 renter = users[1];
 
-                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
-                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
 
                 Notifications.send(booking.id + "_OWNER_3_START", Notifications.OWNER_3_START, {
                     owner_name: booking.owner_name,
                     item_type: booking.gear_type,
                     renter_name: booking.renter_name,
                     renter_image_url: renter.image_url,
-                    pickup_date: ownerStartTime.format("DD/MM/YYYY"),
-                    pickup_time: ownerStartTime.format("HH:mm"),
-                    delivery_date: ownerEndTime.format("DD/MM/YYYY"),
-                    delivery_time: ownerEndTime.format("HH:mm"),
+                    pickup_date: ownerStartTime.tz(owner.time_zone).format("DD/MM/YYYY"),
+                    pickup_time: ownerStartTime.tz(owner.time_zone).format("HH:mm"),
+                    delivery_date: ownerEndTime.tz(owner.time_zone).format("DD/MM/YYYY"),
+                    delivery_time: ownerEndTime.tz(owner.time_zone).format("HH:mm"),
                 }, booking.owner_email);
                 Notifications.send(booking.id + "_RENTER_3_START", Notifications.RENTER_3_START, {
                     renter_name: booking.renter_name,
                     item_type: booking.gear_type,
                     owner_name: booking.owner_name,
                     owner_image_url: owner.image_url,
-                    pickup_date: renterStartTime.format("DD/MM/YYYY"),
-                    pickup_time: renterStartTime.format("HH:mm"),
-                    delivery_date: renterEndTime.format("DD/MM/YYYY"),
-                    delivery_time: renterEndTime.format("HH:mm"),
+                    pickup_date: renterStartTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                    pickup_time: renterStartTime.tz(renter.time_zone).format("HH:mm"),
+                    delivery_date: renterEndTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                    delivery_time: renterEndTime.tz(renter.time_zone).format("HH:mm"),
                 }, booking.renter_email);
             });
         };
@@ -777,30 +777,30 @@ checkBookingStatus = function() {
                 owner = users[0];
                 renter = users[1];
 
-                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", owner.time_zone);
-                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
-                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", renter.time_zone);
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
 
                 Notifications.send(booking.id + "_OWNER_4_END", Notifications.OWNER_4_END, {
                     owner_name: booking.owner_name,
                     item_type: booking.gear_type,
                     renter_name: booking.renter_name,
                     renter_image_url: renter.image_url,
-                    pickup_date: ownerStartTime.format("DD/MM/YYYY"),
-                    pickup_time: ownerStartTime.format("HH:mm"),
-                    delivery_date: ownerEndTime.format("DD/MM/YYYY"),
-                    delivery_time: ownerEndTime.format("HH:mm"),
+                    pickup_date: ownerStartTime.tz(owner.time_zone).format("DD/MM/YYYY"),
+                    pickup_time: ownerStartTime.tz(owner.time_zone).format("HH:mm"),
+                    delivery_date: ownerEndTime.tz(owner.time_zone).format("DD/MM/YYYY"),
+                    delivery_time: ownerEndTime.tz(owner.time_zone).format("HH:mm"),
                 }, booking.owner_email);
                 Notifications.send(booking.id + "_RENTER_4_END", Notifications.RENTER_4_END, {
                     renter_name: booking.renter_name,
                     item_type: booking.gear_type,
                     owner_name: booking.owner_name,
                     owner_image_url: owner.image_url,
-                    pickup_date: renterStartTime.format("DD/MM/YYYY"),
-                    pickup_time: renterStartTime.format("HH:mm"),
-                    delivery_date: renterEndTime.format("DD/MM/YYYY"),
-                    delivery_time: renterEndTime.format("HH:mm"),
+                    pickup_date: renterStartTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                    pickup_time: renterStartTime.tz(renter.time_zone).format("HH:mm"),
+                    delivery_date: renterEndTime.tz(renter.time_zone).format("DD/MM/YYYY"),
+                    delivery_time: renterEndTime.tz(renter.time_zone).format("HH:mm"),
                 }, booking.renter_email);
             });
         };
