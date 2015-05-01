@@ -452,7 +452,7 @@ search = function(location, roadie, callback) {
 	db.search("SELECT id, roadie_type, name, surname, image_url, city, country, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM roadies_main, roadies_delta WHERE MATCH(?) ORDER BY id DESC LIMIT 100", [roadie], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
-			console.log("Error searching for match: " + JSON.stringify(error));
+			console.error("Error searching for match: " + JSON.stringify(error));
 			callback(error);
 			return;
 		}
@@ -483,7 +483,7 @@ search = function(location, roadie, callback) {
 		db.search(sql, [lat, lng, Config.SEARCH_RADIUS], function(error, rows) {
 			var i;
 			if(error) {
-				console.log("Error filtering by location: " + JSON.stringify(error));
+				console.error("Error filtering by location: " + JSON.stringify(error));
 				callback(error);
 				return;
 			}

@@ -276,7 +276,7 @@ send = function(emailID, notificationType, notificationParameters, recipientEmai
 
             SendGrid.send(email, function(error) {
                 if (error) {
-                    console.log("Error sending notification email: " + error);
+                    console.error("Error sending notification email: " + error);
                     return;
                 }
             });

@@ -347,7 +347,7 @@ updateToPending = function(booking, callback) {
             User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
                 var owner, renter;
                 if (error) {
-                    console.log("Error sending notification on booking update to pending. Unable to get owner data.");
+                    console.error("Error sending notification on booking update to pending. Unable to get owner data.");
                     return;
                 }
                 owner = users[0];
@@ -356,7 +356,7 @@ updateToPending = function(booking, callback) {
                 Gear.getImageURL(booking.gear_id, function(error, imageURL) {
                     var ownerStartTime, ownerEndTime, renterStartTime, renterEndTime;
                     if (error) {
-                        console.log("Error sending notification on booking update to pending. Unable to get renter data.");
+                        console.error("Error sending notification on booking update to pending. Unable to get renter data.");
                         return;
                     }
                     ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
@@ -423,7 +423,7 @@ updateToDenied = function(booking, callback) {
         User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
             var owner, renter;
             if (error) {
-                console.log("Error sending notification on booking update to pending. Unable to get owner data.");
+                console.error("Error sending notification on booking update to pending. Unable to get owner data.");
                 return;
             }
             owner = users[0];
@@ -432,7 +432,7 @@ updateToDenied = function(booking, callback) {
             Gear.getImageURL(booking.gear_id, function(error, imageURL) {
                 var ownerStartTime, ownerEndTime, renterStartTime, renterEndTime;
                 if (error) {
-                    console.log("Error sending notification to renter on booking update to denied.");
+                    console.error("Error sending notification to renter on booking update to denied.");
                     return;
                 }
                 ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
@@ -501,7 +501,7 @@ updateToAccepted = function(booking, callback) {
             User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
                 var owner, renter;
                 if (error) {
-                    console.log("Error sending notifications on booking update to accepted. Unable to get renter data.");
+                    console.error("Error sending notifications on booking update to accepted. Unable to get renter data.");
                     return;
                 }
                 owner = users[0];
@@ -510,7 +510,7 @@ updateToAccepted = function(booking, callback) {
                 Gear.getImageURL(booking.gear_id, function(error, imageURL) {
                     var ownerStartTime, ownerEndTime, renterStartTime, renterEndTime, paymentTime;
                     if (error) {
-                        console.log("Error sending notifications on booking update to accepted. Unable to get owner data.");
+                        console.error("Error sending notifications on booking update to accepted. Unable to get owner data.");
                         return;
                     }
                     ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");

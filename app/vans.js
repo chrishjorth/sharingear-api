@@ -543,7 +543,7 @@ search = function(location, van, callback) {
 	db.search("SELECT id, van_type, model, city, country, images, price_a, price_b, price_c, currency, latitude, longitude, owner_id FROM vans_main, vans_delta WHERE MATCH(?) ORDER BY id DESC LIMIT 100", [van], function(error, rows) {
 		var latLngArray, lat, lng, sql, i;
 		if(error) {
-			console.log("Error searching for match: " + JSON.stringify(error));
+			console.error("Error searching for match: " + JSON.stringify(error));
 			callback(error);
 			return;
 		}
@@ -574,7 +574,7 @@ search = function(location, van, callback) {
 		db.search(sql, [lat, lng, Config.SEARCH_RADIUS], function(error, rows) {
 			var i;
 			if(error) {
-				console.log("Error filtering by location: " + JSON.stringify(error));
+				console.error("Error filtering by location: " + JSON.stringify(error));
 				callback(error);
 				return;
 			}

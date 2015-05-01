@@ -343,7 +343,7 @@ updateToPending = function(booking, callback) {
             User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
                 var owner, renter, ownerStartTime, ownerEndTime, renterStartTime, renterEndTime;
                 if (error) {
-                    console.log("Error sending notification on booking update to pending. Unable to get owner data.");
+                    console.error("Error sending notification on booking update to pending. Unable to get owner data.");
                     return;
                 }
                 owner = users[0];
@@ -412,7 +412,7 @@ updateToDenied = function(booking, callback) {
         User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
             var owner, renter, ownerStartTime, ownerEndTime, renterStartTime, renterEndTime;
             if (error) {
-                console.log("Error sending notification on booking update to pending. Unable to get owner data.");
+                console.error("Error sending notification on booking update to pending. Unable to get owner data.");
                 return;
             }
             owner = users[0];
@@ -483,7 +483,7 @@ updateToAccepted = function(booking, callback) {
             User.readCompleteUsers([booking.owner_id, booking.renter_id], function(error, users) {
                 var owner, renter, ownerStartTime, ownerEndTime, renterStartTime, renterEndTime, paymentTime;
                 if (error) {
-                    console.log("Error sending notifications on booking update to accepted. Unable to get renter data.");
+                    console.error("Error sending notifications on booking update to accepted. Unable to get renter data.");
                     return;
                 }
                 owner = users[0];
