@@ -53,12 +53,15 @@ query = function(queryString, paramArray, callback) {
             callback(error);
             return;
         }
+        connection.on("error", function(error) {
+        	callback(error);
+        });
         connection.query(queryString, paramArray, function(error, rows) {
             if (error) {
                 console.error("Error running query: " + queryString + ". " + error.code);
             }
             callback(error, rows);
-            connection.destroy();
+            connection.release();
         });
     });
 };
@@ -69,9 +72,12 @@ search = function(searchString, paramArray, callback) {
             callback("Error opening sphinx connection: " + error);
             return;
         }
+        connection.on("error", function(error) {
+        	callback(error);
+        });
         connection.query(searchString, paramArray, function(error, rows) {
             callback(error, rows);
-            connection.destroy();
+            connection.release();
         });
     });
 };
