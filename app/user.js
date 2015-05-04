@@ -11,6 +11,7 @@ var db = require("./database"),
 	Localization = require("./localization"),
 	XChangeRates = require("./xchangerates"),
 
+	getClassification,
 	getUserFromFacebookID,
 	createUserFromFacebookInfo,
 	setServerAccessToken,
@@ -26,8 +27,27 @@ var db = require("./database"),
 
 	checkLocales;
 
+getClassification = function(callback) {
+    var sql = "SELECT type_name FROM user_types;";
+    db.query(sql, [], function(error, rows) {
+        var userTypes = [],
+            i;
+        if (error) {
+            callback(error);
+            return;
+        }
+        for (i = 0; i < rows.length; i++) {
+            userTypes.push({
+                user_type: rows[i].type_name
+            });
+        }
+        callback(null, userTypes);
+    });
+};
+
+
 getUserFromFacebookID = function(fbid, callback) {
-	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, vatnum FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
+	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, vatnum, band_name, company_name FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		var user;
 		if(error) {
 			callback(error);
@@ -57,7 +77,9 @@ getUserFromFacebookID = function(fbid, callback) {
 			hasBank: (rows[0].bank_id !== null),
 			buyer_fee: rows[0].buyer_fee,
 			seller_fee: rows[0].seller_fee,
-			vatnum: rows[0].vatnum
+			vatnum: rows[0].vatnum,
+			band_name: rows[0].band_name,
+			company_name: rows[0].company_name
 		};
 		user.currency = Localization.getCurrency(user.country);
 		callback(null, user);
@@ -171,7 +193,7 @@ readPublicUser = function(userID, callback) {
 };
 
 readUser = function(userID, callback) {
-	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, vatnum FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, vatnum, band_name, company_name FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var user;
 		if(error) {
 			callback(error);
@@ -200,7 +222,9 @@ readUser = function(userID, callback) {
 			hasBank: (rows[0].bank_id !== null),
 			buyer_fee: rows[0].buyer_fee,
 			seller_fee: rows[0].seller_fee,
-			vatnum: rows[0].vatnum
+			vatnum: rows[0].vatnum,
+			band_name: rows[0].band_name,
+			company_name: rows[0].company_name
 		};
 		user.currency = Localization.getCurrency(user.country);
 		callback(null, user);
@@ -275,6 +299,8 @@ update = function(userID, updatedInfo, callback) {
 			image_url: (updatedInfo.image_url ? updatedInfo.image_url : rows[0].image_url),
 			bio: (updatedInfo.bio ? updatedInfo.bio : rows[0].bio),
 			vatnum: (updatedInfo.vatnum ? updatedInfo.vatnum : rows[0].vatnum),
+			band_name: (updatedInfo.band_name ? updatedInfo.band_name : rows[0].band_name),
+			company_name: (updatedInfo.company_name ? updatedInfo.company_name : rows[0].company_name),
 			hasBank: (rows[0].bank_id !== null),
 			id: userID
 		};
@@ -286,8 +312,8 @@ update = function(userID, updatedInfo, callback) {
 
 		updateUser = function(mangopay_id) {
 			var userInfoArray;
-			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.time_zone, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, userInfo.vatnum, userInfo.id];
-			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, time_zone=?, nationality=?, phone=?, image_url=?, bio=?, vatnum=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
+			userInfoArray = [mangopay_id, userInfo.email, userInfo.name, userInfo.surname, userInfo.birthdate, userInfo.address, userInfo.postal_code, userInfo.city, userInfo.region, userInfo.country, userInfo.time_zone, userInfo.nationality, userInfo.phone, userInfo.image_url, userInfo.bio, userInfo.vatnum, userInfo.band_name, userInfo.company_name, userInfo.id];
+			db.query("UPDATE users SET mangopay_id=?, email=?, name=?, surname=?, birthdate=?, address=?, postal_code=?, city=?, region=?, country=?, time_zone=?, nationality=?, phone=?, image_url=?, bio=?, vatnum=?, band_name=?, company_name=? WHERE id=? LIMIT 1", userInfoArray, function(error) {
 				if(error) {
 					callback(error);
 					return;
@@ -431,6 +457,7 @@ checkLocales = function(user) {
 };
 
 module.exports = {
+	getClassification: getClassification,
 	getUserFromFacebookID: getUserFromFacebookID,
 	createUserFromFacebookInfo: createUserFromFacebookInfo,
 	setServerAccessToken: setServerAccessToken,
