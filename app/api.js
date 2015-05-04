@@ -200,14 +200,22 @@ readContentClassification = function(req, res, next) {
                     handleError(res, next, "Error retrieving roadie classification: " + error);
                     return;
                 }
-                contentClassification = {
-                    gearClassification: gearClassification.classification,
-                    gearBrands: gearClassification.brands,
-                    vanClassification: vanClassification,
-                    roadieClassification: roadieClassification
-                };
-                res.send(contentClassification);
-                next();
+                    User.getClassification(function(error, userClassification) {
+                    if (error) {
+                        handleError(res, next, "Error retrieving user classification: " + error);
+                        return;
+                    }
+                    contentClassification = {
+                        gearClassification: gearClassification.classification,
+                        gearBrands: gearClassification.brands,
+                        vanClassification: vanClassification,
+                        roadieClassification: roadieClassification,
+                        userClassification: userClassification
+                    };
+                    
+                    res.send(contentClassification);
+                    next();
+                });
             });
         });
     });

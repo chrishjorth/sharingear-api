@@ -11,6 +11,7 @@ var db = require("./database"),
 	Localization = require("./localization"),
 	XChangeRates = require("./xchangerates"),
 
+	getClassification,
 	getUserFromFacebookID,
 	createUserFromFacebookInfo,
 	setServerAccessToken,
@@ -25,6 +26,25 @@ var db = require("./database"),
 	getUserWithMangoPayData,
 
 	checkLocales;
+
+getClassification = function(callback) {
+    var sql = "SELECT type_name FROM user_types;";
+    db.query(sql, [], function(error, rows) {
+        var userTypes = [],
+            i;
+        if (error) {
+            callback(error);
+            return;
+        }
+        for (i = 0; i < rows.length; i++) {
+            userTypes.push({
+                user_type: rows[i].type_name
+            });
+        }
+        callback(null, userTypes);
+    });
+};
+
 
 getUserFromFacebookID = function(fbid, callback) {
 	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, vatnum, band_name, company_name FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
@@ -437,6 +457,7 @@ checkLocales = function(user) {
 };
 
 module.exports = {
+	getClassification: getClassification,
 	getUserFromFacebookID: getUserFromFacebookID,
 	createUserFromFacebookInfo: createUserFromFacebookInfo,
 	setServerAccessToken: setServerAccessToken,
