@@ -693,6 +693,7 @@ endBooking = function(bookingData, callback) {
 };
 
 checkBookingStatus = function() {
+    console.log("# Checking booking status for ROADIES...");
     //Read all gear bookings that are accepted and have not ended
     db.query("SELECT id, start_time, end_time, request_time, booking_status FROM roadie_bookings WHERE booking_status='accepted' OR booking_status='renter-returned' OR booking_status='owner_returned'", function(error, rows) {
         var i, currentMoment, requestMoment, startMoment, startMomentWindow, endMoment, endMomentWindow,
@@ -803,14 +804,17 @@ checkBookingStatus = function() {
             endMomentWindow = new Moment(endMoment);
             endMomentWindow.subtract(24, "hours");
             if (currentMoment.isAfter(startMomentWindow) === true && currentMoment.isBefore(startMoment) === true && requestMoment.isAfter(currentMoment) === false) {
+                console.log("# send ROADIES start mail for booking: " + rows[i].id);
                 sendStartMails(rows[i]);
             }
             //If there are less than 24 hours to the end and the booking was not created within the last 24 hours, send end email
             if (currentMoment.isAfter(endMomentWindow) === true && currentMoment.isBefore(endMoment) === true && requestMoment.isAfter(currentMoment) === false) {
+                console.log("# send ROADIES end mail for booking: " + rows[i].id);
                 sendEndMails(rows[i]);
             }
             //If booking to time has passed, and the users have not ended the booking send completion mail
             if (currentMoment.isAfter(endMoment) === true) {
+                console.log("# send ROADIES completion mail for booking: " + rows[i].id);
                 sendCompletionMails(rows[i]);
             }
         }
