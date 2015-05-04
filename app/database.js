@@ -51,6 +51,8 @@ query = function(queryString, paramArray, callback) {
         callback(error);
     };
 
+    console.log("Getting connection from pool...");
+
     sharingearPool.getConnection(function(error, connection) {
         if (error) {
             console.error("Error opening database connection.");
@@ -59,11 +61,12 @@ query = function(queryString, paramArray, callback) {
         }
         connection.on("error", handleConnectionError);
         connection.query(queryString, paramArray, function(error, rows) {
+            console.log("Returned from query and closing connection...");
+            connection.release();
             if (error) {
                 console.error("Error running query: " + queryString + ". " + error.code);
             }
             callback(error, rows);
-            connection.release();
         });
     });
 };
@@ -73,6 +76,8 @@ search = function(searchString, paramArray, callback) {
         callback(error);
     };
 
+    console.log("Getting connection from sphinx pool...");
+
     sphinxPool.getConnection(function(error, connection) {
         if (error) {
             callback("Error opening sphinx connection: " + error);
@@ -80,8 +85,9 @@ search = function(searchString, paramArray, callback) {
         }
         connection.on("error", handleConnectionError);
         connection.query(searchString, paramArray, function(error, rows) {
-            callback(error, rows);
+            console.log("Returned from sphinx query and closing connection...");
             connection.release();
+            callback(error, rows);
         });
     });
 };
