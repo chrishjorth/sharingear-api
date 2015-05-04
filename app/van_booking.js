@@ -25,6 +25,7 @@ var Moment = require("moment-timezone"),
     Notifications = require("./notifications"),
     Config = require("./config"),
     Localization = require("./localization"),
+    SGUtilities = require("./sgutilities"),
 
     create,
     _insertBooking,
@@ -70,8 +71,8 @@ create = function(renterID, bookingData, callback) {
                     callback(error);
                     return;
                 }
-                renter_price = Vans.getPrice(Math.ceil(convertedPrices[0]), Math.ceil(convertedPrices[1]), Math.ceil(convertedPrices[2]), bookingData.start_time, bookingData.end_time);
-                owner_price = Vans.getPrice(van.price_a, van.price_b, van.price_c, bookingData.start_time, bookingData.end_time);
+                renter_price = SGUtilities.getPriceForPeriod(Math.ceil(convertedPrices[0]), Math.ceil(convertedPrices[1]), Math.ceil(convertedPrices[2]), bookingData.start_time, bookingData.end_time);
+                owner_price = SGUtilities.getPriceForPeriod(van.price_a, van.price_b, van.price_c, bookingData.start_time, bookingData.end_time);
 
                 Payment.getUserWalletsForCurrency([renterData.mangopay_id, ownerData.mangopay_id], renterData.currency, function(error, wallets) {
                     if (error) {
