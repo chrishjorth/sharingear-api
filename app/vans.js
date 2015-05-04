@@ -25,7 +25,6 @@ var db = require("./database"),
 	checkOwner,
 	readVanWithID,
 	search,
-	getPrice,
 	getImageURL;
 
 getClassification = function(callback) {
@@ -587,20 +586,6 @@ search = function(location, van, callback) {
 	});
 };
 
-//TODO: Move this to a general utility or into payment, depending of circular reference risk
-getPrice = function(priceA, priceB, priceC, startTime, endTime) {
-	var startMoment, endMoment, months, weeks, days, price;
-	startMoment = new Moment(startTime, "YYYY-MM-DD HH:mm:ss");
-	endMoment = new Moment(endTime, "YYYY-MM-DD HH:mm:ss");
-	months = parseInt(endMoment.diff(startMoment, "months"), 10);
-	endMoment.subtract(months, "months");
-	weeks = parseInt(endMoment.diff(startMoment, "weeks"), 10);
-	endMoment.subtract(weeks, "weeks");
-	days = parseInt(endMoment.diff(startMoment, "days"), 10);
-	price = priceA * days + priceB * weeks + priceC * months;
-	return price;
-};
-
 /**
  * @return: the URL for the main image of a specific gear item. If the gear has no images an empty string is returned.
  */
@@ -634,6 +619,5 @@ module.exports = {
 	checkOwner: checkOwner,
 	readVanWithID: readVanWithID,
 	search: search,
-	getPrice: getPrice,
 	getImageURL: getImageURL
 };
