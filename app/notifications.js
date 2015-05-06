@@ -248,8 +248,8 @@ send = function(emailID, notificationType, notificationParameters, recipientEmai
                     break;
                 case RENTER_RECEIPT:
                     emailParams.subject = renterReceiptEmailSubject;
-                    emailParams.html = renterReceiptEmailSubject(notificationParameters);
-                    emailParams.text = renterReceiptEmailSubject(notificationParameters);
+                    emailParams.html = renterReceiptEmailHTMLTemplate(notificationParameters);
+                    emailParams.text = renterReceiptEmailTextTemplate(notificationParameters);
                     break;
                 case OWNER_DENIED:
                     emailParams.subject = ownerDeniedEmailSubject;
