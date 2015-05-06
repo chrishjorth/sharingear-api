@@ -565,8 +565,6 @@ chargePreAuthorization = function(seller, buyer, bookingData, callback) {
         console.log("buyerFee: " + buyerFee);
         console.log("amount: " + amount);
 
-
-
         postData = {
             AuthorId: buyer.mangopay_id,
             DebitedFunds: {
