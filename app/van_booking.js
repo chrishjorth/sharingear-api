@@ -356,10 +356,10 @@ updateToPending = function(booking, callback) {
                         console.error("Error sending notification on booking update to pending. Unable to get renter data.");
                         return;
                     }
-                    ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                    ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                    renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                    renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                    ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                    ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                    renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                    renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
 
                     Notifications.send(booking.id + "_OWNER_1_REQUEST", Notifications.OWNER_1_REQUEST, {
                         name: owner.name,
@@ -432,10 +432,10 @@ updateToDenied = function(booking, callback) {
                     console.error("Error sending notification to renter on booking update to denied.");
                     return;
                 }
-                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
 
                 Notifications.send(booking.id + "_OWNER_DENIED", Notifications.OWNER_DENIED, {
                     name: booking.owner_name,
@@ -510,10 +510,10 @@ updateToAccepted = function(booking, callback) {
                         console.error("Error sending notifications on booking update to accepted. Unable to get owner data.");
                         return;
                     }
-                    ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                    ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                    renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                    renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                    ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                    ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                    renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                    renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
 
                     paymentTime = new Moment.tz(renter.time_zone);
 
@@ -737,10 +737,10 @@ checkBookingStatus = function() {
                 owner = users[0];
                 renter = users[1];
 
-                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
 
                 Notifications.send(booking.id + "_OWNER_3_START", Notifications.OWNER_3_START, {
                     owner_name: booking.owner_name,
@@ -775,10 +775,10 @@ checkBookingStatus = function() {
                 owner = users[0];
                 renter = users[1];
 
-                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
 
                 Notifications.send(booking.id + "_OWNER_4_END", Notifications.OWNER_4_END, {
                     owner_name: booking.owner_name,
