@@ -239,7 +239,7 @@ _insertBooking = function(bookingData, callback) {
 };
 
 read = function(bookingID, callback) {
-    db.query("SELECT id, van_id, van_type, van_model, price_a, price_b, price_c, start_time, end_time, owner_id, owner_name, owner_surname, owner_email, owner_phone, owner_address, owner_city, owner_postal_code, owner_country, owner_vat_num, renter_id, renter_name, renter_surname, renter_email, renter_phone, renter_address, renter_city, renter_postal_code, renter_country, renter_vat_num, owner_currency, owner_price, owner_price_vat, owner_fee, owner_fee_vat, renter_currency, renter_price, renter_price_vat, renter_fee, renter_fee_vat, pickup_address, pickup_city, pickup_postal_code, pickup_country, booking_status FROM van_bookings WHERE id=?", [bookingID], function(error, rows) {
+    db.query("SELECT id, van_id, van_type, van_model, price_a, price_b, price_c, start_time, end_time, owner_id, owner_name, owner_surname, owner_email, owner_phone, owner_address, owner_city, owner_postal_code, owner_country, owner_vat_num, renter_id, renter_name, renter_surname, renter_email, renter_phone, renter_address, renter_city, renter_postal_code, renter_country, renter_vat_num, owner_currency, owner_price, owner_price_vat, owner_fee, owner_fee_vat, renter_currency, renter_price, renter_price_vat, renter_fee, renter_fee_vat, pickup_address, pickup_city, pickup_postal_code, pickup_country, preauth_id, booking_status FROM van_bookings WHERE id=?", [bookingID], function(error, rows) {
         if (error) {
             callback(error);
             return;
