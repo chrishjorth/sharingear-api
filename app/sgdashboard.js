@@ -32,7 +32,8 @@ wipeout = function(callback) {
 	sql += " TRUNCATE roadie_bookings;";
 	sql += " TRUNCATE wallets;";
 	sql += " TRUNCATE users;";
-	db.query(sql, [], function(error, result) {
+	sql += " TRUNCATE emails;";
+	db.query(sql, [], function(error) {
 		if(error) {
 			callback(error);
 			return;

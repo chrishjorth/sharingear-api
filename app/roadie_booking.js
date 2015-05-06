@@ -696,7 +696,7 @@ endBooking = function(bookingData, callback) {
 checkBookingStatus = function() {
     console.log("# Checking booking status for ROADIES...");
     //Read all gear bookings that are accepted and have not ended
-    db.query("SELECT id, start_time, end_time, request_time, booking_status FROM roadie_bookings WHERE booking_status='accepted' OR booking_status='renter-returned' OR booking_status='owner_returned'", function(error, rows) {
+    db.query("SELECT id, start_time, end_time, request_time, booking_status FROM roadie_bookings WHERE booking_status='accepted' OR booking_status='renter-returned' OR booking_status='owner_returned'", [], function(error, rows) {
         var i, currentMoment, requestMoment, startMoment, startMomentWindow, endMoment, endMomentWindow,
             sendStartMails, sendEndMails, sendCompletionMails;
 
