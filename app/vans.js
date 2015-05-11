@@ -612,7 +612,7 @@ getVans = function(callback) {
 			callback(error);
 			return;
 		}
-		callback(rows);
+		callback(null, rows);
 	});
 };
 
