@@ -711,7 +711,7 @@ getImageURL = function(gearID, callback) {
 };
 
 getGear = function(callback) {
-    db.query("SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name, gear.model, gear.updated FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [], function(error, rows) {
+    db.query("SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.updated FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [], function(error, rows) {
         if(error) {
             callback(error);
             return;
