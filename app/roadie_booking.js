@@ -239,7 +239,7 @@ _insertBooking = function(bookingData, callback) {
 };
 
 read = function(bookingID, callback) {
-    db.query("SELECT id, roadie_id, roadie_type, roadie_name, price_a, price_b, price_c, start_time, end_time, owner_id, owner_name, owner_surname, owner_email, owner_phone, owner_address, owner_city, owner_postal_code, owner_country, owner_vatnum, renter_id, renter_name, renter_surname, renter_email, renter_phone, renter_address, renter_city, renter_postal_code, renter_country, renter_vatnum, owner_currency, owner_price, owner_price_vat, owner_fee, owner_fee_vat, renter_currency, renter_price, renter_price_vat, renter_fee, renter_fee_vat, pickup_address, pickup_city, pickup_postal_code, pickup_country, booking_status FROM roadie_bookings WHERE id=?", [bookingID], function(error, rows) {
+    db.query("SELECT id, roadie_id, roadie_type, roadie_name, price_a, price_b, price_c, start_time, end_time, owner_id, owner_name, owner_surname, owner_email, owner_phone, owner_address, owner_city, owner_postal_code, owner_country, owner_vatnum, renter_id, renter_name, renter_surname, renter_email, renter_phone, renter_address, renter_city, renter_postal_code, renter_country, renter_vatnum, owner_currency, owner_price, owner_price_vat, owner_fee, owner_fee_vat, renter_currency, renter_price, renter_price_vat, renter_fee, renter_fee_vat, pickup_address, pickup_city, pickup_postal_code, pickup_country, preauth_id, booking_status FROM roadie_bookings WHERE id=?", [bookingID], function(error, rows) {
         if (error) {
             callback(error);
             return;
@@ -350,10 +350,10 @@ updateToPending = function(booking, callback) {
                 owner = users[0];
                 renter = users[1];
 
-                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
 
                 Notifications.send(booking.id + "_OWNER_1_REQUEST", Notifications.OWNER_1_REQUEST, {
                     name: owner.name,
@@ -419,10 +419,10 @@ updateToDenied = function(booking, callback) {
             owner = users[0];
             renter = users[1];
 
-            ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-            ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-            renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-            renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+            ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+            ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+            renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+            renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
 
             Notifications.send(booking.id + "_OWNER_DENIED", Notifications.OWNER_DENIED, {
                 name: booking.owner_name,
@@ -490,10 +490,10 @@ updateToAccepted = function(booking, callback) {
                 owner = users[0];
                 renter = users[1];
 
-                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
 
                 paymentTime = new Moment.tz(renter.time_zone);
 
@@ -696,7 +696,7 @@ endBooking = function(bookingData, callback) {
 checkBookingStatus = function() {
     console.log("# Checking booking status for ROADIES...");
     //Read all gear bookings that are accepted and have not ended
-    db.query("SELECT id, start_time, end_time, request_time, booking_status FROM roadie_bookings WHERE booking_status='accepted' OR booking_status='renter-returned' OR booking_status='owner_returned'", function(error, rows) {
+    db.query("SELECT id, start_time, end_time, request_time, booking_status FROM roadie_bookings WHERE booking_status='accepted' OR booking_status='renter-returned' OR booking_status='owner_returned'", [], function(error, rows) {
         var i, currentMoment, requestMoment, startMoment, startMomentWindow, endMoment, endMomentWindow,
             sendStartMails, sendEndMails, sendCompletionMails;
 
@@ -717,10 +717,10 @@ checkBookingStatus = function() {
                 owner = users[0];
                 renter = users[1];
 
-                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
 
                 Notifications.send(booking.id + "_OWNER_3_START", Notifications.OWNER_3_START, {
                     owner_name: booking.owner_name,
@@ -755,10 +755,10 @@ checkBookingStatus = function() {
                 owner = users[0];
                 renter = users[1];
 
-                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UCT");
-                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UCT");
+                ownerStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                ownerEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterStartTime = new Moment.tz(booking.start_time, "YYYY-MM-DD HH:mm:ss", "UTC");
+                renterEndTime = new Moment.tz(booking.end_time, "YYYY-MM-DD HH:mm:ss", "UTC");
 
                 Notifications.send(booking.id + "_OWNER_4_END", Notifications.OWNER_4_END, {
                     owner_name: booking.owner_name,

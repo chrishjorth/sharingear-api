@@ -28,7 +28,8 @@ var db = require("./database"),
     readGearWithID,
     search,
     getOwner,
-    getImageURL;
+    getImageURL,
+    getGear;
 
 /**
  * @returns fx {
@@ -709,6 +710,16 @@ getImageURL = function(gearID, callback) {
     });
 };
 
+getGear = function(callback) {
+    db.query("SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.updated FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [], function(error, rows) {
+        if(error) {
+            callback(error);
+            return;
+        }
+        callback(null, rows);
+    });
+};
+
 module.exports = {
     getClassification: getClassification,
     checkTypes: checkTypes,
@@ -728,5 +739,6 @@ module.exports = {
     readGearWithID: readGearWithID,
     search: search,
     getOwner: getOwner,
-    getImageURL: getImageURL
+    getImageURL: getImageURL,
+    getGear: getGear
 };

@@ -14,11 +14,13 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
     readContentClassification,
 
     createGear,
+    getGear,
     readGearWithID,
     addImageToGear,
     generateFileName,
     readGearSearchResults,
     createUserSession,
+    getUsers,
     readUserWithID,
     updateUserWithID,
     updateUserBankDetails,
@@ -38,6 +40,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
     updateVansForUserWithID,
     createVanAvailability,
     readVanAvailability,
+    getVans,
     readVan,
     readVanSearchResults,
     createVanBooking,
@@ -51,6 +54,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
     updateRoadieForUserWithID,
     createRoadieAvailability,
     readRoadieAvailability,
+    getRoadies,
     readRoadie,
     readRoadieSearchResults,
     createRoadieBooking,
@@ -244,6 +248,17 @@ createGear = function(req, res, next) {
     });
 };
 
+getGear = function(req, res, next) {
+    Gear.getGear(function(error, gear) {
+        if(error) {
+            handleError(res, next, "Error getting gear: ", error);
+            return;
+        }
+        res.send(gear);
+        next();
+    });
+};
+
 readGearWithID = function(req, res, next) {
     Gear.readGearWithID(req.params.id, function(error, gear) {
         if (error) {
@@ -392,6 +407,17 @@ createUserSession = function(req, res, next) {
                 createSession(user, longToken);
             }
         });
+    });
+};
+
+getUsers = function(req, res, next) {
+    User.getUsers(function(error, users) {
+        if(error) {
+            handleError(res, next, "Error getting users: ", error);
+            return;
+        }
+        res.send(users);
+        next();
     });
 };
 
@@ -857,6 +883,17 @@ readVanAvailability = function(req, res, next) {
     });
 };
 
+getVans = function(req, res, next) {
+    Vans.getVans(function(error, vans) {
+        if(error) {
+            handleError(res, next, "Error getting vans: ", error);
+            return;
+        }
+        res.send(vans);
+        next();
+    });
+};
+
 readVan = function(req, res, next) {
     Vans.readVanWithID(req.params.van_id, function(error, van) {
         if (error) {
@@ -1119,6 +1156,17 @@ readRoadieAvailability = function(req, res, next) {
                 next();
             });
         });
+    });
+};
+
+getRoadies = function(req, res, next) {
+    Roadies.getRoadies(function(error, roadies) {
+        if(error) {
+            handleError(res, next, "Error getting roadies: ", error);
+            return;
+        }
+        res.send(roadies);
+        next();
     });
 };
 
@@ -1470,11 +1518,13 @@ secureServer.get("/localization", readLocalizationData);
 secureServer.get("/contentclassification", readContentClassification);
 
 secureServer.post("/gear", createGear);
+secureServer.get("/gear", getGear);
 secureServer.get("/gear/:id", readGearWithID);
 secureServer.post("/gear/image", addImageToGear);
 secureServer.get("/gear/search/:location/:gear/:daterange", readGearSearchResults);
 
 secureServer.post("/users/login", createUserSession);
+secureServer.get("/users", getUsers);
 secureServer.get("/users/:id", readUserWithID);
 secureServer.put("/users/:id", updateUserWithID);
 secureServer.put("/users/:id/bankdetails", updateUserBankDetails);
@@ -1496,6 +1546,7 @@ secureServer.post("/users/:user_id/vans/:van_id/image", addImageToVan);
 secureServer.put("/users/:user_id/vans/:van_id", updateVansForUserWithID);
 secureServer.post("/users/:user_id/vans/:van_id/availability", createVanAvailability);
 secureServer.get("/users/:user_id/vans/:van_id/availability", readVanAvailability);
+secureServer.get("/vans", getVans);
 secureServer.get("/vans/:van_id", readVan);
 secureServer.get("/vans/search/:location/:van/:daterange", readVanSearchResults);
 secureServer.post("/users/:user_id/vans/:van_id/bookings", createVanBooking);
@@ -1509,6 +1560,7 @@ secureServer.post("/users/:user_id/roadies", createRoadieForUserWithID);
 secureServer.put("/users/:user_id/roadies/:roadie_id", updateRoadieForUserWithID);
 secureServer.post("/users/:user_id/roadies/:roadie_id/availability", createRoadieAvailability);
 secureServer.get("/users/:user_id/roadies/:roadie_id/availability", readRoadieAvailability);
+secureServer.get("/roadies", getRoadies);
 secureServer.get("/roadies/:roadie_id", readRoadie);
 secureServer.get("/roadies/search/:location/:roadie/:daterange", readRoadieSearchResults);
 secureServer.post("/users/:user_id/roadies/:roadie_id/bookings", createRoadieBooking);

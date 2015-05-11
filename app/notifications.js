@@ -248,8 +248,8 @@ send = function(emailID, notificationType, notificationParameters, recipientEmai
                     break;
                 case RENTER_RECEIPT:
                     emailParams.subject = renterReceiptEmailSubject;
-                    emailParams.html = renterReceiptEmailSubject(notificationParameters);
-                    emailParams.text = renterReceiptEmailSubject(notificationParameters);
+                    emailParams.html = renterReceiptEmailHTMLTemplate(notificationParameters);
+                    emailParams.text = renterReceiptEmailTextTemplate(notificationParameters);
                     break;
                 case OWNER_DENIED:
                     emailParams.subject = ownerDeniedEmailSubject;
@@ -262,6 +262,7 @@ send = function(emailID, notificationType, notificationParameters, recipientEmai
                     emailParams.text = renterDeniedEmailTextTemplate(notificationParameters);
                     break;
                 default:
+                    console.error("Tried to send email notification of unknown type: " + notificationType);
                     return;
             }
 
@@ -274,7 +275,10 @@ send = function(emailID, notificationType, notificationParameters, recipientEmai
             }
             email = new SendGrid.Email(emailParams);
 
+            console.log("SEND NOTIF");
+
             SendGrid.send(email, function(error) {
+                console.log("SEND GRID RETURNED");
                 if (error) {
                     console.error("Error sending notification email: " + error);
                     return;

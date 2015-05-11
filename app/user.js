@@ -27,6 +27,7 @@ var db = require("./database"),
 	updateBankDetails,
 	getCardObject,
 	getUserWithMangoPayData,
+	getUsers,
 
 	checkLocales;
 
@@ -107,7 +108,7 @@ createUserFromFacebookInfo = function(userInfo, callback) {
 		userInfo.last_name, //surname
 		null, //birthdate
 		null, //city
-		"https://graph.facebook.com/" + userInfo.id + "/picture" //image_url
+		"https://graph.facebook.com/" + userInfo.id + "/picture?type=large" //image_url
 	];
 	if(userInfo.middle_name && userInfo.middle_name.length > 0) {
 		user[2] += " " + userInfo.middle_name;
@@ -563,6 +564,20 @@ getUserWithMangoPayData = function(userID, callback) {
 	});
 };
 
+getUsers = function(callback) {
+	db.query("SELECT id, name, surname FROM users;", [], function(error, rows) {
+		var i;
+		if(error) {
+			callback(error);
+			return;
+		}
+		for(i = 0; i < rows.length; i++) {
+			rows[i].surname = rows[i].surname.substr(0, 1);
+		}
+		callback(null, rows);
+	});
+};
+
 checkLocales = function(user) {
 	if(user.country !== null) {
 		user.country = user.country.toUpperCase();
@@ -597,5 +612,6 @@ module.exports = {
 	update: update,
 	updateBankDetails: updateBankDetails,
 	getCardObject: getCardObject,
-	getUserWithMangoPayData: getUserWithMangoPayData
+	getUserWithMangoPayData: getUserWithMangoPayData,
+	getUsers: getUsers
 };
