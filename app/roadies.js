@@ -24,7 +24,8 @@ var db = require("./database"),
     getAlwaysFlag,
     checkOwner,
     readRoadieWithID,
-    search;
+    search,
+    getRoadies;
 
 getClassification = function(callback) {
     var sql = "SELECT roadie_type, price_a_suggestion, price_b_suggestion, price_c_suggestion FROM roadie_types ORDER BY sorting;";
@@ -472,6 +473,16 @@ search = function(location, roadie, callback) {
     });
 };
 
+getRoadies = function(callback) {
+    db.query("SELECT roadies.id, users.name, users.surname, roadie_types.roadie_type FROM roadies, users, roadie_types WHERE users.id=roadies.owner_id AND roadie_types.id=roadies.roadie_type;", [], function(error, rows) {
+        if(error) {
+            callback(error);
+            return;
+        }
+        callback(rows);
+    });
+};
+
 module.exports = {
     getClassification: getClassification,
     readRoadiesFromUser: readRoadiesFromUser,
@@ -483,5 +494,6 @@ module.exports = {
     getAlwaysFlag: getAlwaysFlag,
     checkOwner: checkOwner,
     readRoadieWithID: readRoadieWithID,
-    search: search
+    search: search,
+    getRoadies: getRoadies
 };
