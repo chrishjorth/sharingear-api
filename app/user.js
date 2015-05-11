@@ -24,6 +24,7 @@ var db = require("./database"),
 	updateBankDetails,
 	getCardObject,
 	getUserWithMangoPayData,
+	getUsers,
 
 	checkLocales;
 
@@ -438,6 +439,19 @@ getUserWithMangoPayData = function(userID, callback) {
 	});
 };
 
+getUsers = function(callback) {
+	db.query("SELECT id, name, surname FROM users;", [], function(error, rows) {
+		if(error) {
+			callback(error);
+			return;
+		}
+		for(i = 0; i < rows.length; i++) {
+			rows[i].surname = rows[i].surname.substr(0, 1);
+		}
+		callback(rows);
+	});
+};
+
 checkLocales = function(user) {
 	if(user.country !== null) {
 		user.country = user.country.toUpperCase();
@@ -469,5 +483,6 @@ module.exports = {
 	update: update,
 	updateBankDetails: updateBankDetails,
 	getCardObject: getCardObject,
-	getUserWithMangoPayData: getUserWithMangoPayData
+	getUserWithMangoPayData: getUserWithMangoPayData,
+	getUsers: getUsers
 };
