@@ -441,6 +441,7 @@ getUserWithMangoPayData = function(userID, callback) {
 
 getUsers = function(callback) {
 	db.query("SELECT id, name, surname FROM users;", [], function(error, rows) {
+		var i;
 		if(error) {
 			callback(error);
 			return;
