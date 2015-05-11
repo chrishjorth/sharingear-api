@@ -17,6 +17,9 @@ var db = require("./database"),
 	setServerAccessToken,
 	matchToken,
 	getToken,
+	getUserTypesForUserWithID,
+	getUserTypeID,
+	addUserTypes,
 	readPublicUser,
 	readUser,
 	readCompleteUsers,
@@ -47,6 +50,7 @@ getClassification = function(callback) {
 
 
 getUserFromFacebookID = function(fbid, callback) {
+	var User = this;
 	db.query("SELECT id, fbid, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, vatnum, band_name, company_name FROM users WHERE fbid=? LIMIT 1", [fbid], function(error, rows) {
 		var user;
 		if(error) {
@@ -57,6 +61,7 @@ getUserFromFacebookID = function(fbid, callback) {
 			callback(null, null);
 			return;
 		}
+
 		user = {
 			id: rows[0].id,
 			fbid: rows[0].fbid,
@@ -82,7 +87,12 @@ getUserFromFacebookID = function(fbid, callback) {
 			company_name: rows[0].company_name
 		};
 		user.currency = Localization.getCurrency(user.country);
-		callback(null, user);
+
+		User.getUserTypesForUserWithID(user.id,function(error,userTypes){
+			user.user_types = userTypes;
+			callback(null, user);			
+		});
+
 	});
 };
 
@@ -178,6 +188,79 @@ getToken = function(userID, callback) {
 	});
 };
 
+getUserTypesForUserWithID = function(userID, callback){
+	var sql, userTypes, i;
+	sql = "SELECT user_types.type_name FROM user_types, has_user_types WHERE has_user_types.user_id=? AND user_types.id=has_user_types.user_type_id;";
+	db.query(sql, [userID], function(error, rows) {
+        var userTypes;
+        if (error) {
+            callback("Error getting accessory IDs: " + error);
+            return;
+        }
+        userTypes = [];
+        for (i = 0; i < rows.length; i++) {
+            userTypes.push(rows[i].type_name);
+        }
+        callback(null, userTypes);
+    });	
+};
+
+getUserTypeID = function(usertypes, callback) {
+    var sql, valueArray, i;
+    sql = "SELECT id FROM user_types WHERE type_name IN(";
+    valueArray = [];
+    
+    if (!Array.isArray(usertypes) || usertypes.length <= 0) {
+        callback(null, valueArray);
+        return;
+    }
+
+    for (i = 0; i < usertypes.length - 1; i++) {
+        sql += "?, ";
+        valueArray.push(usertypes[i]);
+    }
+
+    sql += "?";
+    valueArray.push(usertypes[i]);
+    sql += ");";
+
+    db.query(sql, valueArray, function(error, rows) {
+        var userTypeIDs;
+        if (error) {
+            callback("Error getting accessory IDs: " + error);
+            return;
+        }
+        userTypeIDs = [];
+        for (i = 0; i < rows.length; i++) {
+            userTypeIDs.push(rows[i].id);
+        }
+        callback(null, userTypeIDs);
+    });
+};
+
+addUserTypes = function(userID, userTypeIDs, callback) {
+    var sql, valueArray, i;
+    if (userTypeIDs.length <= 0) {
+        callback(null);
+        return;
+    }
+    sql = "INSERT INTO has_user_types(user_id, user_type_id) VALUES ";
+    valueArray = [];
+    for (i = 0; i < userTypeIDs.length - 1; i++) {
+        sql += "(?, ?), ";
+        valueArray.push(userID, userTypeIDs[i]);
+    }
+    sql += "(?, ?)";
+    valueArray.push(userID, userTypeIDs[i]);
+    db.query(sql, valueArray, function(error) {
+        if (error) {
+            callback(error);
+            return;
+        }
+        callback(null);
+    });
+};
+
 readPublicUser = function(userID, callback) {
 	db.query("SELECT id, name, surname, image_url, bio FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		if(error) {
@@ -193,16 +276,30 @@ readPublicUser = function(userID, callback) {
 };
 
 readUser = function(userID, callback) {
-	db.query("SELECT id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, bank_id, buyer_fee, seller_fee, vatnum, band_name, company_name FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
-		var user;
-		if(error) {
-			callback(error);
-			return;
-		}
-		if(rows.length <= 0) {
+	var sql;
+	sql = "SELECT users.id, users.email, users.name, users.surname, users.birthdate, users.address, users.postal_code, users.city, users.region, users.country, users.time_zone, users.nationality, users.phone, users.image_url, users.bio, users.bank_id, users.buyer_fee, users.seller_fee, users.vatnum, users.band_name, users.company_name, user_types.type_name";
+	sql += "FROM (SELECT users.id, users.email, users.name, users.surname, users.birthdate, users.address, users.postal_code, users.city, users.region, users.country, users.time_zone, users.nationality, users.phone, users.image_url, users.bio, users.bank_id, users.buyer_fee, users.seller_fee, users.vatnum, users.band_name, users.company_name FROM users WHERE users.id=? LIMIT 1) AS users";
+	sql += "LEFT JOIN(SELECT has_user_types.user_id, user_types.type_name FROM has_user_types, user_types WHERE has_user_types.user_type_id = user_types.id) AS user_types ON user_types.user_id=users.id;";
+
+    db.query(sql, [userID], function(error, rows) {
+        var user, userTypes, i;
+        if (error) {
+            callback(error);
+            return;
+        }
+
+        if( rows.length <= 0) {
 			callback("No user with id: " + userID + ".");
 			return;
 		}
+
+        userTypes = [];
+        for (i = 0; i < rows.length; i++) {
+            if (rows[i].type_name !== null) {
+                userTypes.push(rows[i].type_name);
+            }
+        }
+
 		user = {
 			id: rows[0].id,
 			email: rows[0].email,
@@ -224,11 +321,12 @@ readUser = function(userID, callback) {
 			seller_fee: rows[0].seller_fee,
 			vatnum: rows[0].vatnum,
 			band_name: rows[0].band_name,
-			company_name: rows[0].company_name
+			company_name: rows[0].company_name,
+			user_types: userTypes
 		};
 		user.currency = Localization.getCurrency(user.country);
 		callback(null, user);
-	});
+    });
 };
 
 /**
@@ -272,6 +370,7 @@ readCompleteUsers = function(userIDs, callback) {
 };
 
 update = function(userID, updatedInfo, callback) {
+	var User = this;
 	db.query("SELECT id, mangopay_id, email, name, surname, birthdate, address, postal_code, city, region, country, time_zone, nationality, phone, image_url, bio, vatnum FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
 		var userInfo, updateUser, updatePaymentUser, newCurrency;
 		if(error) {
@@ -301,10 +400,11 @@ update = function(userID, updatedInfo, callback) {
 			vatnum: (updatedInfo.vatnum ? updatedInfo.vatnum : rows[0].vatnum),
 			band_name: (updatedInfo.band_name ? updatedInfo.band_name : rows[0].band_name),
 			company_name: (updatedInfo.company_name ? updatedInfo.company_name : rows[0].company_name),
+			user_types: (updatedInfo.user_types ? updatedInfo.user_types : []),
 			hasBank: (rows[0].bank_id !== null),
 			id: userID
 		};
-
+		
 		if(checkLocales(userInfo) === false) {
 			callback("Locale not supported.");
 			return;
@@ -320,7 +420,32 @@ update = function(userID, updatedInfo, callback) {
 				}
 				userInfo.hasWallet = true;
 				userInfo.currency = Localization.getCurrency(userInfo.country);
-				callback(null, userInfo);
+		
+				//Delete accessories and then add them
+	            db.query("DELETE FROM has_user_types WHERE user_id=?;", [userID], function(error) {
+	                if (error) {
+	                    callback(error);
+	                    return;
+	                }
+	                
+	                User.getUserTypeID(updatedInfo.user_types, function(error, usertypesIDs) {
+	                    if (error) {
+	                        callback(error);
+	                        return;
+	                    }
+	                    if (usertypesIDs.length <= 0) {
+	                        callback(null, userInfo);
+	                        return;
+	                    }
+	                    User.addUserTypes(userID, usertypesIDs, function(error) {
+	                        if (error) {
+	                            console.error("Error adding accessories: " + error);
+	                            return;
+	                        }
+	                        callback(null, userInfo);
+	                    });
+	                });
+	            });
 			});
 		};
 
@@ -463,6 +588,9 @@ module.exports = {
 	setServerAccessToken: setServerAccessToken,
 	matchToken: matchToken,
 	getToken: getToken,
+	getUserTypesForUserWithID: getUserTypesForUserWithID,
+	getUserTypeID: getUserTypeID,
+	addUserTypes: addUserTypes,
 	readPublicUser: readPublicUser,
 	readUser: readUser,
 	readCompleteUsers: readCompleteUsers,
