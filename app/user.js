@@ -449,7 +449,7 @@ getUsers = function(callback) {
 		for(i = 0; i < rows.length; i++) {
 			rows[i].surname = rows[i].surname.substr(0, 1);
 		}
-		callback(rows);
+		callback(null, rows);
 	});
 };
 
