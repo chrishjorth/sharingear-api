@@ -29,7 +29,8 @@ var db = require("./database"),
     search,
     getOwner,
     getImageURL,
-    getGear;
+    getGear,
+    getGearImages;
 
 /**
  * @returns fx {
@@ -720,6 +721,24 @@ getGear = function(callback) {
     });
 };
 
+getGearImages = function(callback) {
+    db.query("SELECT gear.id, gear_types.gear_type, gear_subtypes.subtype, gear_brands.name AS brand, gear.model, gear.images, gear.updated FROM gear, gear_types, gear_subtypes, gear_brands WHERE gear_types.id=gear.gear_type AND gear_subtypes.id=gear.subtype AND gear_brands.id=gear.brand;", [], function(error, rows) {
+        var gearImages = [],
+            i;
+        if(error) {
+            callback(error);
+            return;
+        }
+        for(i = 0; i < rows.length; i++) {
+            if(rows[i].images.length > 0) {
+                rows[i].images = rows[i].images.split(",");
+                gearImages.push(rows[i]);
+            }
+        }
+        callback(null, gearImages);
+    });
+};
+
 module.exports = {
     getClassification: getClassification,
     checkTypes: checkTypes,
@@ -740,5 +759,6 @@ module.exports = {
     search: search,
     getOwner: getOwner,
     getImageURL: getImageURL,
-    getGear: getGear
+    getGear: getGear,
+    getGearImages: getGearImages
 };

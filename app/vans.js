@@ -26,7 +26,8 @@ var db = require("./database"),
 	readVanWithID,
 	search,
 	getImageURL,
-	getVans;
+	getVans,
+	getVansImages;
 
 getClassification = function(callback) {
 	var sql = "SELECT van_types.van_type, van_types.price_a_suggestion, van_types.price_b_suggestion, van_types.price_c_suggestion, accessories.accessory FROM  van_types";
@@ -616,6 +617,24 @@ getVans = function(callback) {
 	});
 };
 
+getVansImages = function(callback) {
+	db.query("SELECT vans.id, van_types.van_type, vans.model, vans.images", [], function(error, rows) {
+		var vansImages = [],
+            i;
+		if(error) {
+			callback(error);
+			return;
+		}
+		for(i = 0; i < rows.length; i++) {
+            if(rows[i].images.length > 0) {
+                rows[i].images = rows[i].images.split(",");
+               	vansImages.push(rows[i]);
+            }
+        }
+        callback(null, vansImages);
+	});
+};
+
 module.exports = {
 	getClassification: getClassification,
 	readVansFromUser: readVansFromUser,
@@ -631,5 +650,6 @@ module.exports = {
 	readVanWithID: readVanWithID,
 	search: search,
 	getImageURL: getImageURL,
-	getVans: getVans
+	getVans: getVans,
+	getVansImages: getVansImages
 };
