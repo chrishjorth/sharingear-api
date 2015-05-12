@@ -485,7 +485,7 @@ getRoadies = function(callback) {
 };
 
 getRoadiesImages = function(callback) {
-    db.query("SELECT roadies.id, users.name, users.surname, users.image_url, roadie_types.roadie_type FROM", [], function(error, rows) {
+    db.query("SELECT roadies.id, users.name, users.surname, users.image_url, roadie_types.roadie_type FROM roadies, users, roadie_types WHERE users.id=roadies.owner_id AND roadie_types.id=roadies.roadie_type;", [], function(error, rows) {
         var roadiesImages = [],
             i;
         if(error) {
