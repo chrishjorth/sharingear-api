@@ -279,8 +279,8 @@ readPublicUser = function(userID, callback) {
 readUser = function(userID, callback) {
 	var sql;
 	sql = "SELECT users.id, users.email, users.name, users.surname, users.birthdate, users.address, users.postal_code, users.city, users.region, users.country, users.time_zone, users.nationality, users.phone, users.image_url, users.bio, users.bank_id, users.buyer_fee, users.seller_fee, users.vatnum, users.band_name, users.company_name, user_types.type_name";
-	sql += "FROM (SELECT users.id, users.email, users.name, users.surname, users.birthdate, users.address, users.postal_code, users.city, users.region, users.country, users.time_zone, users.nationality, users.phone, users.image_url, users.bio, users.bank_id, users.buyer_fee, users.seller_fee, users.vatnum, users.band_name, users.company_name FROM users WHERE users.id=? LIMIT 1) AS users";
-	sql += "LEFT JOIN(SELECT has_user_types.user_id, user_types.type_name FROM has_user_types, user_types WHERE has_user_types.user_type_id = user_types.id) AS user_types ON user_types.user_id=users.id;";
+	sql += " FROM (SELECT users.id, users.email, users.name, users.surname, users.birthdate, users.address, users.postal_code, users.city, users.region, users.country, users.time_zone, users.nationality, users.phone, users.image_url, users.bio, users.bank_id, users.buyer_fee, users.seller_fee, users.vatnum, users.band_name, users.company_name FROM users WHERE users.id=? LIMIT 1) AS users";
+	sql += " LEFT JOIN(SELECT has_user_types.user_id, user_types.type_name FROM has_user_types, user_types WHERE has_user_types.user_type_id = user_types.id) AS user_types ON user_types.user_id=users.id;";
 
     db.query(sql, [userID], function(error, rows) {
         var user, userTypes, i;
