@@ -618,7 +618,7 @@ getVans = function(callback) {
 };
 
 getVansImages = function(callback) {
-	db.query("SELECT vans.id, van_types.van_type, vans.model, vans.images", [], function(error, rows) {
+	db.query("SELECT vans.id, van_types.van_type, vans.model, vans.images FROM vans, van_types WHERE van_types.id=vans.van_type;", [], function(error, rows) {
 		var vansImages = [],
             i;
 		if(error) {
