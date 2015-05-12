@@ -15,6 +15,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
 
     createGear,
     getGear,
+    getGearImages,
     readGearWithID,
     addImageToGear,
     generateFileName,
@@ -41,6 +42,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
     createVanAvailability,
     readVanAvailability,
     getVans,
+    getVansImages,
     readVan,
     readVanSearchResults,
     createVanBooking,
@@ -55,6 +57,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
     createRoadieAvailability,
     readRoadieAvailability,
     getRoadies,
+    getRoadiesImages,
     readRoadie,
     readRoadieSearchResults,
     createRoadieBooking,
@@ -255,6 +258,17 @@ getGear = function(req, res, next) {
             return;
         }
         res.send(gear);
+        next();
+    });
+};
+
+getGearImages = function(req, res, next) {
+    Gear.getGearImages(function(error, gearImages) {
+        if(error) {
+            handleError(res, next, "Error getting gear images: ", error);
+            return;
+        }
+        res.send(gearImages);
         next();
     });
 };
@@ -894,6 +908,17 @@ getVans = function(req, res, next) {
     });
 };
 
+getVansImages = function(req, res, next) {
+    Vans.getVansImages(function(error, vansImages) {
+        if(error) {
+            handleError(res, next, "Error getting vans images: ", error);
+            return;
+        }
+        res.send(vansImages);
+        next();
+    });
+};
+
 readVan = function(req, res, next) {
     Vans.readVanWithID(req.params.van_id, function(error, van) {
         if (error) {
@@ -1166,6 +1191,17 @@ getRoadies = function(req, res, next) {
             return;
         }
         res.send(roadies);
+        next();
+    });
+};
+
+getRoadiesImages = function(req, res, next) {
+    Roadies.getRoadiesImages(function(error, roadiesImages) {
+        if(error) {
+            handleError(res, next, "Error getting roadies images: ", error);
+            return;
+        }
+        res.send(roadiesImages);
         next();
     });
 };
@@ -1519,6 +1555,7 @@ secureServer.get("/contentclassification", readContentClassification);
 
 secureServer.post("/gear", createGear);
 secureServer.get("/gear", getGear);
+secureServer.get("/gear/images", getGearImages);
 secureServer.get("/gear/:id", readGearWithID);
 secureServer.post("/gear/image", addImageToGear);
 secureServer.get("/gear/search/:location/:gear/:daterange", readGearSearchResults);
@@ -1547,6 +1584,7 @@ secureServer.put("/users/:user_id/vans/:van_id", updateVansForUserWithID);
 secureServer.post("/users/:user_id/vans/:van_id/availability", createVanAvailability);
 secureServer.get("/users/:user_id/vans/:van_id/availability", readVanAvailability);
 secureServer.get("/vans", getVans);
+secureServer.get("/vans/images", getVansImages);
 secureServer.get("/vans/:van_id", readVan);
 secureServer.get("/vans/search/:location/:van/:daterange", readVanSearchResults);
 secureServer.post("/users/:user_id/vans/:van_id/bookings", createVanBooking);
@@ -1561,6 +1599,7 @@ secureServer.put("/users/:user_id/roadies/:roadie_id", updateRoadieForUserWithID
 secureServer.post("/users/:user_id/roadies/:roadie_id/availability", createRoadieAvailability);
 secureServer.get("/users/:user_id/roadies/:roadie_id/availability", readRoadieAvailability);
 secureServer.get("/roadies", getRoadies);
+secureServer.get("/roadies/images", getRoadiesImages);
 secureServer.get("/roadies/:roadie_id", readRoadie);
 secureServer.get("/roadies/search/:location/:roadie/:daterange", readRoadieSearchResults);
 secureServer.post("/users/:user_id/roadies/:roadie_id/bookings", createRoadieBooking);

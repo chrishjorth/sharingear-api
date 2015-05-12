@@ -25,7 +25,8 @@ var db = require("./database"),
     checkOwner,
     readRoadieWithID,
     search,
-    getRoadies;
+    getRoadies,
+    getRoadiesImages;
 
 getClassification = function(callback) {
     var sql = "SELECT roadie_type, price_a_suggestion, price_b_suggestion, price_c_suggestion FROM roadie_types ORDER BY sorting;";
@@ -483,6 +484,24 @@ getRoadies = function(callback) {
     });
 };
 
+getRoadiesImages = function(callback) {
+    db.query("SELECT roadies.id, users.name, users.surname, users.image_url, roadie_types.roadie_type FROM", [], function(error, rows) {
+        var roadiesImages = [],
+            i;
+        if(error) {
+            callback(error);
+            return;
+        }
+        for(i = 0; i < rows.length; i++) {
+            if(rows[i].image_url.length > 0) {
+                roadiesImages.push(rows[i]);
+            }
+        }
+        callback(null, roadiesImages);
+    });
+
+};
+
 module.exports = {
     getClassification: getClassification,
     readRoadiesFromUser: readRoadiesFromUser,
@@ -495,5 +514,6 @@ module.exports = {
     checkOwner: checkOwner,
     readRoadieWithID: readRoadieWithID,
     search: search,
-    getRoadies: getRoadies
+    getRoadies: getRoadies,
+    getRoadiesImages: getRoadiesImages
 };
