@@ -47,8 +47,6 @@ sphinxPool.on("error", function(error) {
 });
 
 query = function(queryString, paramArray, callback) {
-    console.log("Getting connection from pool...");
-
     sharingearPool.getConnection(function(error, connection) {
         var handleConnectionError = function(error) {
             callback(error);
@@ -60,7 +58,6 @@ query = function(queryString, paramArray, callback) {
         }
         connection.on("error", handleConnectionError);
         connection.query(queryString, paramArray, function(error, rows) {
-            console.log("Returned from query and closing connection...");
             connection.release();
             connection.removeListener("error", handleConnectionError);
             if (error) {
@@ -72,8 +69,6 @@ query = function(queryString, paramArray, callback) {
 };
 
 search = function(searchString, paramArray, callback) {
-    console.log("Getting connection from sphinx pool...");
-
     sphinxPool.getConnection(function(error, connection) {
         var handleConnectionError = function(error) {
             callback(error);
@@ -84,7 +79,6 @@ search = function(searchString, paramArray, callback) {
         }
         connection.on("error", handleConnectionError);
         connection.query(searchString, paramArray, function(error, rows) {
-            console.log("Returned from sphinx query and closing connection...");
             connection.release();
             connection.removeListener("error", handleConnectionError);
             callback(error, rows);
