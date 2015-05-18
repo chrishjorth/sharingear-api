@@ -169,6 +169,8 @@ send = function(emailID, notificationType, notificationParameters, recipientEmai
         textTemplate,
         htmlTemplate;
 
+    console.log("Sending email of type " + notificationType);
+
     this.readEmailWithID(emailID, function(error, email) {
         if (error) {
             console.error("Error reading email with ID " + emailID + ": " + error);
@@ -177,6 +179,7 @@ send = function(emailID, notificationType, notificationParameters, recipientEmai
 
         if (email !== null) {
             //The email has already been sent
+            console.log("Email has already been sent.");
             return;
         }
 
