@@ -1391,6 +1391,7 @@ readSGBalance = function(req, res, next) {
                     handleError(res, next, "Error retrieving Sharingear balance: ", error);
                     return;
                 }
+                console.log(balance);
                 res.send({
                     balance: balance
                 });
