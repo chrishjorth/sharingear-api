@@ -77,6 +77,7 @@ loadPayment = function(callback) {
                     }
                     Payment.createSGWallets(_.difference(supportedCurrencies, sgCurrencies), callback);
                 } else {
+                    Payment.sg_user.wallets = wallets;
                     callback(null);
                 }
             });
@@ -734,27 +735,30 @@ payOutSeller = function(seller, bookingData, callback) {
 };
 
 getSGBalance = function(callback) {
-    var i = 0,
+    var Payment = this,
+        i = 0,
         walletBalances = [],
+        walletCounter = 0,
         getWalletBalance;
 
     getWalletBalance = function(wallet_id) {
         gatewayGet("/wallets/" + wallet_id, function(error, data) {
             var parsedData;
+            walletCounter++;
             if (error) {
                 callback("Error getting Sharingear wallet: " + error);
                 return;
             }
             parsedData = JSON.parse(data);
             walletBalances.push(parsedData.Balance);
-            if(i >= this.sg_user.wallets.length) {
+            if(walletCounter >= Payment.sg_user.wallets.length) {
                 callback(null, walletBalances);
             }
         });
     };
 
     while(i < this.sg_user.wallets.length) {
-        getWalletBalance(this.sg_user.wallets[i]);
+        getWalletBalance(this.sg_user.wallets[i].wallet_id);
         i++;
     }
 };
