@@ -692,19 +692,16 @@ payOutSeller = function(seller, bookingData, callback) {
                     console.log("payout successful");
                     callback(null);
 
-                    if(bookingData.gear_type) {
+                    if (bookingData.gear_type) {
                         item_type = bookingData.gear_type;
                         item_name = bookingData.gear_brand + " " + bookingData.gear_model + " " + bookingData.gear_subtype;
-                    }
-                    else if(bookingData.roadie_type) {
+                    } else if (bookingData.roadie_type) {
                         item_type = bookingData.roadie_type;
                         item_name = bookingData.name + " " + bookingData.surname;
-                    }
-                    else if(bookingData.van_type) {
+                    } else if (bookingData.van_type) {
                         item_type = bookingData.van_type;
                         item_name = bookingData.van_model;
-                    }
-                    else {
+                    } else {
                         console.error("Could not detect booking type for owner receipt creation.");
                         return;
                     }
@@ -737,16 +734,29 @@ payOutSeller = function(seller, bookingData, callback) {
 };
 
 getSGBalance = function(callback) {
-    gatewayGet("/wallets/" + this.sg_user.wallet_id, function(error, data) {
-        var parsedData;
-        if (error) {
-            callback("Error getting Sharingear wallet: " + error);
-            return;
-        }
-        console.log(data);
-        parsedData = JSON.parse(data);
-        callback(null, parsedData.Balance);
-    });
+    var i = 0,
+        walletBalances = [],
+        getWalletBalance;
+
+    getWalletBalance = function(wallet_id) {
+        gatewayGet("/wallets/" + wallet_id, function(error, data) {
+            var parsedData;
+            if (error) {
+                callback("Error getting Sharingear wallet: " + error);
+                return;
+            }
+            parsedData = JSON.parse(data);
+            walletBalances.push(parsedData.Balance);
+            if(i >= this.sg_user.wallets.length) {
+                callback(null, walletBalances);
+            }
+        });
+    };
+
+    while(i < this.sg_user.wallets.length) {
+        getWalletBalance(this.sg_user.wallets[i]);
+        i++;
+    }
 };
 
 getSGTransactions = function(callback) {
