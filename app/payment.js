@@ -743,6 +743,7 @@ getSGBalance = function(callback) {
             callback("Error getting Sharingear wallet: " + error);
             return;
         }
+        console.log(data);
         parsedData = JSON.parse(data);
         callback(null, parsedData.Balance);
     });
