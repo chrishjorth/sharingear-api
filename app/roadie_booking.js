@@ -126,10 +126,10 @@ create = function(renterID, bookingData, callback) {
                         renter_fee: renter_price / 100 * parseFloat(renterData.buyer_fee),
                         renter_fee_vat: 0, //TODO: Change this when VAT is implemented
                         //renter_pp_transaction_id: null,
-                        pickup_address: ownerData.address,
-                        pickup_postal_code: ownerData.postal_code,
-                        pickup_city: ownerData.city,
-                        pickup_country: ownerData.country,
+                        pickup_address: roadie.address,
+                        pickup_postal_code: roadie.postal_code,
+                        pickup_city: roadie.city,
+                        pickup_country:roadie.country,
                         cardId: bookingData.cardId,
                         returnURL: bookingData.returnURL
                     };
