@@ -67,6 +67,9 @@ getUserInfo = function(longToken, callback) {
 	});
 };
 
+/**
+ * @assertion: The token is provided by the database, and hence attached to a user record. For this reason we do not need to validate that the token belongs to the correct user.
+ */
 checkToken = function(longToken, callback) {
 	var apiPath = "/debug_token?input_token=" + longToken + "&access_token=" + getAppToken();
 	graphCall(apiPath, function(error, data) {

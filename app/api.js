@@ -1488,6 +1488,7 @@ handleError = function(res, next, message, error) {
 };
 
 isAuthorized = function(userID, callback) {
+    //Check that the user still has a valid Facebook token
     User.getToken(userID, function(error, token) {
         if (error) {
             callback(error);
@@ -1501,27 +1502,11 @@ isAuthorized = function(userID, callback) {
             if (tokenStatus !== "valid") {
                 callback(null, false);
             } else {
+                
                 callback(null, true);
             }
         });
     });
-    /*fb.checkToken(fbLongToken, function(error, tokenStatus) {
-		if(error) {
-			callback(error);
-			return;
-		}
-		if(tokenStatus !== "valid") {
-			callback("Error checking token: Token not valid.");
-			return;
-		}
-		User.matchToken(userID, fbLongToken, function(error, didMatch) {
-			if(error) {
-				callback(error);
-				return;
-			}
-			callback(null, didMatch);
-		});
-	});*/
 };
 
 //ROUTES
