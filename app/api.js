@@ -23,6 +23,7 @@ var Config, restify, fs, fb, Sec, User, Gear, GearAvailability, GearBooking, Van
     createUserSession,
     getUsers,
     readUserWithID,
+    readPublicUserWithID,
     updateUserWithID,
     updateUserBankDetails,
     readGearFromUserWithID,
@@ -153,7 +154,7 @@ server = restify.createServer({
 });
 
 server.on("uncaughtException", function(req, res, route, error) {
-	console.error("server uncaught exception: ");
+    console.error("server uncaught exception: ");
     console.error(error.stack);
     res.send(error);
 });
@@ -207,7 +208,7 @@ readContentClassification = function(req, res, next) {
                     handleError(res, next, "Error retrieving roadie classification: " + error);
                     return;
                 }
-                    User.getClassification(function(error, userClassification) {
+                User.getClassification(function(error, userClassification) {
                     if (error) {
                         handleError(res, next, "Error retrieving user classification: " + error);
                         return;
@@ -219,7 +220,7 @@ readContentClassification = function(req, res, next) {
                         roadieClassification: roadieClassification,
                         userClassification: userClassification
                     };
-                    
+
                     res.send(contentClassification);
                     next();
                 });
@@ -253,7 +254,7 @@ createGear = function(req, res, next) {
 
 getGear = function(req, res, next) {
     Gear.getGear(function(error, gear) {
-        if(error) {
+        if (error) {
             handleError(res, next, "Error getting gear: ", error);
             return;
         }
@@ -264,7 +265,7 @@ getGear = function(req, res, next) {
 
 getGearImages = function(req, res, next) {
     Gear.getGearImages(function(error, gearImages) {
-        if(error) {
+        if (error) {
             handleError(res, next, "Error getting gear images: ", error);
             return;
         }
@@ -419,7 +420,7 @@ createUserSession = function(req, res, next) {
 
 getUsers = function(req, res, next) {
     User.getUsers(function(error, users) {
-        if(error) {
+        if (error) {
             handleError(res, next, "Error getting users: ", error);
             return;
         }
@@ -430,24 +431,33 @@ getUsers = function(req, res, next) {
 
 readUserWithID = function(req, res, next) {
     isAuthorized(req, function(error, userID) {
-        var handleRead;
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        handleRead = function(error, user) {
+        if (userID === null) {
+            handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+            return;
+        }
+        User.readUser(userID, function(error, user) {
             if (error) {
                 handleError(res, next, "Error reading user: ", error);
                 return;
             }
             res.send(user);
             next();
-        };
-        if (userID !== null) {
-            User.readUser(req.params.id, handleRead);
-        } else {
-            User.readPublicUser(req.params.id, handleRead);
+        });
+    });
+};
+
+readPublicUserWithID = function(req, res, next) {
+    User.readPublicUser(req.params.id, function(error, user) {
+        if (error) {
+            handleError(res, next, "Error reading user: ", error);
+            return;
         }
+        res.send(user);
+        next();
     });
 };
 
@@ -892,7 +902,7 @@ readVanAvailability = function(req, res, next) {
 
 getVans = function(req, res, next) {
     Vans.getVans(function(error, vans) {
-        if(error) {
+        if (error) {
             handleError(res, next, "Error getting vans: ", error);
             return;
         }
@@ -903,7 +913,7 @@ getVans = function(req, res, next) {
 
 getVansImages = function(req, res, next) {
     Vans.getVansImages(function(error, vansImages) {
-        if(error) {
+        if (error) {
             handleError(res, next, "Error getting vans images: ", error);
             return;
         }
@@ -1179,7 +1189,7 @@ readRoadieAvailability = function(req, res, next) {
 
 getRoadies = function(req, res, next) {
     Roadies.getRoadies(function(error, roadies) {
-        if(error) {
+        if (error) {
             handleError(res, next, "Error getting roadies: ", error);
             return;
         }
@@ -1190,7 +1200,7 @@ getRoadies = function(req, res, next) {
 
 getRoadiesImages = function(req, res, next) {
     Roadies.getRoadiesImages(function(error, roadiesImages) {
-        if(error) {
+        if (error) {
             handleError(res, next, "Error getting roadies images: ", error);
             return;
         }
@@ -1496,12 +1506,12 @@ isAuthorized = function(req, callback) {
     //Check if request is authorized
     var token = Sec.getTokenFromRequest(req),
         tokenData;
-    if(token === null) {
+    if (token === null) {
         callback("No token in header.");
         return;
     }
     tokenData = Sec.verifyJWT(token);
-    if(tokenData === null) {
+    if (tokenData === null) {
         callback("Authentication token is not valid.");
         return;
     }
@@ -1539,9 +1549,9 @@ secureServer.on("MethodNotAllowed", function(req, res) {
     var allowedHeaders;
     //jQuery forces preflight requests when adding additional headers such as an authorization header
     //https://github.com/mcavage/node-restify/issues/284
-    if(req.method.toLowerCase() === "options") {
+    if (req.method.toLowerCase() === "options") {
         allowedHeaders = ["Accept", "Accept-Version", "Content-Type", "Api-Version", "Origin", "X-Requested-With", "Authorization"];
-        if(res.methods.indexOf("OPTIONS") === -1) {
+        if (res.methods.indexOf("OPTIONS") === -1) {
             res.methods.push("OPTIONS");
         }
         res.header("Access-Control-Allow-Credentials", true);
@@ -1550,8 +1560,7 @@ secureServer.on("MethodNotAllowed", function(req, res) {
         res.header("Access-Control-Allow-Origin", req.headers.origin);
 
         return res.send(200);
-    }
-    else {
+    } else {
         console.error("---- Method " + req.method + " on URI " + req.url + " not allowed in secure server");
         return res.send(new restify.MethodNotAllowedError());
     }
@@ -1573,6 +1582,7 @@ secureServer.post("/users/login", createUserSession);
 });*/
 secureServer.get("/users", getUsers);
 secureServer.get("/users/:id", readUserWithID);
+secureServer.get("/users/:id/public", readPublicUserWithID);
 secureServer.put("/users/:id", updateUserWithID);
 secureServer.put("/users/:id/bankdetails", updateUserBankDetails);
 secureServer.get("/users/:id/newfilename/:filename", generateFileName);
