@@ -751,28 +751,45 @@ getSGBalance = function(callback) {
             }
             parsedData = JSON.parse(data);
             walletBalances.push(parsedData.Balance);
-            if(walletCounter >= Payment.sg_user.wallets.length) {
+            if (walletCounter >= Payment.sg_user.wallets.length) {
                 callback(null, walletBalances);
             }
         });
     };
 
-    while(i < this.sg_user.wallets.length) {
+    while (i < this.sg_user.wallets.length) {
         getWalletBalance(this.sg_user.wallets[i].wallet_id);
         i++;
     }
 };
 
 getSGTransactions = function(callback) {
-    gatewayGet("/wallets/" + this.sg_user.wallet_id + "/transactions", function(error, data) {
-        var parsedData;
-        if (error) {
-            callback("Error getting Sharingear transactions: " + error);
-            return;
-        }
-        parsedData = JSON.parse(data);
-        callback(null, parsedData);
-    });
+    var Payment = this,
+        i = 0,
+        walletTransactions = [],
+        walletCounter = 0,
+        getWalletTransactions;
+
+    getWalletTransactions = function(wallet_id) {
+        gatewayGet("/wallets/" + wallet_id + "/transactions", function(error, data) {
+            var parsedData;
+            walletCounter++;
+            if (error) {
+                callback("Error getting Sharingear transactions: " + error);
+                return;
+            }
+            parsedData = JSON.parse(data);
+            walletTransactions.push(parsedData);
+            if(walletCounter >= Payment.sg_user.wallets.length) {
+                callback(null, walletTransactions);
+            }
+        });
+    };
+
+    while(i < this.sg_user.wallets.length) {
+        getWalletTransactions(this.sg_user.wallets[i].wallet_id);
+        i++;
+    }
 };
 
 getSGPreauthorization = function(preauthID, callback) {
