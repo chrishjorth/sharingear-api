@@ -181,7 +181,7 @@ getToken = function(userID, callback) {
 			callback("No user with id " + userID + ".");
 			return;
 		}
-		if(rows[0].fb_token === null) {
+		if(rows[0].fb_token === null || rows[0].fb_token === "") {
 			callback("User has no token.");
 			return;
 		}
