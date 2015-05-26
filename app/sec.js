@@ -7,9 +7,13 @@
 "use strict";
 
 var crypto = require("crypto"),
+	JWT = require("jsonwebtoken"),
 	sharingearSecret = "95b95a4a2e59ddc98136ce54b8a0f8d2",
 	generateFileName,
-	getFileSecretProof;
+	getFileSecretProof,
+	signJWT,
+	verifyJWT,
+	getTokenFromRequest;
 
 /**
  * Generates a unique filename.
@@ -28,7 +32,34 @@ getFileSecretProof = function(filename) {
 	return hmac.digest("hex");
 };
 
+signJWT = function(payload) {
+	return JWT.sign(payload, sharingearSecret);
+};
+
+verifyJWT = function(token) {
+	try {
+		return JWT.verify(token, sharingearSecret);
+	}
+	catch(error) {
+		return null;
+	}
+};
+
+getTokenFromRequest = function(req) {
+	var bearerHeader = req.headers.authorization;
+	if(!bearerHeader) {
+		//No Authorization header passed
+		return null;
+	}
+	//Authorization: Bearer token
+	bearerHeader = bearerHeader.split(" ");
+	return bearerHeader[1];
+};
+
 module.exports = {
 	generateFileName: generateFileName,
-	getFileSecretProof: getFileSecretProof
+	getFileSecretProof: getFileSecretProof,
+	signJWT: signJWT,
+	verifyJWT: verifyJWT,
+	getTokenFromRequest: getTokenFromRequest
 };

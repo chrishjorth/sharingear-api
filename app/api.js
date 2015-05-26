@@ -229,12 +229,12 @@ readContentClassification = function(req, res, next) {
 };
 
 createGear = function(req, res, next) {
-    isAuthorized(req.params.owner_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -296,12 +296,12 @@ addImageToGear = function(req, res, next) {
         return;
     }
 
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -321,13 +321,13 @@ addImageToGear = function(req, res, next) {
 generateFileName = function(req, res, next) {
     var params = req.params;
 
-    isAuthorized(params.id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         var newFileName, dot, extension, secret;
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -369,6 +369,11 @@ createUserSession = function(req, res, next) {
                 handleError(res, next, "Error setting Access Token: ", error);
                 return;
             }
+            user.token = Sec.signJWT({
+                user_id: user.id,
+                name: user.name,
+                surname: user.surname
+            });
             res.send(user);
             next();
         });
@@ -424,7 +429,7 @@ getUsers = function(req, res, next) {
 };
 
 readUserWithID = function(req, res, next) {
-    isAuthorized(req.params.id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         var handleRead;
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
@@ -438,7 +443,7 @@ readUserWithID = function(req, res, next) {
             res.send(user);
             next();
         };
-        if (status === true) {
+        if (userID !== null) {
             User.readUser(req.params.id, handleRead);
         } else {
             User.readPublicUser(req.params.id, handleRead);
@@ -447,12 +452,12 @@ readUserWithID = function(req, res, next) {
 };
 
 updateUserWithID = function(req, res, next) {
-    isAuthorized(req.params.id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -469,12 +474,12 @@ updateUserWithID = function(req, res, next) {
 };
 
 updateUserBankDetails = function(req, res, next) {
-    isAuthorized(req.params.id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -505,12 +510,12 @@ readGearFromUserWithID = function(req, res, next) {
  * @return the updated gear
  */
 updateGearFromUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -526,12 +531,12 @@ updateGearFromUserWithID = function(req, res, next) {
 };
 
 readGearAvailability = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -556,13 +561,13 @@ readGearAvailability = function(req, res, next) {
 };
 
 createGearAvailability = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         var availability;
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -610,12 +615,12 @@ createGearAvailability = function(req, res, next) {
 };
 
 readGearRentalsFromUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -631,12 +636,12 @@ readGearRentalsFromUserWithID = function(req, res, next) {
 };
 
 readGearReservationsFromUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -652,12 +657,12 @@ readGearReservationsFromUserWithID = function(req, res, next) {
 };
 
 createGearBooking = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -673,12 +678,12 @@ createGearBooking = function(req, res, next) {
 };
 
 readGearBooking = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -694,12 +699,12 @@ readGearBooking = function(req, res, next) {
 };
 
 updateGearBooking = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === false) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -726,12 +731,12 @@ readVansFromUserWithID = function(req, res, next) {
 };
 
 createVansForUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === false) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -758,12 +763,12 @@ addImageToVan = function(req, res, next) {
         return;
     }
 
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -781,12 +786,12 @@ addImageToVan = function(req, res, next) {
 };
 
 updateVansForUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -802,13 +807,13 @@ updateVansForUserWithID = function(req, res, next) {
 };
 
 createVanAvailability = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         var availability;
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -856,12 +861,12 @@ createVanAvailability = function(req, res, next) {
 };
 
 readVanAvailability = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -931,12 +936,12 @@ readVanSearchResults = function(req, res, next) {
 };
 
 createVanBooking = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -952,12 +957,12 @@ createVanBooking = function(req, res, next) {
 };
 
 readVanBooking = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -973,12 +978,12 @@ readVanBooking = function(req, res, next) {
 };
 
 updateVanBooking = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -994,12 +999,12 @@ updateVanBooking = function(req, res, next) {
 };
 
 readVanRentalsFromUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1015,12 +1020,12 @@ readVanRentalsFromUserWithID = function(req, res, next) {
 };
 
 readVanReservationsFromUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1047,12 +1052,12 @@ readRoadiesFromUserWithID = function(req, res, next) {
 };
 
 createRoadieForUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1068,12 +1073,12 @@ createRoadieForUserWithID = function(req, res, next) {
 };
 
 updateRoadieForUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1089,13 +1094,13 @@ updateRoadieForUserWithID = function(req, res, next) {
 };
 
 createRoadieAvailability = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         var availability;
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1143,12 +1148,12 @@ createRoadieAvailability = function(req, res, next) {
 };
 
 readRoadieAvailability = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1237,12 +1242,12 @@ readRoadieSearchResults = function(req, res, next) {
 };
 
 createRoadieBooking = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1258,12 +1263,12 @@ createRoadieBooking = function(req, res, next) {
 };
 
 readRoadieBooking = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1279,12 +1284,12 @@ readRoadieBooking = function(req, res, next) {
 };
 
 updateRoadieBooking = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1300,12 +1305,12 @@ updateRoadieBooking = function(req, res, next) {
 };
 
 readRoadieRentalsFromUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1321,12 +1326,12 @@ readRoadieRentalsFromUserWithID = function(req, res, next) {
 };
 
 readRoadieReservationsFromUserWithID = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1342,12 +1347,12 @@ readRoadieReservationsFromUserWithID = function(req, res, next) {
 };
 
 createCardObject = function(req, res, next) {
-    isAuthorized(req.params.user_id, function(error, status) {
+    isAuthorized(req, function(error, userID) {
         if (error) {
             handleError(res, next, "Error authorizing user: ", error);
             return;
         }
-        if (status === false) {
+        if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
@@ -1377,12 +1382,12 @@ getExchangeRate = function(req, res, next) {
 
 readSGBalance = function(req, res, next) {
     if (req.params.user_id === "1" || req.params.user_id === "2") {
-        isAuthorized(req.params.user_id, function(error, status) {
+        isAuthorized(req, function(error, userID) {
             if (error) {
                 handleError(res, next, "Error authorizing user: ", error);
                 return;
             }
-            if (status === false) {
+            if (userID === null) {
                 handleError(res, next, "Error authorizing user: ", "User is not authorized.");
                 return;
             }
@@ -1404,12 +1409,12 @@ readSGBalance = function(req, res, next) {
 
 readSGTransactions = function(req, res, next) {
     if (req.params.user_id === "1" || req.params.user_id === "2") {
-        isAuthorized(req.params.user_id, function(error, status) {
+        isAuthorized(req, function(error, userID) {
             if (error) {
                 handleError(res, next, "Error authorizing user: ", error);
                 return;
             }
-            if (status === false) {
+            if (userID === null) {
                 handleError(res, next, "Error authorizing user: ", "User is not authorized.");
                 return;
             }
@@ -1429,12 +1434,12 @@ readSGTransactions = function(req, res, next) {
 
 readSGPreauthorization = function(req, res, next) {
     if (req.params.user_id === "1" || req.params.user_id === "2") {
-        isAuthorized(req.params.user_id, function(error, status) {
+        isAuthorized(req, function(error, userID) {
             if (error) {
                 handleError(res, next, "Error authorizing user: ", error);
                 return;
             }
-            if (status === false) {
+            if (userID === null) {
                 handleError(res, next, "Error authorizing user: ", "User is not authorized.");
                 return;
             }
@@ -1454,12 +1459,12 @@ readSGPreauthorization = function(req, res, next) {
 
 wipeout = function(req, res, next) {
     if (req.params.user_id === "1") {
-        isAuthorized(req.params.user_id, function(error, status) {
+        isAuthorized(req, function(error, userID) {
             if (error) {
                 handleError(res, next, "Error authorizing user: ", error);
                 return;
             }
-            if (status === false) {
+            if (userID === null) {
                 handleError(res, next, "Error authorizing user: ", "User is not authorized.");
                 return;
             }
@@ -1487,9 +1492,22 @@ handleError = function(res, next, message, error) {
     next();
 };
 
-isAuthorized = function(userID, callback) {
+isAuthorized = function(req, callback) {
+    //Check if request is authorized
+    var token = Sec.getTokenFromRequest(req),
+        tokenData;
+    if(token === null) {
+        callback("No token in header.");
+        return;
+    }
+    tokenData = Sec.verifyJWT(token);
+    if(tokenData === null) {
+        callback("Authentication token is not valid.");
+        return;
+    }
+
     //Check that the user still has a valid Facebook token
-    User.getToken(userID, function(error, token) {
+    User.getToken(tokenData.user_id, function(error, token) {
         if (error) {
             callback(error);
             return;
@@ -1502,7 +1520,6 @@ isAuthorized = function(userID, callback) {
             if (tokenStatus !== "valid") {
                 callback(null, false);
             } else {
-                
                 callback(null, true);
             }
         });
@@ -1519,8 +1536,25 @@ server.on("MethodNotAllowed", function(req, res) {
 });
 
 secureServer.on("MethodNotAllowed", function(req, res) {
-    console.error("---- Method " + req.method + " on URI " + req.url + " not allowed in secure server");
-    return res.send(new restify.MethodNotAllowedError());
+    var allowedHeaders;
+    //jQuery forces preflight requests when adding additional headers such as an authorization header
+    //https://github.com/mcavage/node-restify/issues/284
+    if(req.method.toLowerCase() === "options") {
+        allowedHeaders = ["Accept", "Accept-Version", "Content-Type", "Api-Version", "Origin", "X-Requested-With", "Authorization"];
+        if(res.methods.indexOf("OPTIONS") === -1) {
+            res.methods.push("OPTIONS");
+        }
+        res.header("Access-Control-Allow-Credentials", true);
+        res.header("Access-Control-Allow-Headers", allowedHeaders.join(", "));
+        res.header("Access-Control-Allow-Methods", res.methods.join(", "));
+        res.header("Access-Control-Allow-Origin", req.headers.origin);
+
+        return res.send(200);
+    }
+    else {
+        console.error("---- Method " + req.method + " on URI " + req.url + " not allowed in secure server");
+        return res.send(new restify.MethodNotAllowedError());
+    }
 });
 
 secureServer.get("/localization", readLocalizationData);
@@ -1534,6 +1568,9 @@ secureServer.post("/gear/image", addImageToGear);
 secureServer.get("/gear/search/:location/:gear/:daterange", readGearSearchResults);
 
 secureServer.post("/users/login", createUserSession);
+/*secureServer.opts("/users/login", function(req, res, next) {
+    var allowedHeaders = ["Accept", "Accept-Encoding", "Authorization", ""]
+});*/
 secureServer.get("/users", getUsers);
 secureServer.get("/users/:id", readUserWithID);
 secureServer.put("/users/:id", updateUserWithID);
