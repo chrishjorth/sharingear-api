@@ -266,6 +266,7 @@ send = function(emailID, notificationType, notificationParameters, recipientEmai
                     break;
                 default:
                     console.error("Tried to send email notification of unknown type: " + notificationType);
+                    console.trace();
                     return;
             }
 
