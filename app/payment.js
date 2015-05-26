@@ -771,7 +771,7 @@ getSGTransactions = function(callback) {
         getWalletTransactions;
 
     getWalletTransactions = function(wallet_id) {
-        gatewayGet("/wallets/" + wallet_id + "/transactions", function(error, data) {
+        gatewayGet("/wallets/" + wallet_id + "/transactions?per_page=100", function(error, data) {
             var parsedData;
             walletCounter++;
             if (error) {
