@@ -474,7 +474,7 @@ addImage = function(userID, gearID, imageURL, callback) {
 /**
  * Latitude and longitude must be in degrees.
  */
-updateGearWithID = function(gearID, updatedGearData, callback) {
+updateGearWithID = function(userID, gearID, updatedGearData, callback) {
     var Gear = this,
         update;
 
@@ -506,10 +506,11 @@ updateGearWithID = function(gearID, updatedGearData, callback) {
             updatedGearData.country,
             lat,
             lng,
-            gearID
+            gearID,
+            userID
         ];
 
-        db.query("UPDATE gear SET subtype=?, brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=?, currency=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=?, updated=NULL WHERE id=? LIMIT 1", inputs, function(error, result) {
+        db.query("UPDATE gear SET subtype=?, brand=?, model=?, description=?, images=?, price_a=?, price_b=?, price_c=?, currency=?, address=?, postal_code=?, city=?, region=?, country=?, latitude=?, longitude=?, updated=NULL WHERE id=? AND owner_id=? LIMIT 1", inputs, function(error, result) {
             if (error) {
                 callback(error);
                 return;

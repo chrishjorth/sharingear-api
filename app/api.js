@@ -533,11 +533,7 @@ updateGearFromUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        if (userID !== req.params.owner_id) {
-            handleError(res, next, "Error updating gear for user: ", "User is not the owner.");
-            return;
-        }
-        Gear.updateGearWithID(req.params.gear_id, req.params, function(error, updatedGearData) {
+        Gear.updateGearWithID(userID, req.params.gear_id, req.params, function(error, updatedGearData) {
             if (error) {
                 handleError(res, next, "Error updating gear: ", error);
                 return;
