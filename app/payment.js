@@ -710,7 +710,7 @@ payOutSeller = function(seller, bookingData, callback) {
                     startTime = new Moment.tz(bookingData.start_time, "YYYY-MM-DD HH:mm:ss", seller.time_zone);
                     endTime = new Moment.tz(bookingData.end_time, "YYYY-MM-DD HH:mm:ss", seller.time_zone);
 
-                    Notifications.send(bookingData.id + "_OWNER_6_RECEIPT", Notifications.OWNER_6_RECEIPT, {
+                    Notifications.send(bookingData.id + "_OWNER_RECEIPT", Notifications.OWNER_RECEIPT, {
                         name: bookingData.owner_name,
                         surname: bookingData.owner_surname,
                         item_type: item_type,
