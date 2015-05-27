@@ -64,7 +64,7 @@ getUserFromFacebookID = function(fbid, callback) {
 		}
 
 		user = {
-			id: rows[0].id,
+			id: rows[0].id.toString(), //We do not want number vs string issues in comparisons fx when extracting from authentication token
 			fbid: rows[0].fbid,
 			email: rows[0].email,
 			name: rows[0].name,
@@ -190,7 +190,7 @@ getToken = function(userID, callback) {
 };
 
 getUserTypesForUserWithID = function(userID, callback){
-	var sql, userTypes, i;
+	var sql, i;
 	sql = "SELECT user_types.type_name FROM user_types, has_user_types WHERE has_user_types.user_id=? AND user_types.id=has_user_types.user_type_id;";
 	db.query(sql, [userID], function(error, rows) {
         var userTypes;
@@ -272,6 +272,7 @@ readPublicUser = function(userID, callback) {
 			callback("No user with id: " + userID + ".");
 			return;
 		}
+		rows[0].id = rows[0].id.toString(); //We need to ensure user id's are strings
 		callback(null, rows[0]);
 	});
 };
@@ -302,7 +303,7 @@ readUser = function(userID, callback) {
         }
 
 		user = {
-			id: rows[0].id,
+			id: rows[0].id.toString(), //We need to ensure user id's are strings
 			email: rows[0].email,
 			name: rows[0].name,
 			surname: rows[0].surname,
@@ -364,6 +365,7 @@ readCompleteUsers = function(userIDs, callback) {
 			return;
 		}
 		for(i = 0; i < rows.length; i++) {
+			rows[i].id = rows[i].id.toString();
 			rows[i].currency = Localization.getCurrency(rows[i].country);
 		}
 		callback(null, rows);
@@ -560,6 +562,7 @@ getUserWithMangoPayData = function(userID, callback) {
 			callback("No user with id " + userID + ".");
 			return;
 		}
+		rows[0].id = rows[0].id.toString();
 		callback(null, rows[0]);
 	});
 };
@@ -572,6 +575,7 @@ getUsers = function(callback) {
 			return;
 		}
 		for(i = 0; i < rows.length; i++) {
+			rows[i].id = rows[i].id.toString();
 			rows[i].surname = rows[i].surname.substr(0, 1);
 		}
 		callback(null, rows);

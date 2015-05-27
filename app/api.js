@@ -1564,9 +1564,9 @@ isAuthorized = function(req, callback) {
                 return;
             }
             if (tokenStatus !== "valid") {
-                callback(null, false);
+                callback("Facebook token expired.");
             } else {
-                callback(null, true);
+                callback(null, tokenData.user_id);
             }
         });
     });
