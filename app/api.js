@@ -239,6 +239,10 @@ createGear = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
+        if (req.params.owner_id !== userID) {
+            handleError(res, next, "Error creating gear: ", "The owner of the gear is not the currently logged in user.");
+            return;
+        }
         Gear.createGear(req.params, function(error, gearID) {
             if (error) {
                 handleError(res, next, "Error creating new gear: ", error);
@@ -306,7 +310,8 @@ addImageToGear = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        Gear.addImage(req.params.user_id, req.params.gear_id, imageURL, function(error, images) {
+
+        Gear.addImage(userID, req.params.gear_id, imageURL, function(error, images) {
             if (error) {
                 handleError(res, next, "Error authorizing user: ", error);
                 return;
@@ -321,7 +326,7 @@ addImageToGear = function(req, res, next) {
 
 generateFileName = function(req, res, next) {
     var params = req.params;
-
+    //We require authentication for this to avoid meddling and resource hogging
     isAuthorized(req, function(error, userID) {
         var newFileName, dot, extension, secret;
         if (error) {
@@ -471,8 +476,7 @@ updateUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-
-        User.update(req.params.id, req.params, function(error, updatedUser) {
+        User.update(userID, req.params, function(error, updatedUser) {
             if (error) {
                 handleError(res, next, "Error updating user: ", error);
                 return;
@@ -493,7 +497,7 @@ updateUserBankDetails = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        User.updateBankDetails(req.params.id, req.params, function(error) {
+        User.updateBankDetails(userID, req.params, function(error) {
             if (error) {
                 handleError(res, next, "Error adding bank details: ", error);
                 return;
@@ -529,7 +533,7 @@ updateGearFromUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        Gear.updateGearWithID(req.params.gear_id, req.params, function(error, updatedGearData) {
+        Gear.updateGearWithID(userID, req.params.gear_id, req.params, function(error, updatedGearData) {
             if (error) {
                 handleError(res, next, "Error updating gear: ", error);
                 return;
@@ -583,13 +587,13 @@ createGearAvailability = function(req, res, next) {
         }
         availability = JSON.parse(req.params.availability);
         //Check that the user owns the gear
-        Gear.checkOwner(req.params.user_id, req.params.gear_id, function(error, data) {
+        Gear.checkOwner(userID, req.params.gear_id, function(error, data) {
             if (error) {
                 handleError(res, next, "Error checking gear ownership: ", error);
                 return;
             }
             if (data === false) {
-                handleError(res, next, "Error checking gear ownership: ", "User " + req.params.user_id + " does not own gear " + req.params.gear_id);
+                handleError(res, next, "Error checking gear ownership: ", "User " + userID + " does not own gear " + req.params.gear_id);
                 return;
             }
             Gear.getAlwaysFlag(req.params.gear_id, function(error, result) {
@@ -634,7 +638,7 @@ readGearRentalsFromUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        GearBooking.readRentalsForUser(req.params.user_id, function(error, rentals) {
+        GearBooking.readRentalsForUser(userID, function(error, rentals) {
             if (error) {
                 handleError(res, next, "Error reading reservations for user: ", error);
                 return;
@@ -655,7 +659,7 @@ readGearReservationsFromUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        GearBooking.readReservationsForUser(req.params.user_id, function(error, reservations) {
+        GearBooking.readReservationsForUser(userID, function(error, reservations) {
             if (error) {
                 handleError(res, next, "Error reading reservations for user: ", error);
                 return;
@@ -676,7 +680,7 @@ createGearBooking = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        GearBooking.create(req.params.user_id, req.params, function(error, booking) {
+        GearBooking.create(userID, req.params, function(error, booking) {
             if (error) {
                 handleError(res, next, "Error creating booking: ", error);
                 return;
@@ -702,6 +706,10 @@ readGearBooking = function(req, res, next) {
                 handleError(res, next, "Error reading booking: ", error);
                 return;
             }
+            if (booking.owner_id !== userID && booking.renter_id !== userID) {
+                handleError(res, next, "Error reading booking: ", "The user trying to read is neither owner nor renter.");
+                return;
+            }
             res.send(booking);
             next();
         });
@@ -718,7 +726,7 @@ updateGearBooking = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        GearBooking.update(req.params, function(error) {
+        GearBooking.update(userID, req.params, function(error) {
             if (error) {
                 handleError(res, next, "Error updating booking: ", error);
                 return;
@@ -750,7 +758,7 @@ createVansForUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        Vans.createVans(req.params.user_id, req.params, function(error, van) {
+        Vans.createVans(userID, req.params, function(error, van) {
             if (error) {
                 handleError(res, next, "Error creating van: ", error);
                 return;
@@ -782,7 +790,7 @@ addImageToVan = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        Vans.addImage(req.params.user_id, req.params.van_id, imageURL, function(error, images) {
+        Vans.addImage(userID, req.params.van_id, imageURL, function(error, images) {
             if (error) {
                 handleError(res, next, "Error authorizing user: ", error);
                 return;
@@ -805,7 +813,7 @@ updateVansForUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        Vans.updateVanWithID(req.params.user_id, req.params.van_id, req.params, function(error, updatedVan) {
+        Vans.updateVanWithID(userID, req.params.van_id, req.params, function(error, updatedVan) {
             if (error) {
                 handleError(res, next, "Error updating van: ", error);
                 return;
@@ -829,13 +837,13 @@ createVanAvailability = function(req, res, next) {
         }
         availability = JSON.parse(req.params.availability);
         //Check that the user owns the gear
-        Vans.checkOwner(req.params.user_id, req.params.van_id, function(error, data) {
+        Vans.checkOwner(userID, req.params.van_id, function(error, data) {
             if (error) {
                 handleError(res, next, "Error checking van ownership: ", error);
                 return;
             }
             if (data === false) {
-                handleError(res, next, "Error checking van ownership: ", "User " + req.params.user_id + " does not own van " + req.params.van_id);
+                handleError(res, next, "Error checking van ownership: ", "User " + userID + " does not own van " + req.params.van_id);
                 return;
             }
             Vans.getAlwaysFlag(req.params.van_id, function(error, result) {
@@ -955,7 +963,7 @@ createVanBooking = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        VanBooking.create(req.params.user_id, req.params, function(error, booking) {
+        VanBooking.create(userID, req.params, function(error, booking) {
             if (error) {
                 handleError(res, next, "Error creating booking: ", error);
                 return;
@@ -981,6 +989,10 @@ readVanBooking = function(req, res, next) {
                 handleError(res, next, "Error reading booking: ", error);
                 return;
             }
+            if (booking.owner_id !== userID && booking.renter_id !== userID) {
+                handleError(res, next, "Error reading booking: ", "User is neither owner nor renter.");
+                return;
+            }
             res.send(booking);
             next();
         });
@@ -997,7 +1009,7 @@ updateVanBooking = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        VanBooking.update(req.params, function(error) {
+        VanBooking.update(userID, req.params, function(error) {
             if (error) {
                 handleError(res, next, "Error updating booking: ", error);
                 return;
@@ -1018,7 +1030,7 @@ readVanRentalsFromUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        VanBooking.readRentalsForUser(req.params.user_id, function(error, rentals) {
+        VanBooking.readRentalsForUser(userID, function(error, rentals) {
             if (error) {
                 handleError(res, next, "Error reading reservations for user: ", error);
                 return;
@@ -1039,7 +1051,7 @@ readVanReservationsFromUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        VanBooking.readReservationsForUser(req.params.user_id, function(error, reservations) {
+        VanBooking.readReservationsForUser(userID, function(error, reservations) {
             if (error) {
                 handleError(res, next, "Error reading reservations for user: ", error);
                 return;
@@ -1071,7 +1083,7 @@ createRoadieForUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        Roadies.createRoadie(req.params.user_id, req.params, function(error, van) {
+        Roadies.createRoadie(userID, req.params, function(error, van) {
             if (error) {
                 handleError(res, next, "Error creating roadie: ", error);
                 return;
@@ -1092,7 +1104,7 @@ updateRoadieForUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        Roadies.updateRoadieWithID(req.params.user_id, req.params.roadie_id, req.params, function(error, updatedVan) {
+        Roadies.updateRoadieWithID(userID, req.params.roadie_id, req.params, function(error, updatedVan) {
             if (error) {
                 handleError(res, next, "Error updating roadie: ", error);
                 return;
@@ -1116,13 +1128,13 @@ createRoadieAvailability = function(req, res, next) {
         }
         availability = JSON.parse(req.params.availability);
         //Check that the user owns the gear
-        Roadies.checkOwner(req.params.user_id, req.params.roadie_id, function(error, data) {
+        Roadies.checkOwner(userID, req.params.roadie_id, function(error, data) {
             if (error) {
                 handleError(res, next, "Error checking roadie ownership: ", error);
                 return;
             }
             if (data === false) {
-                handleError(res, next, "Error checking roadie ownership: ", "User " + req.params.user_id + " does not own roadie profile " + req.params.roadie_id);
+                handleError(res, next, "Error checking roadie ownership: ", "User " + userID + " does not own roadie profile " + req.params.roadie_id);
                 return;
             }
             Roadies.getAlwaysFlag(req.params.roadie_id, function(error, result) {
@@ -1261,7 +1273,7 @@ createRoadieBooking = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        RoadieBooking.create(req.params.user_id, req.params, function(error, booking) {
+        RoadieBooking.create(userID, req.params, function(error, booking) {
             if (error) {
                 handleError(res, next, "Error creating booking: ", error);
                 return;
@@ -1287,6 +1299,10 @@ readRoadieBooking = function(req, res, next) {
                 handleError(res, next, "Error reading booking: ", error);
                 return;
             }
+            if (userID !== booking.owner_id && userID !== booking.renter_id) {
+                handleError(res, next, "Error reading booking: ", "User is neither owner nor renter.");
+                return;
+            }
             res.send(booking);
             next();
         });
@@ -1303,7 +1319,7 @@ updateRoadieBooking = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        RoadieBooking.update(req.params, function(error) {
+        RoadieBooking.update(userID, req.params, function(error) {
             if (error) {
                 handleError(res, next, "Error updating booking: ", error);
                 return;
@@ -1324,7 +1340,7 @@ readRoadieRentalsFromUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        RoadieBooking.readRentalsForUser(req.params.user_id, function(error, rentals) {
+        RoadieBooking.readRentalsForUser(userID, function(error, rentals) {
             if (error) {
                 handleError(res, next, "Error reading rentals for user: ", error);
                 return;
@@ -1345,7 +1361,7 @@ readRoadieReservationsFromUserWithID = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        RoadieBooking.readReservationsForUser(req.params.user_id, function(error, reservations) {
+        RoadieBooking.readReservationsForUser(userID, function(error, reservations) {
             if (error) {
                 handleError(res, next, "Error reading reservations for user: ", error);
                 return;
@@ -1366,7 +1382,7 @@ createCardObject = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        User.getCardObject(req.params.user_id, function(error, cardObject) {
+        User.getCardObject(userID, function(error, cardObject) {
             if (error) {
                 handleError(res, next, "Error getting card object: ", error);
                 return;
@@ -1391,106 +1407,106 @@ getExchangeRate = function(req, res, next) {
 };
 
 readSGBalance = function(req, res, next) {
-    if (req.params.user_id === "1" || req.params.user_id === "2") {
-        isAuthorized(req, function(error, userID) {
+    isAuthorized(req, function(error, userID) {
+        if (error) {
+            handleError(res, next, "Error authorizing user: ", error);
+            return;
+        }
+        if (userID === null) {
+            handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+            return;
+        }
+        if (userID !== "1") {
+            handleError(res, next, "Error authorizing user: ", "User id is not authorized.");
+            return;
+        }
+        Payment.getSGBalance(function(error, balance) {
             if (error) {
-                handleError(res, next, "Error authorizing user: ", error);
+                handleError(res, next, "Error retrieving Sharingear balance: ", error);
                 return;
             }
-            if (userID === null) {
-                handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-                return;
-            }
-            Payment.getSGBalance(function(error, balance) {
-                if (error) {
-                    handleError(res, next, "Error retrieving Sharingear balance: ", error);
-                    return;
-                }
-                res.send({
-                    balance: balance
-                });
-                next();
+            res.send({
+                balance: balance
             });
+            next();
         });
-    } else {
-        handleError(res, next, "Error authorizing user: ", "User id is not authorized.");
-    }
+    });
 };
 
 readSGTransactions = function(req, res, next) {
-    if (req.params.user_id === "1" || req.params.user_id === "2") {
-        isAuthorized(req, function(error, userID) {
+    isAuthorized(req, function(error, userID) {
+        if (error) {
+            handleError(res, next, "Error authorizing user: ", error);
+            return;
+        }
+        if (userID === null) {
+            handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+            return;
+        }
+        if (userID !== "1") {
+            handleError(res, next, "Error authorizing user: ", "User id is not authorized.");
+            return;
+        }
+        Payment.getSGTransactions(function(error, transactions) {
             if (error) {
-                handleError(res, next, "Error authorizing user: ", error);
+                handleError(res, next, "Error retrieving Sharingear transactions: ", error);
                 return;
             }
-            if (userID === null) {
-                handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-                return;
-            }
-            Payment.getSGTransactions(function(error, transactions) {
-                if (error) {
-                    handleError(res, next, "Error retrieving Sharingear transactions: ", error);
-                    return;
-                }
-                res.send(transactions);
-                next();
-            });
+            res.send(transactions);
+            next();
         });
-    } else {
-        handleError(res, next, "Error authorizing user: ", "User id is not authorized.");
-    }
+    });
 };
 
 readSGPreauthorization = function(req, res, next) {
-    if (req.params.user_id === "1" || req.params.user_id === "2") {
-        isAuthorized(req, function(error, userID) {
+    isAuthorized(req, function(error, userID) {
+        if (error) {
+            handleError(res, next, "Error authorizing user: ", error);
+            return;
+        }
+        if (userID === null) {
+            handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+            return;
+        }
+        if (userID !== "1") {
+            handleError(res, next, "Error authorizing user: ", "User id is not authorized.");
+            return;
+        }
+        Payment.getSGPreauthorization(req.params.preauth_id, function(error, preauthorization) {
             if (error) {
-                handleError(res, next, "Error authorizing user: ", error);
+                handleError(res, next, "Error retrieving Sharingear preauthorization: ", error);
                 return;
             }
-            if (userID === null) {
-                handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-                return;
-            }
-            Payment.getSGPreauthorization(req.params.preauth_id, function(error, preauthorization) {
-                if (error) {
-                    handleError(res, next, "Error retrieving Sharingear preauthorization: ", error);
-                    return;
-                }
-                res.send(preauthorization);
-                next();
-            });
+            res.send(preauthorization);
+            next();
         });
-    } else {
-        handleError(res, next, "Error authorizing user: ", "User id is not authorized.");
-    }
+    });
 };
 
 wipeout = function(req, res, next) {
-    if (req.params.user_id === "1") {
-        isAuthorized(req, function(error, userID) {
+    isAuthorized(req, function(error, userID) {
+        if (error) {
+            handleError(res, next, "Error authorizing user: ", error);
+            return;
+        }
+        if (userID === null) {
+            handleError(res, next, "Error authorizing user: ", "User is not authorized.");
+            return;
+        }
+        if (userID !== "1") {
+            handleError(res, next, "Error authorizing user: ", "User id is not authorized.");
+            return;
+        }
+        SGDashboard.wipeout(function(error) {
             if (error) {
-                handleError(res, next, "Error authorizing user: ", error);
+                handleError(res, next, "Error performing wipeout: ", error);
                 return;
             }
-            if (userID === null) {
-                handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-                return;
-            }
-            SGDashboard.wipeout(function(error) {
-                if (error) {
-                    handleError(res, next, "Error performing wipeout: ", error);
-                    return;
-                }
-                console.log("Database wiped out successfully.");
-                res.send({});
-                next();
-            });
+            console.log("Database wiped out successfully.");
+            res.send({});
+            next();
         });
-    } else {
-        handleError(res, next, "Error authorizing user: ", "User id is not allowed in SG dashboard.");
-    }
+    });
 };
 
 /* UTILITIES */
@@ -1528,9 +1544,9 @@ isAuthorized = function(req, callback) {
                 return;
             }
             if (tokenStatus !== "valid") {
-                callback(null, false);
+                callback("Facebook token expired.");
             } else {
-                callback(null, true);
+                callback(null, tokenData.user_id);
             }
         });
     });
@@ -1577,9 +1593,6 @@ secureServer.post("/gear/image", addImageToGear);
 secureServer.get("/gear/search/:location/:gear/:daterange", readGearSearchResults);
 
 secureServer.post("/users/login", createUserSession);
-/*secureServer.opts("/users/login", function(req, res, next) {
-    var allowedHeaders = ["Accept", "Accept-Encoding", "Authorization", ""]
-});*/
 secureServer.get("/users", getUsers);
 secureServer.get("/users/:id", readUserWithID);
 secureServer.get("/users/:id/public", readPublicUserWithID);

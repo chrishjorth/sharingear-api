@@ -9,7 +9,7 @@
 "use strict";
 
 var https = require("https"),
-    Moment = require("moment"),
+    Moment = require("moment-timezone"),
     _ = require("underscore"),
     db = require("./database"),
     Notifications = require("./notifications"),
@@ -680,7 +680,7 @@ payOutSeller = function(seller, bookingData, callback) {
                 gatewayPost("/payouts/bankwire", postData, function(error, data) {
                     var item_type = "",
                         item_name = "",
-                        parsedData, startTime, endTime;
+                        parsedData, startTime, endTime, paymentTime;
                     if (error) {
                         callback("Error wiring from wallet: " + error);
                         return;
@@ -707,18 +707,19 @@ payOutSeller = function(seller, bookingData, callback) {
                         return;
                     }
 
-                    startTime = new Moment.tz(bookingData.start_time, "YYYY-MM-DD HH:mm:ss", seller.time_zone);
-                    endTime = new Moment.tz(bookingData.end_time, "YYYY-MM-DD HH:mm:ss", seller.time_zone);
+                    startTime = new Moment.tz(bookingData.start_time, "YYYY-MM-DD HH:mm:ss");
+                    endTime = new Moment.tz(bookingData.end_time, "YYYY-MM-DD HH:mm:ss");
+                    paymentTime = new Moment.tz(seller.time_zone);
 
-                    Notifications.send(bookingData.id + "_OWNER_6_RECEIPT", Notifications.OWNER_6_RECEIPT, {
+                    Notifications.send(bookingData.id + "_OWNER_RECEIPT", Notifications.OWNER_RECEIPT, {
                         name: bookingData.owner_name,
                         surname: bookingData.owner_surname,
                         item_type: item_type,
                         item_name: item_name,
-                        pickup_date: startTime.format("DD/MM/YYYY"),
-                        pickup_time: startTime.format("HH:mm"),
-                        delivery_date: endTime.format("DD/MM/YYYY"),
-                        delivery_time: endTime.format("HH:mm"),
+                        pickup_date: startTime.tz(seller.time_zone).format("DD/MM/YYYY"),
+                        pickup_time: startTime.tz(seller.time_zone).format("HH:mm"),
+                        delivery_date: endTime.tz(seller.time_zone).format("DD/MM/YYYY"),
+                        delivery_time: endTime.tz(seller.time_zone).format("HH:mm"),
                         price: bookingData.owner_price,
                         fee: "-" + bookingData.owner_fee,
                         total: bookingData.owner_price - (bookingData.owner_price * 100 / bookingData.owner_fee),
@@ -726,7 +727,9 @@ payOutSeller = function(seller, bookingData, callback) {
                         address: bookingData.owner_address,
                         postal_code: bookingData.postal_code,
                         city: bookingData.city,
-                        country: bookingData.country
+                        country: bookingData.country,
+                        pickup_address: bookingData.pickup_address + ", " + bookingData.pickup_postal_code + " " + bookingData.pickup_city + ", " + bookingData.pickup_country,
+                        payment_date: paymentTime.format("DD/MM/YYY HH:mm")
                     }, seller.email);
                 });
             });
@@ -780,13 +783,13 @@ getSGTransactions = function(callback) {
             }
             parsedData = JSON.parse(data);
             walletTransactions.push(parsedData);
-            if(walletCounter >= Payment.sg_user.wallets.length) {
+            if (walletCounter >= Payment.sg_user.wallets.length) {
                 callback(null, walletTransactions);
             }
         });
     };
 
-    while(i < this.sg_user.wallets.length) {
+    while (i < this.sg_user.wallets.length) {
         getWalletTransactions(this.sg_user.wallets[i].wallet_id);
         i++;
     }
