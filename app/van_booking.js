@@ -813,11 +813,13 @@ checkBookingStatus = function() {
         sendCompletionMails = function(booking) {
             Notifications.send(booking.id + "_OWNER_5_COMPLETION", Notifications.OWNER_5_COMPLETION, {
                 name: booking.owner_name,
-                item_type: booking.van_type
+                item_type: booking.van_type,
+                dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanrentals"
             }, booking.owner_email);
             Notifications.send(booking.id + "_RENTER_5_COMPLETION", Notifications.RENTER_5_COMPLETION, {
                 name: booking.renter_name,
-                item_type: booking.van_type
+                item_type: booking.van_type,
+                dashboard_link: "https://" + Config.VALID_IMAGE_HOST + "/#dashboard/yourvanreservations"
             }, booking.renter_email);
         };
 
