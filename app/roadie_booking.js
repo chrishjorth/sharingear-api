@@ -248,6 +248,8 @@ read = function(bookingID, callback) {
             callback("No booking found for id.");
             return;
         }
+        rows[0].owner_id = rows[0].owner_id.toString();
+        rows[0].renter_id = rows[0].renter_id.toString();
         callback(null, rows[0]);
     });
 };
@@ -280,7 +282,7 @@ readReservationsForUser = function(renterID, callback) {
     });
 };
 
-update = function(bookingData, callback) {
+update = function(userID, bookingData, callback) {
     var status = bookingData.booking_status,
         bookingID = bookingData.booking_id;
     if (status !== "pending" && status !== "denied" && status !== "accepted" && status !== "ended-denied" && status !== "owner-returned" && status !== "renter-returned") {
@@ -290,6 +292,10 @@ update = function(bookingData, callback) {
     this.read(bookingID, function(error, booking) {
         if (error) {
             callback("Error selecting booking interval: " + error);
+            return;
+        }
+        if (userID !== booking.owner_id && userID !== booking.renter_id) {
+            callback("Error updating van booking: User is neither owner nor renter.");
             return;
         }
         booking.preauth_id = bookingData.preauth_id;

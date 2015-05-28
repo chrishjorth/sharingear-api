@@ -553,7 +553,7 @@ getCardObject = function(userID, callback) {
 };
 
 getUserWithMangoPayData = function(userID, callback) {
-	db.query("SELECT users.id, users.email, users.name, users.surname, users.birthdate, users.address, users.postal_code, users.city, users.region, users.country, users.nationality, users.phone, users.image_url, users.bio, users.mangopay_id, users.bank_id, users.buyer_fee, users.seller_fee, countries.vat FROM users, countries WHERE id=? AND countries.code=users.country LIMIT 1", [userID], function(error, rows) {
+	db.query("SELECT users.id, users.email, users.name, users.surname, users.birthdate, users.address, users.postal_code, users.city, users.region, users.country, users.nationality, users.phone, users.image_url, users.bio, users.mangopay_id, users.bank_id, users.buyer_fee, users.seller_fee, countries.vat, users.time_zone FROM users, countries WHERE id=? AND countries.code=users.country LIMIT 1", [userID], function(error, rows) {
 		if(error) {
 			callback(error);
 			return;

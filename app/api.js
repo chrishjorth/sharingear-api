@@ -1009,11 +1009,7 @@ updateVanBooking = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        if (req.params.owner_id !== userID && req.params.renter_id !== userID) {
-            handleError(res, next, "Error updating booking: ", "User is neither owner nor renter.");
-            return;
-        }
-        VanBooking.update(req.params, function(error) {
+        VanBooking.update(userID, req.params, function(error) {
             if (error) {
                 handleError(res, next, "Error updating booking: ", error);
                 return;
@@ -1106,10 +1102,6 @@ updateRoadieForUserWithID = function(req, res, next) {
         }
         if (userID === null) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
-            return;
-        }
-        if (userID !== req.params.owner_id) {
-            handleError(res, next, "Error updating roadie: ", "User is not roadie profile owner.");
             return;
         }
         Roadies.updateRoadieWithID(userID, req.params.roadie_id, req.params, function(error, updatedVan) {
@@ -1327,11 +1319,7 @@ updateRoadieBooking = function(req, res, next) {
             handleError(res, next, "Error authorizing user: ", "User is not authorized.");
             return;
         }
-        if (userID !== req.params.owner_id && userID !== req.params.renter_id) {
-            handleError(res, next, "Error updating booking: ", "User is neither owner nor renter.");
-            return;
-        }
-        RoadieBooking.update(req.params, function(error) {
+        RoadieBooking.update(userID, req.params, function(error) {
             if (error) {
                 handleError(res, next, "Error updating booking: ", error);
                 return;

@@ -241,7 +241,7 @@ updateRoadieWithID = function(userID, roadieID, updatedRoadieData, callback) {
             return;
         }
         //Check if user is owner
-        if (parseInt(userID, 10) !== rows[0].owner_id) {
+        if (userID !== rows[0].owner_id.toString()) {
             callback("User is not owner.");
             return;
         }
