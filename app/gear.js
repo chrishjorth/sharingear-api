@@ -9,6 +9,7 @@
 
 var db = require("./database"),
     Config = require("./config"),
+    Localization = require("./localization"),
 
     getClassification,
     checkTypes,
@@ -382,6 +383,10 @@ createGear = function(newGear, callback) {
                     return;
                 }
                 newGear.brand = brandID;
+                if(Localization.isCountrySupported(newGear.country) === false && newGear.country !== null && newGear.country !== "") {
+                    callback("Country is not supported.");
+                    return;
+                }
                 create();
             });
         });
@@ -570,6 +575,10 @@ updateGearWithID = function(userID, gearID, updatedGearData, callback) {
                 updatedGearData.brand = brandID;
                 if (brandID === null) {
                     callback("Wrong brand.");
+                    return;
+                }
+                if(Localization.isCountrySupported(updatedGearData.country) === false && updatedGearData.country !== null && updatedGearData.country !== "") {
+                    callback("Country is not supported.");
                     return;
                 }
                 update();

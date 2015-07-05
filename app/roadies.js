@@ -10,6 +10,7 @@
 var db = require("./database"),
     Moment = require("moment"),
     Config = require("./config"),
+    Localization = require("./localization"),
 
     roadieLevels = ["A+", "A", "B", "C", "D"],
 
@@ -103,6 +104,10 @@ createRoadie = function(userID, params, callback) {
         callback("User creating roadie and owner do not match.");
         return;
     }
+    if (Localization.isCountrySupported(params.country) === false && params.country !== null && params.country !== "") {
+        callback("Country is not supported.");
+        return;
+    }
     //Check if owner exists
     db.query("SELECT id FROM users WHERE id=? LIMIT 1", [userID], function(error, rows) {
         if (error) {
@@ -157,10 +162,10 @@ createRoadie = function(userID, params, callback) {
                 }
                 //Insert accessories
                 /*roadies.addAccessories(result.insertId, typeID, params.accessories, function(error) {
-					if(error) {
-						callback(error);
-						return;
-					}*/
+                    if(error) {
+                        callback(error);
+                        return;
+                    }*/
                 //return object 
                 callback(null, {
                     id: result.insertId,
@@ -245,6 +250,10 @@ updateRoadieWithID = function(userID, roadieID, updatedRoadieData, callback) {
             callback("User is not owner.");
             return;
         }
+        if (Localization.isCountrySupported(updatedRoadieData.country) === false && updatedRoadieData.country !== null && updatedRoadieData.country !== "") {
+            callback("Country is not supported.");
+            return;
+        }
 
         update = function(roadieTypeID, roadieTypeName) {
             var roadieInfo;
@@ -274,20 +283,6 @@ updateRoadieWithID = function(userID, roadieID, updatedRoadieData, callback) {
                     callback("Found no van to update.");
                     return;
                 }
-                //Delete accessories and then add them
-                /*db.query("DELETE FROM roadie_has_accessories WHERE roadie_id=?;", [roadieID], function(error) {
-					
-					if(error) {
-						callback(error);
-						return;
-					}
-					updatedRoadieData.accessories = JSON.parse(updatedRoadieData.accessories);
-					roadies.addAccessories(roadieID, roadieInfo[0], updatedRoadieData.accessories, function(error) {
-						var now = new Moment();
-						if(error) {
-							callback(error);
-							return;
-						}*/
                 callback(null, {
                     id: roadieID,
                     roadie_type: roadieTypeName,
@@ -307,13 +302,10 @@ updateRoadieWithID = function(userID, roadieID, updatedRoadieData, callback) {
                     updated: now.format("YYYY-MM-DD HH:mm:ss"),
                     owner_id: userID
                 });
-                //});
-                //});
             });
         };
 
         if (updatedRoadieData.roadie_type) {
-            //Check if van type is legal
             roadies.getTypeID(updatedRoadieData.roadie_type, function(error, typeID) {
                 if (error) {
                     callback(error);
@@ -476,7 +468,7 @@ search = function(location, roadie, callback) {
 
 getRoadies = function(callback) {
     db.query("SELECT roadies.id, users.name, users.surname, roadie_types.roadie_type FROM roadies, users, roadie_types WHERE users.id=roadies.owner_id AND roadie_types.id=roadies.roadie_type;", [], function(error, rows) {
-        if(error) {
+        if (error) {
             callback(error);
             return;
         }
@@ -488,12 +480,12 @@ getRoadiesImages = function(callback) {
     db.query("SELECT roadies.id, users.name, users.surname, users.image_url, roadie_types.roadie_type FROM roadies, users, roadie_types WHERE users.id=roadies.owner_id AND roadie_types.id=roadies.roadie_type;", [], function(error, rows) {
         var roadiesImages = [],
             i;
-        if(error) {
+        if (error) {
             callback(error);
             return;
         }
-        for(i = 0; i < rows.length; i++) {
-            if(rows[i].image_url.length > 0) {
+        for (i = 0; i < rows.length; i++) {
+            if (rows[i].image_url.length > 0) {
                 roadiesImages.push(rows[i]);
             }
         }

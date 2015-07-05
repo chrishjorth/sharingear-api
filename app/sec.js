@@ -8,7 +8,11 @@
 
 var crypto = require("crypto"),
 	JWT = require("jsonwebtoken"),
+	Moment = require("moment"),
 	sharingearSecret = "95b95a4a2e59ddc98136ce54b8a0f8d2",
+	//TOKEN_LIFESPAN = 3600, //60 x 60 seconds = 1 hour
+	TOKEN_LIFESPAN = 60,
+
 	generateFileName,
 	getFileSecretProof,
 	signJWT,
@@ -33,16 +37,26 @@ getFileSecretProof = function(filename) {
 };
 
 signJWT = function(payload) {
+	var currentTime = new Moment();
+	payload.created = currentTime.format("YYYY-MM-DD HH:mm:ss");
 	return JWT.sign(payload, sharingearSecret);
 };
 
 verifyJWT = function(token) {
+	var currentTime = new Moment(),
+		payload, creationTime;
 	try {
-		return JWT.verify(token, sharingearSecret);
+		payload = JWT.verify(token, sharingearSecret);
 	}
 	catch(error) {
 		return null;
 	}
+	creationTime = new Moment(payload.created, "YYYY-MM-DD HH:mm:ss");
+	creationTime.add(TOKEN_LIFESPAN, "seconds");
+	if(creationTime.isAfter(currentTime) === true) {
+		return payload;
+	}
+	return null;
 };
 
 getTokenFromRequest = function(req) {
