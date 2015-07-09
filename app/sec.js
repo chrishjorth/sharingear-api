@@ -10,8 +10,8 @@ var crypto = require("crypto"),
 	JWT = require("jsonwebtoken"),
 	Moment = require("moment"),
 	sharingearSecret = "95b95a4a2e59ddc98136ce54b8a0f8d2",
-	//TOKEN_LIFESPAN = 3600, //60 x 60 seconds = 1 hour
-	TOKEN_LIFESPAN = 60,
+	TOKEN_LIFESPAN = 3600, //60 x 60 seconds = 1 hour
+	//TOKEN_LIFESPAN = 60,
 
 	generateFileName,
 	getFileSecretProof,
