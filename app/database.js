@@ -9,13 +9,14 @@
 
 var mysql = require("mysql"),
     Config = require("./config"),
+    sharingearPoolOptions,
     sharingearPool,
     sphinxPool,
 
     query,
     search;
 
-sharingearPool = mysql.createPool({
+sharingearPoolOptions = {
     host: Config.MYSQL_URL,
     port: 3306,
     user: "root",
@@ -24,14 +25,19 @@ sharingearPool = mysql.createPool({
     supportBigNumbers: true, //Required for working with Facebook IDs stored as bigint.
     multipleStatements: true, //Required for Minus operation from dynamic data set, which requires temp table
     dateStrings: true,
-    acquireTimeout: 20000, //Default is 10000, we try with double to avoid occasional PROTOCOL_SEQUENCE_TIMEOUT errors
+    acquireTimeout: 20000 //Default is 10000, we try with double to avoid occasional PROTOCOL_SEQUENCE_TIMEOUT errors
     //connectTimeout: 60000, //Outcomment when not debugging with node inspector
-    ssl: {
+};
+
+if(Config.MYSQL_CA && Config.MYSQL_CERT && Config.MYSQL_KEY) {
+    sharingearPoolOptions.ssh = {
         ca: Config.MYSQL_CA,
         cert: Config.MYSQL_CERT,
         key: Config.MYSQL_KEY
-    }
-});
+    };
+}
+
+sharingearPool = mysql.createPool(sharingearPoolOptions);
 
 sharingearPool.on("error", function(error) {
     console.error("Sharingear MySQL pool error: " + error.code);
