@@ -148,6 +148,10 @@ secureServer.on("uncaughtException", function(req, res, route, error) {
     res.send(error);
 });
 
+console.log(restify.CORS.ALLOW_HEADERS);
+
+restify.CORS.ALLOW_HEADERS.push('authorization');
+
 secureServer.use(restify.CORS());
 secureServer.use(restify.fullResponse());
 secureServer.use(restify.bodyParser());
