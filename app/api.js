@@ -148,13 +148,18 @@ secureServer.on("uncaughtException", function(req, res, route, error) {
     res.send(error);
 });
 
-console.log(restify.CORS.ALLOW_HEADERS);
-
 restify.CORS.ALLOW_HEADERS.push('authorization');
+
+console.log(restify.CORS.ALLOW_HEADERS);
 
 secureServer.use(restify.CORS());
 secureServer.use(restify.fullResponse());
 secureServer.use(restify.bodyParser());
+
+secureServer.pre(function(request, response, next) {
+    console.log('REQUEST:');
+    console.log(request);
+});
 
 server = restify.createServer({
     name: "Sharingear health check"
