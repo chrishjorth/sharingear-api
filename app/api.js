@@ -152,10 +152,10 @@ secureServer.use(restify.CORS());
 secureServer.use(restify.fullResponse());
 secureServer.use(restify.bodyParser());
 
-secureServer.pre(function(request, response, next) {
+/*secureServer.pre(function(request, response, next) {
     console.log('REQUEST:');
     console.log(request);
-});
+});*/
 
 server = restify.createServer({
     name: "Sharingear health check"
