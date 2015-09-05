@@ -31,7 +31,7 @@ if(IS_PRODUCTION === true) {
 	//MYSQL_CA = fs.readFileSync(__dirname + "/../certificates/prod_server-ca.pem");
 	//MYSQL_CERT = fs.readFileSync(__dirname + "/../certificates/prod_client-cert.pem");
 	//MYSQL_KEY = fs.readFileSync(__dirname + "/../certificates/prod_client-key.pem");
-	SPHINX_URL = "130.211.79.103";
+	SPHINX_URL = "ec2-52-16-253-75.eu-west-1.compute.amazonaws.com";
 	VALID_IMAGE_HOST = "www.sharingear.com";
 	MANGOPAY_SANDBOX_CLIENTID = "sharingear";
 	MANGOPAY_SANDBOX_URL = "api.mangopay.com";
