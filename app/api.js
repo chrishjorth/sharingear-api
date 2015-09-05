@@ -110,14 +110,14 @@ SGDashboard = require("./sgdashboard");
 
 readFileSuccess = true;
 try {
-    key = fs.readFileSync("/home/chrishjorth/keys/server.key");
+    key = fs.readFileSync("/home/ubuntu/keys/server.key");
 } catch (error) {
     console.error("Could not read key file");
     readFileSuccess = false;
 }
 
 try {
-    certificate = fs.readFileSync("/home/chrishjorth/keys/server.pem");
+    certificate = fs.readFileSync("/home/ubuntu/keys/server.pem");
 } catch (error) {
     console.error("Could not read certificate file.");
     readFileSuccess = false;
@@ -151,6 +151,11 @@ secureServer.on("uncaughtException", function(req, res, route, error) {
 secureServer.use(restify.CORS());
 secureServer.use(restify.fullResponse());
 secureServer.use(restify.bodyParser());
+
+/*secureServer.pre(function(request, response, next) {
+    console.log('REQUEST:');
+    console.log(request);
+});*/
 
 server = restify.createServer({
     name: "Sharingear health check"
