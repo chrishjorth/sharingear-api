@@ -20,6 +20,6 @@ exports.config = {
      * production applications.
      */
     level : 'warn',
-    filepath : '/home/chrishjorth/sg_logs/newrelic_agent.log'
+    filepath : '/home/ubuntu/sg_logs/newrelic_agent.log'
   }
 };
